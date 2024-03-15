@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+    /* Position the button at the top right corner of the page */
+    .load-button {
+        position: fixed;
+        top: 0;
+        right: 0;
+        font-size: 24px;
+        margin-top: 10px;
+        margin-right: 10px;
+    }
+    </style>
+</head>
+<body>
+    <button class="load-button" onclick="loadRepl()">Load REPL script</button>
+    <ul id="log">
+    </ul>
+    <p>welcome</p>
+    <script src="js/blob.js"></script>
+    <!-- unneeded for the most part
+    <script src="js/base64-binary.js"></script> -->
+    <script>
+        function logMessage(message) {
+                try {
+                    var ul = document.getElementById("log");
+                    var li = document.createElement("li");
+                    message = new Date().toISOString() + ": " + message;
+                    li.appendChild(document.createTextNode(message));
+                    if (ul.firstChild) {
+                        ul.insertBefore(li, ul.firstChild);
+                    } else {
+                        ul.appendChild(li);
+                    }
+                } catch (error) {
+                    // Fallback in case logging fails
+                    console.error("Logging failed: ", error);
+                }
+            }
+
+logMessage('JS initialized');
+
+function createPNGBlob(canvas) {
+    var dataURL = canvas.toDataURL('image/png');
+    var data = atob(dataURL.substring('data:image/png;base64,'.length));
+    var u8Array = new Uint8Array(data.length);
+    for (var i = 0, len = data.length; i < len; ++i) {
+        u8Array[i] = data.charCodeAt(i);
+    }
+    var blob = new Blob([u8Array.buffer], { type: 'image/png' });
+    return blob;
+}
+
+// HACK: wait for nwf.mii to initialize since sometimes it's not ready right away
+nwf.mii.Mii.initialize();
+setTimeout(function() {
+
+// sanity test for rendering mii
+nwf.utils.log('creating canvas');
+window.canvas = document.createElement('canvas');
+nwf.utils.log('setting canvas width');
+canvas.width = 384;
+nwf.utils.log('setting canvas height');
+canvas.height = 384;
+nwf.utils.log('calling renderIcon');
+
+var mii = nwf.mii.Mii.getUserMiiList();
+if(mii) {
+	window.act = {mii: mii[0]};
+} else {
+	window.act = nwf.act.NintendoAccountManager.getInstance().getActiveAccount();
+}
+
+
+logMessage('index.html: trying to render this mii (8 sec delay): ' + JSON.stringify(act.mii));
+
+act.mii.renderIcon(canvas, function(img) {
+    nwf.utils.log('renderIcon returned...!!!');
+    logMessage('↑ mii.renderIcon ↑');
+
+    var ul = document.getElementById("log");
+    var li = document.createElement("li");
+    li.appendChild(canvas);
+    nwf.utils.log('insertBefore: inserting canvas, should appear shortly...');
+    ul.insertBefore(li, ul.firstChild);
+    nwf.utils.log('insertBefore returned');
+
+    var image = new Image();
+    nwf.utils.log('calling toDataURL');
+    image.src = canvas.toDataURL('image/png');
+    nwf.utils.log('toDataURL returned');
+
+    logMessage('↑ toDataURL ↑');
+
+    li = document.createElement("li");
+    li.appendChild(image);
+    nwf.utils.log('insertBefore for second image');
+    ul.insertBefore(li, ul.firstChild);
+    nwf.utils.log('insertBefore returned for second image');
+
+    setTimeout(function() {
+        nwf.utils.log('calling createPNGBlob...');
+        logMessage('calling createPNGBlob');
+        var blob = createPNGBlob(canvas);
+        nwf.utils.log('returned from createPNGBlob, calling saveBlob...');
+        logMessage('saving blob');
+        saveBlob(Math.floor(Date.now() / 1000) + '-render.png', blob, logMessage, logMessage);
+        nwf.utils.log('after saveBlob');
+    }, 3000);
+}, {
+    show_body: true,
+    mipmap: true,
+    tex_resolution: 384,
+    size: 384
+});
+
+}, 8000);
+
+function loadRepl() {
+    var script = document.createElement('script');
+    script.src = 'js/repl.js';
+    // Append the script to the head of the document
+    document.head.appendChild(script);
+    // Find the button by its class and disable it
+    var button = document.getElementsByClassName('load-button')[0];
+    button.disabled = true;
+    // Optionally, you might want to change the button text or style to indicate it's disabled
+    button.innerText = 'repl.js loaded';
+}
+
+        </script>
+    <!-- no longer load repl.js automatically
+    <script src="js/repl.js"></script>-->
+    <script src="js/render-listener.js"></script>
+</body>
+</html>

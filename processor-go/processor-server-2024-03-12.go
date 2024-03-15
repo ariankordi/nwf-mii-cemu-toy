@@ -88,30 +88,23 @@ func removeExpiredRequestsThread() {
 	}
 }
 
-const (
-	// fixed height and width used below
-	width = 1920
-	height = 1080
-)
 
 func processImage(buf []byte) {
+	img := image.NewNRGBA(image.Rect(0, 0, 1920, 1080))
+	copy(img.Pix, buf)
+
+	//var wg sync.WaitGroup
+
 	// NOTE: This may take a while, it may be worth it to just copy the marker instead of locking it
 	// go through each coordinate plane
-
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			// Calculate the index in the buffer for the current pixel
-			// Each pixel is 4 bytes (RGBA), hence the *4
-			// NOTE: change this if you are not using RGBA
-			idx := (y*width + x) * 4
-
-			// Extract marker directly from the buffer, if present
-			marker, found := extractMarker(buf, idx, width)
+	for x := 0; x < img.Bounds().Dx(); x++ {
+		for y := 0; y < img.Bounds().Dy(); y++ {
+			// try to read out a marker from each section of the image
+			marker, found := extractMarker(img, x, y)
 			if !found {
-				// skip if extractMarker says this is not a marker
+				// skip if uh, not found?
 				continue
 			}
-
 			markersMutex.Lock() // Lock the mutex before reading the markers slice
 			// iterate through all markers to see if this one is a match
 			for i, request := range renderRequests {
@@ -120,7 +113,6 @@ func processImage(buf []byte) {
 					//log.Println("mii data hash doesn't match:", marker.MiiDataHash, request.parameters.MiiDataHash)
 					continue
 				}
-
 				log.Println("found mii hash inside this marker: ", marker)
 				// then compare ENTIRE STRUCT
 				if !cmp.Equal(marker, request.parameters) {
@@ -128,15 +120,14 @@ func processImage(buf []byte) {
 					log.Println("markers don't match:", marker, request.parameters)
 					continue
 				}
-				log.Printf("Found marker at (%d, %d) with resolution %d\n", x, y, marker.Resolution)
+				fmt.Printf("Found marker at (%d, %d) with resolution %d\n", x, y, marker.Resolution)
 				//fmt.Printf("Found new marker: %+v at (%d, %d)\n", *matchedMarker, x, y)
 				// if scale is zero...
 				if marker.Scale == 0 {
 					log.Println("WARNING: SCALE IS ZERO???? NO!!!!!!")
 					marker.Scale = 1
 				}
-				go extractAndSaveSquare(buf, x, y,
-					marker.getWindowSize(), width, request)
+				go extractAndSaveSquare(img, x, y, int(marker.Resolution/uint16(marker.Scale)), request)
 				/*go func() {
 					// resolution is one number bc this image is square
 					rect := image.Rect(x, y, x+resolution, y+resolution)
@@ -159,29 +150,57 @@ func processImage(buf []byte) {
 			markersMutex.Unlock() // Unlock the mutex after iterating
 		}
 	}
+	/*
+		for x := 0; x < img.Bounds().Dx(); x++ {
+			for y := 0; y < img.Bounds().Dy(); y++ {
+				if params, found := extractMarker(img, x, y); found {
+					markersMutex.Lock()
+					// now try to see if that marker actually exists
+					if _, exists := markers[params.MiiDataHash]; !exists {
+						// go ahead and verify that this is the one that we want
+						// look up... oh wait.
+						markers[params.MiiDataHash] = *params
+						markersMutex.Unlock()
+						fmt.Printf("Found new marker: %+v at (%d, %d)\n", *params, x, y)
+						//extractAndSaveSquare(img, x, y, int(params.Resolution))
+						//wg.Add(1)
+						go func(x, y int, resolution uint16) {
+							//defer wg.Done()
+							extractAndSaveSquare(img, x, y, int(resolution), &marker)
+						}(x, y, marker.Resolution / uint16(marker.Scale))
+						//markers = append(markers[:i], markers[i+1:]...)
+
+						// remove when finished
+						delete(markers, params.MiiDataHash)
+					} else {
+						markersMutex.Unlock()
+					}
+				}
+			}
+		}*/
+
+	//wg.Wait()
 	processFinishChannel <- struct{}{}
 	log.Println("Processing complete.")
 }
 
-func extractMarker(buf []byte, idx, width int) (RenderParameters, bool) {
-	// Bounds checking
-	if idx < 0 || idx >= len(buf) { // or (idx+28): 14 color values * 2 bytes per color
+func extractMarker(img *image.NRGBA, x, y int) (RenderParameters, bool) {
+	if x+1 >= img.Bounds().Dx() || y+1 >= img.Bounds().Dy() {
 		return RenderParameters{}, false
 	}
 
 	var params RenderParameters
-	colors := make([]byte, 14)
+	colors := make([]byte, 14) // 6 bytes: R&G for three pixels to read MiiDataHash (uint32) and Resolution (uint16)
 
-	// Assuming you extract colors starting from idx, adjust as necessary
-	for i := 0; i < len(colors)/2; i++ {
-		// Each pixel is 4 bytes in the buffer
-		// NOTE: also accomodate rgba here
-		baseIdx := idx + i*4
-		if baseIdx+1 >= len(buf) { // Ensure we don't read beyond the buffer
-			return RenderParameters{}, false
-		}
-		colors[2*i], colors[2*i+1] = buf[baseIdx], buf[baseIdx+1] // Only need R and G
+	// read about as many pixels as colors we set above
+	pixelsToRead := len(colors) / 2
+
+	for i := 0; i < pixelsToRead; i++ {
+		r, g, _, _ := img.At(x+i, y).RGBA()
+		colors[2*i], colors[2*i+1] = byte(r>>8), byte(g>>8)
 	}
+	// TODO: UMMMM UHHHHHH FUGGGGGG
+	colors[13] = 0
 
 	reader := bytes.NewReader(colors)
 	if err := binary.Read(reader, binary.BigEndian, &params); err != nil {
@@ -192,48 +211,32 @@ func extractMarker(buf []byte, idx, width int) (RenderParameters, bool) {
 }
 
 const (
-	// CHROMA KEY COLOR
+	// FOR CHROMA KEYING
 	targetR = 0
 	targetG = 255
 	targetB = 0
 )
 
 // TODO: probably remove RenderParameters when you get this to send back
-func extractAndSaveSquare(buf []byte, x, y, resolution, width int, request *renderRequest) {
-	// Calculate starting index in buffer
-	// NOTE: 4 bytes for rgba again
-	startIdx := (y*width + x) * 4
-	// Create a new image to hold the extracted square
-	square := image.NewNRGBA(image.Rect(0, 0, resolution, resolution))
+func extractAndSaveSquare(img *image.NRGBA, x, y, resolution int, request *renderRequest) {
+	rect := image.Rect(x, y, x+resolution, y+resolution)
+	square := image.NewNRGBA(rect)
+	green := color.NRGBA{R: targetR, G: targetG, B: targetB, A: 255} // Define the green color to be removed
+	transparent := color.NRGBA{R: 0, G: 0, B: 0, A: 0}               // Define transparent color
 
-	// Pre-define target green (key) color and transparent color
-	targetKey := color.NRGBA{R: targetR, G: targetG, B: targetB, A: 255}
-	transparent := color.NRGBA{R: 0, G: 0, B: 0, A: 0}
-
-	// Copy buffer to square image
-	for sy := 0; sy < resolution; sy++ {
-		for sx := 0; sx < resolution; sx++ {
-			// Calculate index for source pixel
-			idx := startIdx + (sy*width+sx)*4
-			//idx := ((y+sy)*width + (x+sx)) * 4
-			if idx >= len(buf)-4 { // Ensure we don't go out of bounds
-				continue
-			}
-
-			// skip first row of pixels, for removing the marker
-			if sy == 0 { //&& sx < 20 {
-				continue
-			}
-			// Extract RGBA values
-			r, g, b, a := buf[idx], buf[idx+1], buf[idx+2], buf[idx+3]
-			// Set pixel in square
-			//square.Set(sx, sy, color.RGBA{R: r, G: g, B: b, A: a})
-			// Process chroma key to set pixel or transparency
-			pixel := color.NRGBA{R: r, G: g, B: b, A: a}
-			if pixel == targetKey {
-				square.Set(sx, sy, transparent)
+	// Extract the square and process the background and first row
+	for ix := rect.Min.X; ix < rect.Max.X; ix++ {
+		for iy := rect.Min.Y; iy < rect.Max.Y; iy++ {
+			c := img.At(ix, iy)
+			// Remove green background
+			if c == green {
+				square.Set(ix-x, iy-y, transparent)
 			} else {
-				square.Set(sx, sy, pixel)
+				square.Set(ix-x, iy-y, c)
+			}
+			// Make the first row transparent
+			if iy == rect.Min.Y {
+				square.Set(ix-x, iy-y, transparent)
 			}
 		}
 	}
@@ -391,12 +394,6 @@ type RenderParameters struct {
 	// All chunks are assumed to be split evenly.
 }
 
-// gets the resolution divided by the (down)scale as calculated by the js
-func (params RenderParameters) getWindowSize() int {
-	// divide by scale to calculate same size that js calculates
-	return int(params.Resolution / int16(params.Scale))
-}
-
 // requests are timing out after this amount of time
 const timeout = 7 * time.Second
 
@@ -432,7 +429,6 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
-	// query param takes priority over body
 	if b64MiiData != "" {
 		// if data is specified, which is base64-encoded
 		// NOTE: probably should be base64 url encoding
@@ -442,14 +438,6 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		// read request body, instead of query param
-		// NOTE: 2 KB LIMIT ON REQUEST BODY!!!!!!
-		reader := http.MaxBytesReader(w, r.Body, 2 << 10) // 2 KB
-		miiData, err = ioutil.ReadAll(reader)
-		if err != nil {
-			http.Error(w, "io.ReadAll error on request body: "+err.Error(), http.StatusBadRequest)
-			return
-		}
 		contentType := r.Header.Get("Content-Type")
 		if contentType == "application/base64" {
 			// If the data is base64-encoded
@@ -458,8 +446,17 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "base64 body decode error: "+err.Error(), http.StatusBadRequest)
 				return
 			}
+		} else {
+			// NOTE: 2 KB LIMIT ON REQUEST BODY!!!!!!
+			reader := http.MaxBytesReader(w, r.Body, 2 << 10) // 2 KB
+			miiData, err = ioutil.ReadAll(reader)
+			if err != nil {
+				http.Error(w, "io.ReadAll error on request body: "+err.Error(), http.StatusBadRequest)
+				return
+			}
 		}
 	}
+	// TODO: CHECK CRC16 XMODEM
 
 	// check length and crc16 of mii data
 	miiDataLen := len(miiData)
@@ -503,7 +500,6 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 	scale, _ := strconv.Atoi(r.URL.Query().Get("scale"))
 	horizontalTotal, _ := strconv.Atoi(r.URL.Query().Get("horizontaltotal"))
 	horizontalChunk, _ := strconv.Atoi(r.URL.Query().Get("horizontalchunk"))
-	// NOTE: you may have been able to get away with parsing uint but that is 64
 
 	// Compute CRC for Mii data
 	miiCRC := crc32.ChecksumIEEE(miiData)
@@ -524,38 +520,15 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 		HorizontalChunk: uint8(horizontalChunk),
 	}
 
-	// TODO REOPTIMIZE WHERE THIS IS BECAUSE WE DO BINARY ENCODING AGAIN!!!!!....
-	resendRequest:
-	// check if this request is already in renderRequests
-	markersMutex.Lock() // Lock the mutex before modifying or reading the markers slice
-	var request renderRequest
-	// TODO: BUT REQUEST IS RE-ENCODED AND RESENT EVEN IF IT ALREADY EXISTS
-	var alreadyExists bool
-	for i, request := range renderRequests {
-		if request.parameters.MiiDataHash != params.MiiDataHash {
-			continue
-		}
-		if !cmp.Equal(params, request.parameters) {
-			continue
-		}
-		// here there is a matching one presumably, so change its timestamp to now
-		alreadyExists = true
-		log.Println("request already exists: ", request.parameters)
-		// TODO check if this actually modified it
-		renderRequests[i].timestamp = time.Now()
-		request = renderRequests[i]
-	}
-
 	// add to markers TODO TODO ADD ENTIRE STRUCT TO THIS
-	if !alreadyExists {
-		request = renderRequest{
-			parameters: params,
-			//channel: make(chan renderResponse),
-			timestamp: time.Now(),
-		}
-		log.Println("sending this struct: ", params)
-		renderRequests = append(renderRequests, &request)
+	request := renderRequest{
+		parameters: params,
+		//channel: make(chan renderResponse),
+		timestamp: time.Now(),
 	}
+	log.Println("sending this struct: ", params)
+	markersMutex.Lock() // Lock the mutex before modifying the markers slice
+	renderRequests = append(renderRequests, &request)
 	markersMutex.Unlock()
 
 	// Serialize the params to bytes as before
@@ -594,7 +567,7 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 	httpFailChannel := make(chan error)
 	// Asynchronous request example (commented-out)
 	go func() {
-		// NOTE: IF THE MII DATA IS INVALID, THE EMULATOR WILL CRASH, RIGHT HERE!!!!!
+		// TODO: IF THE MII DATA IS INVALID, THE EMULATOR WILL CRASH, RIGHT HERE!!!!!
 		resp, err := client.Post("http://"+cemuSocketHost, "application/octet-stream", bytes.NewReader(buf))
 		if err != nil {
 			httpFailChannel <- err
@@ -617,28 +590,15 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 	//case renderedResponse := <-request.channel:
 	case renderedResponse := <-responseChannel:
 		if !cmp.Equal(renderedResponse.parameters, params) {
-			log.Println("found response of same hash but not matching params, skipping")
+			log.Println("NO MATCH UHHH UHHHH POOOOOOOP")
 			return
 		}
 		// ENCODE RESPONSE YAAAAAY!!!!
-		log.Println("received from channel with this struct: ", renderedResponse.parameters)
+		log.Println("RECEIVED FROM CHANNEL!!!!!!!! with this struct: ", renderedResponse.parameters)
 		//fmt.Println(renderedResponse)
-		// Calculate the center of the image
-
-		// Extract the pixel at the center
-		sizeMiddle := renderedResponse.parameters.getWindowSize() / 2
-		centerPixel := renderedResponse.pixels.At(sizeMiddle, sizeMiddle).(color.NRGBA)
-		// Check if the center pixel is transparent
-		// CHECK BLANK IMAGE AND THEN JUMP BACK UHHHHH
-		if centerPixel.A == 0 {
-			// TODO:!!! CHECK IF IT IS BACKGROUND COLOR. IF THAT IS SPECIFIED. OK?
-			log.Println("Warning: The pixel in the very center of the image is blank (transparent)!!!, jumping back and resending.")
-			goto resendRequest
-		}
 		header.Set("Content-Type", "image/png")
 		if err := png.Encode(w, &renderedResponse.pixels); err != nil {
-			//http.Error(w, "Failed to encode image: "+err.Error(), http.StatusInternalServerError)
-			log.Println("png.Encode error:", err)
+			http.Error(w, "Failed to encode image: "+err.Error(), http.StatusInternalServerError)
 		}
 	case err = <-httpFailChannel:
 		http.Error(w, "upstream error. oh fucking no. please notify arian about this IMMEDIATELY!: " +

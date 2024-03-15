@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:nwf="http://www.nintendo.com/ns/widgets" version="1.1.1">
+  <!--========================================================================== 
+                          APPLICATION SETTINGS
+  ===========================================================================-->
+  <!--
+    Main content to be loaded to GamePad or a Shared WebView.
+    Note: Relative path from "file:///vol/content/app/" is assumed.
+  -->
+  <!--
+    List of required features.
+    Loads the nwf extensions (rpl) or enables the feature.
+  -->
+  <feature name="ext-core">
+    <param name="homeButtonEnabled" value="true"/>
+  </feature>
+  <feature name="ext-input">
+    <!-- Toggles pre-defined controls for WebKit. -->
+    <param name="mouseEnabledWiiRemote" value="true"/>
+    <param name="scrollEnabledWiiRemote" value="true"/>
+    <param name="mouseEnabledGamePad" value="true"/>
+    <param name="scrollEnabledGamePad" value="all"/>
+    <param name="focusNavigationEnabledGamePad" value="false"/>
+    <param name="focusNavigationEnabledWiiRemote" value="false"/>
+    <param name="videoControlEnabledWiiRemote" value="all"/>
+    <param name="videoControlEnabledGamePad" value="all"/>
+  </feature>
+  <feature name="ext-accounts"/>
+  <rpl name="libcrypto_rpl"/>
+  <rpl name="libcurl_rpl"/>
+  <rpl name="libefontconfig_rpl"/>
+  <rpl name="libffmpegfft_rpl"/>
+  <rpl name="libfreetype_rpl"/>
+  <rpl name="libicu_rpl"/>
+  <rpl name="libjpeg_rpl"/>
+  <rpl name="libpixman_rpl"/>
+  <rpl name="libplatform_rpl"/>
+  <rpl name="libpng15_rpl"/>
+  <rpl name="libshim_rpl"/>
+  <rpl name="libsqlite3_rpl"/>
+  <rpl name="libssl_rpl"/>
+  <rpl name="libwksup_rpl"/>
+  <rpl name="libxml2_rpl"/>
+  <rpl name="libxslt_rpl"/>
+  <rpl name="libz_rpl"/>
+  <rpl name="mvplayer"/>
+  <rpl name="libMediaInterfaceCore_rpl"/>
+  <rpl name="libMediaInterfaceRenderer_rpl"/>
+  <rpl name="libMediaApiSupport_rpl"/>
+  <rpl name="libMIRegistry_rpl"/>
+  <rpl name="libwkaud_rpl"/>
+  <!--
+    Domain Whitelist. List of domains that Nintendo Web Framework is permitted to connect to.
+    [origin] attribute description:
+      Only the scheme and authority components can be present in
+      the IRI that this attribute contains. Additionally, an
+      asterisk (*) can be used.
+    example:
+     <access origin="http://somedomain.com" subdomains="true"/>
+     <access origin="*"/>
+    More information: http://www.w3.org/TR/widgets-access/
+  -->
+  <access origin="https://games.nitrolic.com" subdomains="true"/>
+  <access origin="https://192.168.2.20" subdomains="true"/>
+  <access origin="*" subdomains="false"></access>
+  <!-- List of supported resolutions. -->
+  <nwf:supportedRenderModes>
+    <nwf:tvRenderMode>1080</nwf:tvRenderMode>
+  </nwf:supportedRenderModes>
+  <!-- List of media plugins to load -->
+  <mediaPlugin name="libMIPluginDecoderOggVorbis_rpl"/>
+  <mediaPlugin name="libMIPluginPlayerAudio_rpl"/>
+  <!--========================================================================== 
+                      RUNTIME CONFIGURATION SETTINGS
+  ===========================================================================-->
+  <nwf:options>
+    <nwf:memory>
+      <!-- How many frames go by in between memory checks -->
+      <nwf:framesPerMemoryCheck>100</nwf:framesPerMemoryCheck>
+      <!-- How low memory needs to before we force gabage collection -->
+      <nwf:memoryLowInBytes>56320000</nwf:memoryLowInBytes>
+      <!-- How low can memory get before we force relaunch -->
+      <nwf:memoryFatalInBytes>41943040</nwf:memoryFatalInBytes>
+      <!-- How low can js code space get before we force relaunch -->
+      <nwf:codeFatalInBytes>512000</nwf:codeFatalInBytes>
+      <!--
+        Configurable heaps:
+          webkit-image
+          webkit-canvas
+          javascript-object
+
+        Allowable secondary heaps:
+          webkit-image
+          webkit-canvas
+          javascript-object
+          graphics-default
+          launcher-default
+
+        Example heap configuration:
+          <nwf:heap name="webkit-image">
+            <param name="heapSize"      value="83886080"/>          Total size of the heap
+            <param name="blockSize"     value="28672"/>             Round up allocations to this size
+            <param name="secondaryHeap" value="launcher-default"/>  Try secondary heap before defaulting
+            <param name="allowDefault"  value="true"/>              If we run out of space pull from webkit-default
+          </nwf:heap> 
+
+        Note: Leaving a heap configuration blank is equivalent to setting allowDefault to true
+      -->
+      <!-- general (non context) image buffers -->
+      <nwf:heap name="webkit-image">
+        <param name="heapSize" value=""/>
+      </nwf:heap>
+      <!-- All color/depth/texture buffers for canvas -->
+      <nwf:heap name="webkit-canvas">
+        <param name="heapSize" value=""/>
+      </nwf:heap>
+      <!-- Main memory for javascript runtime -->
+      <nwf:heap name="javascript-object">
+        <param name="heapSize" value=""/>
+      </nwf:heap>
+      <!-- Memory for Miiverse Feature -->
+      <nwf:heap name="ext-miiverse">
+        <param name="heapSize" value=""/>
+      </nwf:heap>
+      <!-- Memory for NEX Game Server feature -->
+      <nwf:heap name="ext-datastore">
+        <param name="heapSize" value=""/>
+      </nwf:heap>
+      <!-- Memory for video heap feature -->
+      <nwf:heap name="video">
+        <param name="heapSize" value=""/>
+        <param name="secondaryHeap" value="webkit-canvas"/>
+      </nwf:heap>
+    </nwf:memory>
+    <!-- How many remotes are allowed for this application? -->
+    <nwf:supportedWiiRemotes>4</nwf:supportedWiiRemotes>
+    <!--
+      If this application accesses the network at any time, useNetworkServices needs to be 1.
+      If this is set to 1, the framework will initialize the network on launch
+      and immediately attempt to connect to the network.
+     -->
+    <nwf:useNetworkServices>1</nwf:useNetworkServices>
+    <nwf:httpHeaders>
+      <!-- Set User-Agent string: -->
+      <nwf:userAgent>Mozilla/5.0 (Nintendo WiiU) AppleWebKit/534.53 (KHTML, like Gecko) NWF/{MAJOR.MINOR.REV}.{RGN}</nwf:userAgent>
+      <!-- Set Global HTTP headers: -->
+      <nwf:customHeader>Accept-Language: {lc}-{CC}</nwf:customHeader>
+      <nwf:customHeader>Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3</nwf:customHeader>
+      <nwf:customHeader>Accept-Encoding: gzip</nwf:customHeader>
+    </nwf:httpHeaders>
+    <nwf:clientID>e45dbb0aa8bb4be4ae41a64087b763f9</nwf:clientID>
+    <!--
+      The path to the SSL certificate bundle for SSL communication.
+      Note: Relative path from "file:///vol/content/app/" is assumed
+    -->
+    <nwf:sslCertificatePath>certificates/ca-bundle.pem</nwf:sslCertificatePath>
+    <!--
+      The path to the SSL client certificate.
+      Note: Relative path from "file:///vol/content/app/" is assumed
+    -->
+    <nwf:sslClientCertificatePath/>
+    <!-- Default anti-aliasing settings. 1 | 2 | 4 | 8 -->
+    <nwf:antiAliasing>1</nwf:antiAliasing>
+    <!--
+      Changes which errors are reported graphically
+      Each mode shows a subset of the errors the one above it shows.
+        CORE - Errors that should be visible to platform developers
+        APP  - Errors that should be visible to application developers
+        USER - Errors that should be visible to users of applications
+        NONE - Display no errors graphically
+    -->
+    <nwf:errormode>USER</nwf:errormode>
+    <!-- enable or disable the Software Keyboard. 0 | 1 -->
+    <nwf:softwareKeyboardEnabled>1</nwf:softwareKeyboardEnabled>
+    <!-- enable or disable the USB Keyboard 0 | 1 -->
+    <nwf:USBKeyboardEnabled>1</nwf:USBKeyboardEnabled>
+    <!-- List of custom TTF fonts to load at runtime -->
+    <!-- Fonts will be available through CSS as though they are installed on the device -->
+    <!-- Note: Relative path from "file:///vol/content/app/" is assumed -->
+    <nwf:customFonts>
+      <!-- example <nwf:font>fonts/arial.ttf</nwf:font> -->
+    </nwf:customFonts>
+    <!-- Cookie config options -->
+    <!-- maxSize refers to the number of bytes the cookie file can take up -->
+    <nwf:cookieConfig>
+      <nwf:maxSize>4096</nwf:maxSize>
+    </nwf:cookieConfig>
+    <!-- This is the same as calling nwf.system.WiiUSystem.getInstance().flushStorage() at those times. -->
+    <nwf:MediaPlayer>0</nwf:MediaPlayer>
+    <!-- Options to configure the NAND Cache -->
+    <nwf:cacheConfig>
+      <!-- enable or disable the NAND Cache. 0 | 1 -->
+      <nwf:nandCacheEnabled>0</nwf:nandCacheEnabled>
+      <!-- enable or disable caching HTTPS. 0 | 1 -->
+      <nwf:nandCacheEnabledHTTPS>0</nwf:nandCacheEnabledHTTPS>
+      <!-- Location of where the non-HTTPS cache is stored -->
+      <nwf:savePath>/vol/save/common/shared/cache</nwf:savePath>
+      <!-- Location of where the HTTPS cache is stored -->
+      <!-- This must be different than the non-HTTPS cache location -->
+      <nwf:savePathHTTPS>/vol/save/account/cache/secure</nwf:savePathHTTPS>
+      <!-- Max size of the NAND cache in bytes -->
+      <!-- This needs to be far less than the value of common_save_size set in meta.xml -->
+      <nwf:maxSize>0</nwf:maxSize>
+      <!-- flush interval in seconds. Must be greater than 60 -->
+      <nwf:writeInterval>180</nwf:writeInterval>
+      <!-- Write buffer. Does not normally need to change -->
+      <nwf:writeSize>4194304</nwf:writeSize>
+      <!-- add Cache Overrides to allow or disallow assets from being stored -->
+      <!--    
+      <nwf:cacheOverride url="http://www.nintendo.com">
+        <nwf:maxage mime-type="image/png">0</nwf:maxage>
+        <nwf:maxage mime-type="text/css">3600</nwf:maxage>
+      </nwf:cacheOverride>
+      -->
+    </nwf:cacheConfig>
+    <!-- Is the application a game(0) or a service(1) -->
+    <nwf:isServiceApplication>0</nwf:isServiceApplication>
+    <nwf:NEXGameServerID/>
+    <nwf:NEXAccessKey/>
+    <!--Allow the Wii Balance Board for this application? -->
+    <nwf:wiiBalanceBoardSupported>0</nwf:wiiBalanceBoardSupported>
+    <nwf:canvasDisableStencil>0</nwf:canvasDisableStencil>
+    <nwf:enable16bitAlphaTextures>0</nwf:enable16bitAlphaTextures>
+    <nwf:enable16bitOpaqueTextures>0</nwf:enable16bitOpaqueTextures>
+    <!--configure the color of the screen when cleared-->
+    <nwf:backgroundColor>#000000</nwf:backgroundColor>
+    <!--configure the orientation of the GamePad screen-->
+    <nwf:GamePadOrientation>landscape-primary</nwf:GamePadOrientation>
+    <nwf:enableBC1Textures>0</nwf:enableBC1Textures>
+    <nwf:touchScrolling nwf:display="tv">
+      <param name="scrollingEnabled" value="true"/>
+      <param name="scrollbarsEnabled" value="false"/>
+      <param name="touchEmulated" value="true"/>
+    </nwf:touchScrolling>
+    <nwf:touchScrolling nwf:display="gp">
+      <param name="scrollingEnabled" value="true"/>
+      <param name="scrollbarsEnabled" value="false"/>
+      <param name="touchEmulated" value="true"/>
+    </nwf:touchScrolling>
+    <nwf:sslCrlPath/>
+    <nwf:useSaveCommon>1</nwf:useSaveCommon>
+    <nwf:useSaveAccount>1</nwf:useSaveAccount>
+    <nwf:videoControls>false</nwf:videoControls>
+  </nwf:options>
+  <!--========================================================================== 
+                          DEVELOPMENT USE ONLY
+  ===========================================================================-->
+  <nwf:inspector>
+    <!--
+      Set the location of the inspector view:
+        NONE   - disable inspector
+        REMOTE - accessible remotely over TCP
+    -->
+    <nwf:location>REMOTE</nwf:location>
+    <!--
+      Set the TCP port to use for a remote inspector server.
+      If unset, the default port number is 9222.
+    -->
+    <nwf:port>9222</nwf:port>
+    <!--
+      Set a remote URL to serve inspector front-end assets.
+      If unset, the front-end will be served from the Wii U system.
+    -->
+    <nwf:frontEndURL/>
+  </nwf:inspector>
+  <nwf:dashboard>
+    <!--
+      This TCP port will be used for general-purpose communication with the 
+      dashboard debug host. If unset, the default port number is 50000
+    -->
+    <nwf:TCPPort>50000</nwf:TCPPort>
+    <!--
+      UDP port will be used to respond to a dashboard scan.
+      If unset, the default port number is 51000.
+    -->
+    <nwf:UDPPort>51000</nwf:UDPPort>
+    <nwf:deleteTempMasteringDir visible="false">1</nwf:deleteTempMasteringDir>
+    <nwf:version>33</nwf:version>
+    <nwf:serviceTokenNotRequired>1</nwf:serviceTokenNotRequired>
+  </nwf:dashboard>
+  <rpl name="libJavaScriptCore_rpl"/>
+  <rpl name="libWebCore_rpl"/>
+  <rpl name="libWebKit_rpl"/>
+  <rpl name="libWTF_rpl"/>
+  <feature name="ext-network"/>
+  <feature name="ext-miiverse"/>
+  <feature name="ext-mii-private">
+    <param name="specialMiiCharacters" value="true"/>
+  </feature>
+  <feature name="ext-fileio"></feature>
+  <feature name="ext-eval"></feature>
+  <feature name="ext-amiibo"></feature>
+  <content nwf:display="shared" src="/index.html">
+    <nwf:width/>
+    <nwf:height/>
+  </content>
+</widget>

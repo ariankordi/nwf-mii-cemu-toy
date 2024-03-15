@@ -1,0 +1,9 @@
+# shm dumps that i leave around
+*.raw
+
+# binaries
+processor-go/processor-server
+processor-go/processor-server.exe
+
+# swap
+*.kate-swp
