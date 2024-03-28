@@ -134,6 +134,55 @@ ul.insertBefore(li, ul.firstChild);
 // maps expressions. yes
 var expressionToConstMap = [1, 16, 1024, 16384, 65536, 256, 2048, 4, 65536, 128, 32, 2, 512, 8192, 8, 1, 131072, 32768, 128, 262144, 16, 4096, 64, 8, 1];
 
+/*
+{
+    // null, zero: 1,
+    "SURPRISE": 16,
+    "SURPRISE_OPEN_MOUTH": 1024,
+    "WINK_LEFT_OPEN_MOUTH": 16384,
+    "LIKE": 65536,
+    "ANGER_OPEN_MOUTH": 256,
+    "BLINK_OPEN_MOUTH": 2048,
+    "ANGER": 4,
+    "LIKE_WINK_LEFT": 65536,
+    "HAPPY": 128,
+    "BLINK": 32,
+    "SMILE": 2,
+    "SORROW_OPEN_MOUTH": 512,
+    "WINK_RIGHT": 8192,
+    "SORROW": 8,
+    "NORMAL": 1,
+    "LIKE_WINK_RIGHT": 131072,
+    "WINK_RIGHT_OPEN_MOUTH": 32768,
+    "SMILE_OPEN_MOUTH": 128,
+    "FRUSTRATED": 262144,
+    "SURPRISED": 16,
+    "WINK_LEFT": 4096,
+    "OPEN_MOUTH": 64,
+    "PUZZLED": 8
+}
+
+    'normal',
+	'smile',
+	'anger',
+	'sorrow',
+	'surprise',
+	'blink',
+	'normal_open_mouth', -> open_mouth
+	'smile_open_mouth',
+	'anger_open_mouth',
+	'surprise_open_mouth',
+	'sorrow_open_mouth',
+	'blink_open_mouth',
+	'wink_left',
+	'wink_right',
+	'wink_left_open_mouth',
+	'wink_right_open_mouth',
+	'like_wink_left',
+	'like_wink_right',
+	'frustrated',
+*/
+
 window.byteArrayToRenderParams = function(buffer) {
     // Now, we convert the binary data back into the struct's fields
     // Assuming the buffer is in the correct order and endianess

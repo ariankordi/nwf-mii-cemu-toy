@@ -4,6 +4,7 @@
 # binaries
 processor-go/processor-server
 processor-go/processor-server.exe
+__debug_*
 
 # swap
 *.kate-swp

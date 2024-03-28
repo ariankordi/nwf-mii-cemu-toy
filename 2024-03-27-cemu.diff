@@ -1,0 +1,628 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 6b5f388..8d4e426 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -28,7 +28,7 @@ if (ENABLE_VCPKG)
+ 	# Set this so that all the various find_package() calls don't need an explicit
+ 	# CONFIG option
+ 	set(CMAKE_FIND_PACKAGE_PREFER_CONFIG TRUE)
+-	if (WIN32)
++	if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+ 		set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "")
+ 	endif()
+ endif()
+@@ -74,6 +74,7 @@ endif()
+ if (UNIX AND NOT APPLE)
+ 	option(ENABLE_WAYLAND "Build with Wayland support" ON)
+ 	option(ENABLE_FERAL_GAMEMODE "Enables Feral Interactive GameMode Support" ON)
++	add_compile_options(-O3 -march=native -mtune=native)
+ endif()
+ 
+ option(ENABLE_OPENGL "Enables the OpenGL backend" ON)
+@@ -82,7 +83,7 @@ option(ENABLE_DISCORD_RPC "Enables the Discord Rich Presence feature" ON)
+ 
+ 
+ # input backends
+-if (WIN32)
++if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+ 	option(ENABLE_XINPUT "Enables the usage of XInput" ON)
+ 	option(ENABLE_DIRECTINPUT "Enables the usage of DirectInput" ON)
+ 	add_compile_definitions(HAS_DIRECTINPUT)
+@@ -92,14 +93,14 @@ option(ENABLE_HIDAPI "Build with HIDAPI" ON)
+ option(ENABLE_SDL "Enables the SDLController backend" ON)
+ 
+ # audio backends
+-if (WIN32)
++if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+ 	option(ENABLE_DIRECTAUDIO "Enables the directaudio backend" ON)
+ 	option(ENABLE_XAUDIO "Enables the xaudio backend" ON)
+ endif()
+ option(ENABLE_CUBEB "Enabled cubeb backend" ON)
+ 
+ # usb hid backends
+-if (WIN32)
++if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+ 	option(ENABLE_NSYSHID_WINDOWS_HID "Enables the native Windows HID backend for nsyshid" ON)
+ endif ()
+ # libusb and windows hid backends shouldn't be active at the same time; otherwise we'd see all devices twice!
+diff --git a/src/Cafe/HW/Latte/Renderer/Renderer.cpp b/src/Cafe/HW/Latte/Renderer/Renderer.cpp
+index 4db8835..fff30c6 100644
+--- a/src/Cafe/HW/Latte/Renderer/Renderer.cpp
++++ b/src/Cafe/HW/Latte/Renderer/Renderer.cpp
+@@ -131,9 +131,9 @@ static std::optional<fs::path> GenerateScreenshotFilename(bool isDRC)
+ 	{
+ 		screenshotPath = screendir;
+ 		if (i == 0)
+-			screenshotPath.append(fmt::format("{}.png", screenshotFileName));
++			screenshotPath.append(fmt::format("{}.bmp", screenshotFileName));
+ 		else
+-			screenshotPath.append(fmt::format("{}_{}.png", screenshotFileName, i + 1));
++			screenshotPath.append(fmt::format("{}_{}.bmp", screenshotFileName, i + 1));
+ 		
+ 		std::error_code ec;
+ 		bool exists = fs::exists(screenshotPath, ec);
+@@ -186,7 +186,7 @@ static void ScreenshotThread(std::vector<uint8> data, bool save_screenshot, int
+ 	
+ 	wxImage image(width, height, data.data(), true);
+ 
+-	if (mainWindow)
++	/*if (mainWindow)
+ 	{
+ 		if(SaveScreenshotToClipboard(image))
+ 		{
+@@ -197,7 +197,7 @@ static void ScreenshotThread(std::vector<uint8> data, bool save_screenshot, int
+ 		{
+ 			LatteOverlay_pushNotification("Failed to open clipboard", 2500);
+ 		}
+-	}
++	}*/
+ 
+ 	if (save_screenshot)
+ 	{
+diff --git a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+index d030531..b2e1019 100644
+--- a/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
++++ b/src/Cafe/HW/Latte/Renderer/Vulkan/VulkanRenderer.cpp
+@@ -304,6 +304,49 @@ void VulkanRenderer::GetDeviceFeatures()
+ 	cemuLog_log(LogType::Force, fmt::format("VulkanLimits: UBAlignment {0} nonCoherentAtomSize {1}", prop2.properties.limits.minUniformBufferOffsetAlignment, prop2.properties.limits.nonCoherentAtomSize));
+ }
+ 
++
++#define IPC_IMPLEMENTATION
++#include "Cafe/HW/Latte/Renderer/Vulkan/ipc.h"
++
++// Global variables for shared memory and semaphore
++ipc_sharedmemory shm;
++ipc_sharedsemaphore sem;
++
++void initializeIPC() {
++    std::string portNumString = std::to_string(gui_getPortNumberForIPC());
++
++    char shmName[32] = "CemuSharedMemory";
++    strcat(shmName, portNumString.c_str());
++    char semName[32] = "CemuSemaphore";
++    strcat(semName, portNumString.c_str());
++    size_t shmSize = 4 * 1920 * 1080; // Adjust the size as needed
++
++    // Initialize shared memory
++    ipc_mem_init(&shm, shmName, shmSize);
++
++    // Attempt to open existing shared memory, or create new if that fails
++    if (ipc_mem_open_existing(&shm) != 0) {
++        printf("Opening existing memory failed, maybe we're first?\n");
++        if (ipc_mem_create(&shm) != 0) {
++            printf("Creating memory failed.\n");
++            //exit(EXIT_FAILURE); // Use appropriate error handling
++        }
++        // Initialize memory if we're the first
++        //memset(shm.data, 0, shm.size);
++        printf("Initialized new shared memory.\n");
++    } else {
++        printf("Attached to existing shared memory.\n");
++    }
++
++    // Initialize semaphore and create or open existing
++    ipc_sem_init(&sem, semName);
++    if (ipc_sem_create(&sem, 1) != 0) { // Using '1' to ensure it's unlocked initially
++        printf("Failed to create or open existing semaphore.\n");
++        //exit(EXIT_FAILURE); // Use appropriate error handling
++    }
++    // not closing because it's pretty much running forever'
++}
++
+ VulkanRenderer::VulkanRenderer()
+ {
+ 	glslang::InitializeProcess();
+@@ -577,6 +620,7 @@ VulkanRenderer::VulkanRenderer()
+ 	for (sint32 i = 0; i < OCCLUSION_QUERY_POOL_SIZE; i++)
+ 		m_occlusionQueries.list_availableQueryIndices.emplace_back(i);
+ 
++	initializeIPC();
+ 	// start compilation threads
+ 	RendererShaderVk::Init();
+ }
+@@ -763,7 +807,8 @@ void VulkanRenderer::HandleScreenshotRequest(LatteTextureView* texView, bool pad
+ 		bool supportsBlit = (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) != 0;
+ 
+ 		const bool dstUsesSRGB = (!padView && LatteGPUState.tvBufferUsesSRGB) || (padView && LatteGPUState.drcBufferUsesSRGB);
+-		const auto blitFormat = dstUsesSRGB ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
++		//const auto blitFormat = dstUsesSRGB ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
++		const auto blitFormat = dstUsesSRGB ? VK_FORMAT_R8G8B8_SNORM : VK_FORMAT_R8G8B8_UNORM;
+ 
+ 		vkGetPhysicalDeviceFormatProperties(m_physicalDevice, blitFormat, &formatProps);
+ 		supportsBlit &= (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT) != 0;
+@@ -889,7 +934,8 @@ void VulkanRenderer::HandleScreenshotRequest(LatteTextureView* texView, bool pad
+ 				vkCmdPipelineBarrier(getCurrentCommandBuffer(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+ 			}
+ 
+-			format = VK_FORMAT_R8G8B8A8_UNORM;
++			//format = VK_FORMAT_R8G8B8A8_UNORM;
++			format = VK_FORMAT_R8G8B8_UNORM;
+ 			dumpImage = image;
+ 		}
+ 	}
+@@ -958,6 +1004,21 @@ void VulkanRenderer::HandleScreenshotRequest(LatteTextureView* texView, bool pad
+ 	SubmitCommandBuffer();
+ 	WaitCommandBufferFinished(GetCurrentCommandBufferId());
+ 
++	// Copy the screenshot data to the shared memory
++    memcpy(ipc_mem_access(&shm), bufferPtr, size); // Ensure 'size' does not exceed the allocated shared memory size
++
++    // Signal the semaphore to notify the consumer
++    ipc_sem_increment(&sem);
++
++	vkUnmapMemory(m_logicalDevice, bufferMemory);
++	vkFreeMemory(m_logicalDevice, bufferMemory, nullptr);
++	vkDestroyBuffer(m_logicalDevice, buffer, nullptr);
++
++	if (image)
++		vkDestroyImage(m_logicalDevice, image, nullptr);
++	if (imageMemory)
++		vkFreeMemory(m_logicalDevice, imageMemory, nullptr);
++	/*
+ 	bool formatValid = true;
+ 
+ 	std::vector<uint8> rgb_data;
+@@ -992,6 +1053,15 @@ void VulkanRenderer::HandleScreenshotRequest(LatteTextureView* texView, bool pad
+ 		cemu_assert_debug(false);
+ 	}
+ 
++	if (formatValid) {
++		SaveScreenshot(rgb_data, width, height, !padView);
++		// Copy the screenshot data to the shared memory
++		memcpy(shm_ptr, bufferPtr, size); // Make sure 'size' does not exceed 'shm_size'
++
++		// Post the semaphore to signal the consumer that new data is available
++		sem_post(sem_ptr);
++	}
++
+ 	vkUnmapMemory(m_logicalDevice, bufferMemory);
+ 	vkFreeMemory(m_logicalDevice, bufferMemory, nullptr);
+ 	vkDestroyBuffer(m_logicalDevice, buffer, nullptr);
+@@ -1000,9 +1070,7 @@ void VulkanRenderer::HandleScreenshotRequest(LatteTextureView* texView, bool pad
+ 		vkDestroyImage(m_logicalDevice, image, nullptr);
+ 	if (imageMemory)
+ 		vkFreeMemory(m_logicalDevice, imageMemory, nullptr);
+-
+-	if (formatValid)
+-		SaveScreenshot(rgb_data, width, height, !padView);
++*/
+ }
+ 
+ static const float kQueuePriority = 1.0f;
+diff --git a/src/Cafe/OS/libs/coreinit/coreinit_Thread.cpp b/src/Cafe/OS/libs/coreinit/coreinit_Thread.cpp
+index 3701a4d..f1d77db 100644
+--- a/src/Cafe/OS/libs/coreinit/coreinit_Thread.cpp
++++ b/src/Cafe/OS/libs/coreinit/coreinit_Thread.cpp
+@@ -1019,7 +1019,7 @@ namespace coreinit
+ 	void __OSCheckSystemEvents()
+ 	{
+ 		// AX update
+-		snd_core::AXOut_update();
++		//snd_core::AXOut_update();
+ 		// alarm update
+ 		coreinit::alarm_update();
+ 		// nfp update
+diff --git a/src/Cafe/OS/libs/nn_nfp/nn_nfp.cpp b/src/Cafe/OS/libs/nn_nfp/nn_nfp.cpp
+index ad2ea20..84b04b0 100644
+--- a/src/Cafe/OS/libs/nn_nfp/nn_nfp.cpp
++++ b/src/Cafe/OS/libs/nn_nfp/nn_nfp.cpp
+@@ -859,6 +859,23 @@ bool nnNfp_touchNfcTagFromFile(const fs::path& filePath, uint32* nfcError)
+ 	return true;
+ }
+ 
++void nnNfp_touchNfcTagFromBuffer(const uint8_t* buffer)
++{
++    // signal activation event
++    nnNfp_unloadAmiibo();
++    nnNfpLock();
++    memcpy(&nfp_data.amiiboInternal, reinterpret_cast<const AmiiboInternal*>(buffer), sizeof(AmiiboInternal));
++
++    nfp_data.hasActiveAmiibo = true;
++    // without this the emulator will crash when you send an amiibo before game is loaded
++    if(nfp_data.activateEvent) {
++        MEMPTR<coreinit::OSEvent> osEvent(nfp_data.activateEvent);
++        coreinit::OSSignalEvent(osEvent);
++    }
++    nfp_data.amiiboTouchTime = GetTickCount();
++    nnNfpUnlock();
++}
++
+ bool nnNfp_writeCurrentAmiibo()
+ {
+ 	nnNfpLock();
+@@ -958,6 +975,83 @@ void nnNfpExport_GetNfpState(PPCInterpreter_t* hCPU)
+ 	osLib_returnFromFunction(hCPU, nfpState);
+ }
+ 
++#include "Cafe/HW/Latte/Renderer/Vulkan/ipc.h"
++#include "gui/guiWrapper.h"
++
++// Global IPC objects
++ipc_sharedmemory nfpShm;
++ipc_sharedsemaphore nfpSem;
++
++void nfpHandler() {
++	std::string portNumString = std::to_string(gui_getPortNumberForIPC());
++
++	char shmName[32] = "NfpShmName"; // Unique name for the shared memory
++	strcat(shmName, portNumString.c_str());
++	char semName[32] = "NfpSemName"; // Unique name for the semaphore
++	strcat(semName, portNumString.c_str());
++	size_t shmSize = sizeof(AmiiboInternal); // Size of the shared memory block
++
++	// Initialize IPC
++	ipc_mem_init(&nfpShm, shmName, shmSize);
++
++	// Attempt to open existing shared memory, or create new if that fails
++	if (ipc_mem_open_existing(&nfpShm) != 0) {
++		printf("NFP: Opening existing memory failed, maybe we're first?\n");
++		if (ipc_mem_create(&nfpShm) != 0) {
++			printf("NFP: Creating memory failed.\n");
++			//exit(EXIT_FAILURE); // Use appropriate error handling
++		}
++		// Initialize memory if we're the first
++		memset(nfpShm.data, 0, shmSize);
++		printf("NFP: Initialized new shared memory.\n");
++	} else {
++		printf("NFP: Attached to existing shared memory.\n");
++	}
++
++	// Initialize semaphore and create or open existing
++	ipc_sem_init(&nfpSem, semName);
++	if (ipc_sem_create(&nfpSem, 1) != 0) { // Using '1' to ensure it's unlocked initially
++		printf("NFP: Failed to create or open existing semaphore.\n");
++		//exit(EXIT_FAILURE); // Use appropriate error handling
++	}
++
++	// Wait loop
++	while (true) {
++		ipc_sem_decrement(&nfpSem); // Wait on semaphore
++		printf("received from nfp semaphore\n");
++
++		// Process the shared memory data
++		uint8_t* buffer = reinterpret_cast<uint8_t*>(ipc_mem_access(&nfpShm));
++
++		// signal activation event
++		//nnNfp_unloadAmiibo();
++		// without this it will take like 5 tries before it reads correctly
++		nnNfpLock();
++		// Try to lock without blocking. If nnNfpTryLock() returns false, the lock is not acquired.
++        //if (nnNfpTryLock()) {
++		// effectively unloadAmiibo
++		nfp_data.isMounted = false;
++		// also for whatever reason it loves to
++		memcpy(&nfp_data.amiiboInternal, reinterpret_cast<const AmiiboInternal*>(buffer), sizeof(AmiiboInternal));
++
++		nfp_data.hasActiveAmiibo = true;
++		// without this the emulator will crash when you send an amiibo before game is loaded
++		if (nfp_data.activateEvent) {
++			MEMPTR<coreinit::OSEvent> osEvent(nfp_data.activateEvent);
++			coreinit::OSSignalEvent(osEvent);
++		}
++
++		nfp_data.amiiboTouchTime = GetTickCount();
++		nnNfpUnlock();
++		printf("nfp injected, finished.\n");
++		/*} else {
++            // The lock wasn't acquired, maybe log this situation or handle accordingly
++            printf("Failed to acquire nfp lock, skipping this cycle.\n");
++        }*/
++
++	}
++}
++
+ namespace nn::nfp
+ {
+ 	uint32 GetErrorCode(uint32 result)
+@@ -1018,6 +1112,10 @@ namespace nn::nfp
+ 	{
+ 		nnNfp_load(); // legacy interface, update these to use cafeExportRegister / cafeExportRegisterFunc
+ 
++		// Spin up the thread that will handle the NFP logic
++		std::thread nfpThread(nfpHandler);
++		nfpThread.detach(); // Detach the thread or alternatively join at some point
++
+ 		cafeExportRegisterFunc(nn::nfp::GetErrorCode, "nn_nfp", "GetErrorCode__Q2_2nn3nfpFRCQ2_2nn6Result", LogType::Placeholder);
+ 
+ 		// NFC API 
+diff --git a/src/Cafe/OS/libs/nn_nfp/nn_nfp.h b/src/Cafe/OS/libs/nn_nfp/nn_nfp.h
+index e8a1c55..9f2f5f8 100644
+--- a/src/Cafe/OS/libs/nn_nfp/nn_nfp.h
++++ b/src/Cafe/OS/libs/nn_nfp/nn_nfp.h
+@@ -10,6 +10,8 @@ void nnNfp_update();
+ 
+ bool nnNfp_touchNfcTagFromFile(const fs::path& filePath, uint32* nfcError);
+ 
++void nnNfp_touchNfcTagFromBuffer(const uint8_t* buffer);
++
+ #define NFP_STATE_NONE			(0)
+ #define NFP_STATE_INIT			(1)
+ #define NFP_STATE_RW_SEARCH		(2)
+diff --git a/src/gui/MainWindow.cpp b/src/gui/MainWindow.cpp
+index 311ddfb..ca6658f 100644
+--- a/src/gui/MainWindow.cpp
++++ b/src/gui/MainWindow.cpp
+@@ -251,6 +251,201 @@ private:
+ 	MainWindow* m_window;
+ };
+ 
++#include <cstring>
++#include "Common/socket.h"
++
++class SimpleSocketServer {
++public:
++	SimpleSocketServer() {
++		// Initialize Winsock on Windows
++#if BOOST_OS_WINDOWS
++		WSADATA wsaData;
++		int result = WSAStartup(MAKEWORD(2,2), &wsaData);
++		if (result != NO_ERROR) {
++			std::cerr << "WSAStartup failed with error: " << result << std::endl;
++			exit(EXIT_FAILURE);
++		}
++#endif
++	}
++
++	~SimpleSocketServer() {
++		// Cleanup Winsock on Windows
++#if BOOST_OS_WINDOWS
++		WSACleanup();
++#endif
++	}
++
++	void Start(int port) {
++		std::thread(&SimpleSocketServer::Run, this, port).detach();
++	}
++
++private:
++	void Run(int port) {
++		SOCKET server_fd, new_socket;
++		struct sockaddr_in address;
++		int opt = 1;
++		socklen_t addrlen = sizeof(address);
++
++		// Creating socket file descriptor
++		if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
++			perror("socket failed");
++			exit(EXIT_FAILURE);
++		}
++
++		// Forcefully attaching socket to the port 8080
++		if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt))) {
++			perror("setsockopt");
++			exit(EXIT_FAILURE);
++		}
++
++		address.sin_family = AF_INET;
++		address.sin_addr.s_addr = INADDR_ANY;
++		address.sin_port = htons(port); // Port number
++
++		if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
++			perror("bind failed");
++			exit(EXIT_FAILURE);
++		}
++		if (listen(server_fd, 3) < 0) {
++			perror("listen");
++			exit(EXIT_FAILURE);
++		}
++
++		std::cout << "Server listening on port " << port << std::endl;
++
++		while (true) {
++			if ((new_socket = accept(server_fd, (struct sockaddr*)&address, &addrlen)) < 0) {
++				perror("accept");
++				exit(EXIT_FAILURE);
++			}
++
++			// Set timeout for this socket
++			struct timeval tv;
++			tv.tv_sec = 1; // Timeout after 1 second of inactivity
++			tv.tv_usec = 0;
++			setsockopt(new_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
++
++			std::thread(&SimpleSocketServer::HandleClient, this, new_socket).detach();
++		}
++	}
++	/*void HandleClient(SOCKET client_socket) {
++		std::cout << "New connection entered HandleClient thread." << std::endl;
++		char buffer[1024];
++		// Initialize buffer to zeros using aggregate initialization.
++		buffer[0] = '\0'; // Ensuring the buffer is treated as a C-style string.
++
++		int read_bytes = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
++		if (read_bytes <= 0) {
++			if (read_bytes == 0) {
++				std::cout << "Client disconnected" << std::endl;
++			} else {
++				perror("recv failed");
++			}
++			closesocket(client_socket);
++			return;
++		}
++
++		buffer[read_bytes] = '\0'; // Ensure null-termination.
++		std::cout << "Data from client is ready." << std::endl;
++
++		// Send 200 OK response with headers immediately for all requests
++		std::string responseHeaders = "HTTP/1.1 200 OK\r\n"
++									"Access-Control-Allow-Origin: *\r\n"
++									"Access-Control-Allow-Private-Network: true\r\n"
++									"Content-Type: text/plain\r\n"
++									"Connection: close";
++
++		const std::string headerEnd = "\r\n\r\n";
++		std::string request(buffer); // Convert buffer to a C++ string for easier processing.
++
++		auto bodyStartPos = request.find(headerEnd);
++		// Check if it's not a POST request or no request body
++		if (request.substr(0, 5) != "POST " || bodyStartPos == std::string::npos) {
++			if (request.substr(0, 8) == "SCREENS ") {
++				// screenshot, snap!
++				g_window_info.has_screenshot_request = true; // Async screenshot request.
++				std::cout << "Screenshot request detected, taking screenshot." << std::endl;
++			}
++			std::string wholeResp = responseHeaders + headerEnd;
++			send(client_socket, wholeResp.c_str(), wholeResp.length(), 0);
++			std::cout << "Sent response to non-POST." << std::endl;
++			closesocket(client_socket);
++			std::cout << "non-POST socket closed." << std::endl;
++			return;
++		}
++
++		bodyStartPos += headerEnd.length(); // Move to start of the body.
++
++		// Process the amiibo data from the POST body.
++		std::string respMsg = "NFC tag was loaded successfully.\n";
++		nnNfp_touchNfcTagFromBuffer(reinterpret_cast<uint8_t*>(&request[bodyStartPos]));
++
++		std::cout << respMsg;
++		std::string wholeResp = responseHeaders + "\r\nContent-Length: " + std::to_string(respMsg.length()) + headerEnd + respMsg;
++		send(client_socket, wholeResp.c_str(), wholeResp.length(), 0);
++
++		closesocket(client_socket);
++		std::cout << "Successful connection is now closed." << std::endl;
++	}*/
++
++	void HandleClient(SOCKET client_socket) {
++		//std::cout << "New connection entered HandleClient thread." << std::endl;
++		char buffer[1024];
++		memset(buffer, 0, sizeof(buffer));
++		int read_bytes = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
++
++		if (read_bytes <= 0) {
++			if (read_bytes == 0) {
++				std::cout << "Client disconnected" << std::endl;
++			} else {
++				perror("recv failed");
++			}
++			closesocket(client_socket);
++			return;
++		}
++		//std::cout << "Data from client is ready." << std::endl;
++
++		// Send 200 OK response with headers immediately for all requests
++		std::string responseHeaders = "HTTP/1.1 200 OK\r\n"
++										"Access-Control-Allow-Origin: *\r\n"
++										"Access-Control-Allow-Private-Network: true\r\n"
++										"Content-Type: text/plain\r\n"
++										"Connection: close";
++
++		const char* headerEnd = "\r\n\r\n";
++		char* bodyStart = strstr(buffer, headerEnd);
++		// Check if it's not a POST request or no request body
++		if (strncmp(buffer, "POST ", 5) != 0 || bodyStart == nullptr) {
++			if (strncmp(buffer, "SCREENS ", 8) == 0) {
++				// screenshot, snap!
++				g_window_info.has_screenshot_request = true; // async screenshot request
++				std::cout << "Screenshot request detected, taking screenshot." << std::endl;
++			}
++			std::string wholeResp = responseHeaders + headerEnd;
++			send(client_socket, wholeResp.c_str(), wholeResp.length(), 0);
++			closesocket(client_socket);
++			//std::cout << "non-POST socket closed." << std::endl;
++			return;
++		}
++
++
++		bodyStart += strlen(headerEnd); // Move pointer to start of the body
++
++		// Process the amiibo data from the POST body
++		std::string respMsg = "NFC tag was loaded successfully.\n";
++		nnNfp_touchNfcTagFromBuffer(reinterpret_cast<uint8_t*>(bodyStart));
++
++		std::cout << respMsg;
++		std::string wholeResp = responseHeaders + "\r\nContent-Length: " + std::to_string(respMsg.length()) + "\r\n\r\n" + respMsg;
++		send(client_socket, wholeResp.c_str(), wholeResp.length(), 0);
++
++		closesocket(client_socket);
++		//std::cout << "Successful connection is now closed." << std::endl;
++	}
++
++};
++
++
+ class wxAmiiboDropTarget : public wxFileDropTarget
+ {
+ public:
+@@ -284,6 +479,24 @@ private:
+ MainWindow::MainWindow()
+ 	: wxFrame(nullptr, -1, GetInitialWindowTitle(), wxDefaultPosition, wxSize(1280, 720), wxMINIMIZE_BOX | wxMAXIMIZE_BOX | wxSYSTEM_MENU | wxCAPTION | wxCLOSE_BOX | wxCLIP_CHILDREN | wxRESIZE_BORDER)
+ {
++
++
++SimpleSocketServer server;
++
++g_window_info.port = 12345;
++
++const char* portEnv = std::getenv("PORT");
++if (portEnv != nullptr) {
++	g_window_info.port = std::atoi(portEnv);
++	if (g_window_info.port <= 0) {
++		std::cerr << "Invalid port number.\n";
++	}
++}
++
++server.Start(g_window_info.port);
++
++
++
+ 	gui_initHandleContextFromWxWidgetsWindow(g_window_info.window_main, this);
+ 	g_mainFrame = this;
+ 	CafeSystem::SetImplementation(this);
+diff --git a/src/gui/guiWrapper.cpp b/src/gui/guiWrapper.cpp
+index ce043ba..56a9076 100644
+--- a/src/gui/guiWrapper.cpp
++++ b/src/gui/guiWrapper.cpp
+@@ -191,6 +191,10 @@ bool gui_isPadWindowOpen()
+ 	return g_window_info.pad_open;
+ }
+ 
++int gui_getPortNumberForIPC() {
++	return g_window_info.port;
++}
++
+ #if BOOST_OS_LINUX
+ std::string gui_gtkRawKeyCodeToString(uint32 keyCode)
+ {
+diff --git a/src/gui/guiWrapper.h b/src/gui/guiWrapper.h
+index ec94c1a..012c815 100644
+--- a/src/gui/guiWrapper.h
++++ b/src/gui/guiWrapper.h
+@@ -68,6 +68,8 @@ struct WindowInfo
+ 	std::atomic_int32_t phys_width, phys_height; 	// client size of main window in physical pixels
+ 	std::atomic<double> dpi_scale;
+ 
++	int port;
++
+ 	std::atomic_bool pad_open; // if separate pad view is open
+ 	std::atomic_int32_t pad_width, pad_height; 	// client size of pad window
+ 	std::atomic_int32_t phys_pad_width, phys_pad_height; 	// client size of pad window in physical pixels
+@@ -132,6 +134,7 @@ void gui_getPadWindowPhysSize(int& w, int& h);
+ double gui_getWindowDPIScale();
+ double gui_getPadDPIScale();
+ bool gui_isPadWindowOpen();
++int gui_getPortNumberForIPC();
+ bool gui_isKeyDown(uint32 key);
+ bool gui_isKeyDown(PlatformKeyCodes key);
+ 
