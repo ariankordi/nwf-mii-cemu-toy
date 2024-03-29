@@ -234,6 +234,7 @@ window.dynamicGetInfoFunction = function(result, data) {
 
     // extract parameters out of buffer ( has to be padded out ...)
     var params = byteArrayToRenderParams(buffer);
+    logMessage(JSON.stringify(params));
 
     // flag if resolution or scale are invalid
     // minimum 16 resolution
@@ -266,6 +267,11 @@ window.dynamicGetInfoFunction = function(result, data) {
 
     logMessage('Preparing to render: ' + data.mii.name);
 
+    // set tex resoluton to 2x when scale is 1
+    var texResolution = (params.Scale === 1 ? (params.Resolution * 2) : params.Resolution);
+    // set texResolution from TexResOverrideQMul (set by HorizontalChunk)
+    params.TexResOverrideQMul && (texResolution = params.TexResOverrideQMul * 4);
+
     data.mii.createIcon(function(img) {
         /*var ul = document.getElementById("log");
         var li = document.createElement("li");
@@ -288,8 +294,8 @@ window.dynamicGetInfoFunction = function(result, data) {
         show_body: (params.Mode ? false : true),
         mipmap: true,
         size: params.Resolution,
-        tex_resolution: params.TexResOverrideQMul ? (params.TexResOverrideQMul * 4)
-                    : (params.Resolution > 1024 ? 1024 : params.Resolution),
+        // tex resolution can only be 1024 max
+        tex_resolution: (texResolution > 1024 ? 1024 : texResolution),
         background_color: bgColor,
         expression: expressionValue,
     });

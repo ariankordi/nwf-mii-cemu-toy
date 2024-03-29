@@ -8,6 +8,7 @@ package main
 */
 import "C"
 import (
+	// TODO: you can probably run something to organize all of these at some point
 	"bytes"
 	"encoding/binary"
 	"errors"
@@ -16,11 +17,14 @@ import (
 	"image/color"
 	"strings"
 
-	//"image/draw"
 	"image/png"
 	"log"
 
-	//"os"
+	"golang.org/x/image/draw"
+
+	// to cleanup on exit
+	"os"
+	"os/signal"
 	//"os/exec"
 	"sync"
 	"time"
@@ -28,17 +32,23 @@ import (
 	// to make a direct pointer to shm data
 	"unsafe"
 
+	"runtime"
+	"syscall"
+
 	"encoding/base64"
+	"flag"
 	"hash/crc32"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net"
 	"net/http"
 	"strconv"
-	"flag"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/sigurn/crc16"
+
+	// for suspending and resuming the process
+	"github.com/shirou/gopsutil/v3/process"
 	//"slices" // for slices.Delete which did not even work
 )
 
@@ -51,7 +61,13 @@ type renderRequest struct {
 	parameters RenderParameters
 	//channel    chan renderResponse
 	timestamp time.Time // Timestamp when the request was added
-	//done      chan struct{}
+	// TODO: should these be receive-only?
+	// this will be sent back to the queue
+	ready chan struct{}
+	// the queue will use this to tell the request to go ahead
+	done chan struct{}
+	// if this is received from then cemu is not running
+	connErrChan chan struct{}
 }
 
 var (
@@ -60,7 +76,9 @@ var (
 	//markers = make(map[uint32]*RenderParameters)
 	renderRequests []*renderRequest
 
-	//renderRequestQueue = make(chan *renderRequest, 1) // Queue size set to 1 for simplicity
+	renderRequestQueue = make(chan *renderRequest, 1) // Queue size set to 1 for simplicity
+	// TODO: this is actually a buffer, try removing this buffer at some point
+	// bc it is probably not needed and adds more unintended behavior
 
 	// used to notify screenshot signaling thread of new request
 	// blank channel, only used to notify that there is something new
@@ -71,20 +89,24 @@ var (
 	responseChannel = make(chan renderResponse)
 )
 
-/*
 func processQueue() {
 	// doesn't this only go through one at a time
 	for request := range renderRequestQueue {
 		log.Println("next in queue:", request)
-		markersMutex.Lock()
-		renderRequests = append(renderRequests, request)
-		markersMutex.Unlock()
+		select {
+		case request.ready <- struct{}{}:
+		default:
+		}
 		// wait until to receive once
-		<-request.done
+		select {
+		case <-request.done:
+			// schedule same timeout in case request routine hangs?
+		case <-time.After(timeout):
+			log.Println("queue timed out on request, moving along...")
+		}
 		log.Println("request finished, moving along in queue")
 	}
 }
-*/
 
 func removeExpiredRequestsThread() {
 	ticker := time.NewTicker(2 * time.Second)
@@ -116,6 +138,12 @@ const (
 )
 
 func processImage(buf []byte) {
+	// always signal processing finished at end
+	defer func() {
+		// probably doesn't need to be non-blocking
+		processFinishChannel <- struct{}{}
+	}()
+
 	// NOTE: This may take a while, it may be worth it to just copy the marker instead of locking it
 	// go through each coordinate plane
 
@@ -180,7 +208,7 @@ func processImage(buf []byte) {
 			markersMutex.RUnlock() // Unlock the mutex after iterating
 		}
 	}
-	processFinishChannel <- struct{}{}
+	//processFinishChannel <- struct{}{}
 	log.Println("Processing complete.")
 }
 
@@ -212,12 +240,8 @@ func extractMarker(buf []byte, idx, width int) (RenderParameters, bool) {
 	return params, true
 }
 
-const (
-	// CHROMA KEY COLOR
-	targetR = 0
-	targetG = 255
-	targetB = 0
-)
+// CHROMA KEY COLOR
+var targetKey = color.NRGBA{R: 0, G: 255, B: 0, A: 255}
 
 // TODO: probably remove RenderParameters when you get this to send back
 func extractAndSaveSquare(buf []byte, x, y, resolution, width int, request *renderRequest) {
@@ -228,34 +252,41 @@ func extractAndSaveSquare(buf []byte, x, y, resolution, width int, request *rend
 	square := image.NewNRGBA(image.Rect(0, 0, resolution, resolution))
 
 	// Pre-define target green (key) color and transparent color
-	targetKey := color.NRGBA{R: targetR, G: targetG, B: targetB, A: 255}
 	transparent := color.NRGBA{R: 0, G: 0, B: 0, A: 0}
 
 	// Copy buffer to square image
 	for sy := 0; sy < resolution; sy++ {
 		for sx := 0; sx < resolution; sx++ {
+			// When sy is 0, we use sy=1 for the source to duplicate the second row into the first row of the target
+			sourceY := sy
+			if sy == 0 {
+				sourceY = 1
+			}
+
 			// Calculate index for source pixel
-			idx := startIdx + (sy*width+sx)*4
-			//idx := ((y+sy)*width + (x+sx)) * 4
+			idx := startIdx + (sourceY*width+sx)*4
 			if idx >= len(buf)-4 { // Ensure we don't go out of bounds
 				continue
 			}
 
 			// skip first row of pixels, for removing the marker
-			if sy == 0 { //&& sx < 20 {
+			// leaves first row as transparent which is undesirable for color
+			/*if sy == 0 { //&& sx < 20 {
 				continue
-			}
+			}*/
+
 			// Extract RGBA values
 			r, g, b, a := buf[idx], buf[idx+1], buf[idx+2], buf[idx+3]
 			// Set pixel in square
 			//square.Set(sx, sy, color.RGBA{R: r, G: g, B: b, A: a})
+
 			// Process chroma key to set pixel or transparency
 			pixel := color.NRGBA{R: r, G: g, B: b, A: a}
 			if pixel == targetKey {
-				square.Set(sx, sy, transparent)
-			} else {
-				square.Set(sx, sy, pixel)
+				// this pixel is now transparent if it is key
+				pixel = transparent
 			}
+			square.Set(sx, sy, pixel)
 		}
 	}
 
@@ -304,8 +335,161 @@ var (
 
 	shm C.ipc_sharedmemory
 	sem C.ipc_sharedsemaphore
-	// for nfp is lkower
+	// for nfp is lower
 )
+
+const (
+	inactivityDuration = 20 * time.Second
+	// how often to check for inactivity
+	inactivityInterval  = 10 * time.Second
+	maintenanceInterval = 5 * time.Minute
+	maintenanceDuration = 5 * time.Second
+	processName         = "Cemu_"
+)
+
+var (
+	lastActivityTime = time.Now()
+	activityNotifier = make(chan struct{})
+	// when this is true it will no longer:
+	// attempt to keep suspending and spam the console
+	// and will let you manually unsuspend by hand instead of fighting with you
+	processSuspended = true
+	// defaults to true so that it will unsuspend on startup (good)
+)
+
+// findProcessesByName searches for processes with a command line containing the target string.
+func findProcessesByName(target string) ([]*process.Process, error) {
+	var procs []*process.Process
+	allProcs, err := process.Processes()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, p := range allProcs {
+		cmdline, err := p.Cmdline()
+		if err == nil && strings.Contains(cmdline, target) {
+			procs = append(procs, p)
+		}
+	}
+	return procs, nil
+}
+
+// manageProcessState changes the state of processes with the target name.
+func manageProcessState(target string, suspend bool) {
+	// If the desired state matches the current state, no action is needed.
+	if processSuspended == suspend {
+		return
+	}
+	procs, err := findProcessesByName(target)
+	if err != nil {
+		log.Println("Error finding processes:", err)
+		return
+	}
+
+	if len(procs) == 0 {
+		log.Println("No", target, "processes found.")
+		return
+	}
+
+	for _, p := range procs {
+		var err error
+		if suspend {
+			err = p.Suspend()
+			if err == nil {
+				log.Println("Suspended process:", p.Pid)
+			}
+		} else {
+			err = p.Resume()
+			if err == nil {
+				log.Println("Resumed process:", p.Pid)
+			}
+		}
+
+		if err != nil {
+			log.Println("Error changing process state:", err)
+		} else {
+			// Update the tracked state to reflect the successful action.
+			processSuspended = suspend
+		}
+	}
+}
+
+// monitorActivityAndManageProcess monitors process activity and adjusts process states as needed,
+// introducing maintenance windows and ensuring responsiveness to activity.
+func monitorActivityAndManageProcess() {
+	// Ensure that any initially suspended processes are resumed when starting.
+	manageProcessState(processName, false)
+
+	ticker := time.NewTicker(inactivityInterval)
+	defer ticker.Stop()
+
+	maintenanceTimer := time.NewTimer(maintenanceInterval)
+	// for whatever reason this just hangs forever and I'm not sure why this was added
+	if !maintenanceTimer.Stop() {
+		select {
+		case <-maintenanceTimer.C: // Drain the timer if it was stopped successfully.
+		default:
+		}
+	}
+
+	for {
+		select {
+		case <-activityNotifier:
+			// Activity detected: reset the last activity time and ensure the target process is active.
+			lastActivityTime = time.Now()
+			manageProcessState(processName, false)
+			log.Println("Activity detected; process resumed if it was suspended.")
+
+			// Reset the maintenance timer whenever there's new activity.
+			if !maintenanceTimer.Stop() {
+				select {
+				case <-maintenanceTimer.C:
+				default:
+				}
+			}
+			maintenanceTimer.Reset(maintenanceInterval)
+
+		case <-ticker.C:
+			// Regular check: Suspend the process if it has been inactive for the specified duration.
+			if time.Since(lastActivityTime) > inactivityDuration {
+				manageProcessState(processName, true)
+				//log.Println("Process suspended due to inactivity.")
+			}
+
+		case <-maintenanceTimer.C:
+			// Maintenance window: temporarily resume the process for maintenance activities.
+			manageProcessState(processName, false)
+			log.Println("Maintenance window: Process resumed for maintenance.")
+
+			// Wait for the maintenance duration or an activity signal.
+			select {
+			case <-time.After(maintenanceDuration):
+				// If no activity, re-suspend the process after maintenance.
+				if time.Since(lastActivityTime) >= maintenanceDuration {
+					manageProcessState(processName, true)
+					log.Println("Maintenance completed; process re-suspended.")
+				}
+			case <-activityNotifier:
+				// If there's activity during maintenance, reset the last activity time
+				// and keep the process running to handle the activity.
+				lastActivityTime = time.Now()
+				log.Println("Activity detected during maintenance; keeping process running.")
+			}
+
+			// Prepare for the next maintenance window.
+			maintenanceTimer.Reset(maintenanceInterval)
+		}
+	}
+}
+
+// notifyActivity is called to signal activity. It's non-blocking.
+func notifyActivity() {
+	select {
+	case activityNotifier <- struct{}{}:
+	default:
+		// If the channel is already full, there's no need to block or add another notification.
+	}
+}
 
 func processImageOnSemNotifyThread() {
 	// Initialize shared memory and semaphore
@@ -329,8 +513,10 @@ func processImageOnSemNotifyThread() {
 	}
 	defer C.ipc_mem_close(&shm)
 
+	// put a warning if the thread exits which, it should not
 	for {
 		// Wait on semaphore
+		// TODO: will ipc_sem_try_decrement work better??? maybe you reopen the sem when that fails? try it?
 		C.ipc_sem_decrement(&sem)
 		log.Println("screenshot recv thread: screenshot data is ready, processing is beginning")
 
@@ -349,6 +535,9 @@ func processImageOnSemNotifyThread() {
 // wait to make sure this many frames has passed since last run
 //const minMsWaitDuration = 15 * 16.6 * time.Millisecond
 
+// delay this function will wait when there is a connection error, before retrying
+const retryDelay = 2 * time.Second
+
 func watchRequestsAndSignalScreenshot() {
 	for {
 		if len(renderRequests) < 1 {
@@ -359,22 +548,55 @@ func watchRequestsAndSignalScreenshot() {
 		}
 
 		// below here there is a new request...
+		// TODO: i wanted to move this to a semaphore but, should it be?
 		connection, err := net.Dial("tcp", cemuSocketHost)
 		if err != nil {
 			log.Println("error connecting to cemu host to submit screenshot request:", err)
-		} else {
-			// NOTE: handling errors on connect() but not write()
-			// hacky ass screenshot request
-
-			connection.Write([]byte("SCREENS "))
-			log.Println("sent screenshot request...")
-			// ngl we should be done so we can just close now
-			defer connection.Close()
+			// signal that cemu is down...
+			if errors.Is(err, syscall.ECONNREFUSED) ||
+				// WSAECONNREFUSED on windows
+				errors.Is(err, syscall.Errno(10061)) {
+				//log.Println("COULD NOT CONNECT TO CEMU!!!")
+				log.Println("OH NO!, screenshot request yielded connection refused, cemu is probably not running. propagating to requests")
+				markersMutex.RLock()
+				for _, req := range renderRequests {
+					select {
+					case req.connErrChan <- struct{}{}:
+						// Error sent successfully
+					default:
+						// This prevents blocking if the error channel is not being listened to,
+						// but consider if this is the behavior you want, or if logging is needed
+					}
+				}
+				markersMutex.RUnlock()
+			}
+			// wait before going back into the loop
+			time.Sleep(retryDelay)
+			log.Println("finished sleeping after failure, retrying screenshot signaling thread")
+			continue
 		}
+		// close the connection but only if there is no error
+		defer connection.Close()
 
-		// TODO: this shouldn't be a static wait we should wait on our image processing
-		// but we are doing it anyway
-		<-processFinishChannel
+		// hacky ass screenshot request http request, thing???
+		if _, err = connection.Write([]byte("SCREENS ")); err != nil {
+			log.Println("screenshot request write error?:", err)
+			// you can probably continue without delay here
+			// try again without waiting for image to signal, potentially triggering another shot
+			continue
+		}
+		log.Println("sent screenshot request...")
+
+		select {
+		// use a select to enable a timeout for this so it does not hang FOREVERER
+		case <-processFinishChannel:
+			// just continue...
+		case <-time.After(timeout):
+			// 7 seconds between screenshot and processing is probably ample time
+			log.Println("screenshot signaling thread timed out on image processing...")
+		}
+		// this will basically just not loop over until it sees that processImage was called
+		// that will only happen when the program responds to the semaphore and takes a screenshot
 		//time.Sleep(minMsWaitDuration)
 	}
 }
@@ -428,6 +650,7 @@ func nfpSubmitSemThread() {
 
 		// Signal the semaphore to notify the consumer.
 		C.ipc_sem_increment(&nfpSem)
+		// TODO: THIS WILL HANG IF PROCESS ON THE OTHER SIDE DOES NOT DECREMENT. ADD TIMEOUT???
 	}
 }
 
@@ -436,6 +659,13 @@ func main() {
 	flag.StringVar(&port, "port", ":8080", "http port to listen to, OR https if you specify cert and key")
 	flag.StringVar(&certFile, "cert", "", "TLS certificate file")
 	flag.StringVar(&keyFile, "key", "", "TLS key file")
+	// make default false on windows because it does not work currently
+	defaultEnableSuspending := true
+	if runtime.GOOS == "windows" {
+		defaultEnableSuspending = false
+	}
+	var enableSuspending bool
+	flag.BoolVar(&enableSuspending, "enable-suspending", defaultEnableSuspending, "Enable suspending the Cemu process, currently broken on Windows but be my guest")
 	flag.Parse()
 
 	http.HandleFunc("/render.png", miiPostHandler)
@@ -443,7 +673,23 @@ func main() {
 	go removeExpiredRequestsThread()
 	go processImageOnSemNotifyThread()
 	go watchRequestsAndSignalScreenshot()
-	//go processQueue()
+	go processQueue()
+	if enableSuspending {
+		log.Println("suspending enabled, we will periodically suspend and resume cemu, notice that it may look crashed because of this")
+		go monitorActivityAndManageProcess()
+		if runtime.GOOS == "windows" {
+			// set handler to unsuspend when finished on windows
+			c := make(chan os.Signal, 2)
+			signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+			go func() {
+				caught := <-c
+				log.Println("caught", caught)
+				manageProcessState(processName, false)
+				fmt.Println("bye bye~!!!!!")
+				os.Exit(0)
+			}()
+		}
+	}
 	log.Println("now listening")
 	var err error
 	if certFile != "" && keyFile != "" {
@@ -458,8 +704,8 @@ func main() {
 
 // make http client that does not do keep alives
 // the cemu server does not support any keepalives and will lock up if you try
-// TODO: THIS SERVER SHOULD BE A SEMAPHORE + SHM!
-// NOTE: you are moving AMIIBO REQUESTS and SCREENSHOT REQUESTS to those!
+// TODO: THIS SERVER SHOULD BE A SEMAPHORE!
+// NOTE: you are moving SCREENSHOT REQUESTS to those!
 var client = &http.Client{
 	Transport: &http.Transport{
 		DisableKeepAlives: true,
@@ -525,13 +771,10 @@ var expressionKeyMap = map[string]uint8{
 // requests are timing out after this amount of time
 const timeout = 7 * time.Second
 
-var literalOneRequestOnlyMutexFuckingHack sync.Mutex
-
 func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 	// NOTE: permissive config here is somewhat temporary
 	header := w.Header()
 	header.Set("Access-Control-Allow-Private-Network", "true")
-	//header.Set("Access-Control-Allow-Origin", "https://savemii.rixy.eu.org")
 	header.Set("Access-Control-Allow-Origin", "*")
 	header.Set("Access-Control-Allow-Methods", "POST")
 	header.Set("Access-Control-Allow-Headers", "Content-Type")
@@ -571,7 +814,7 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 		// read request body, instead of query param
 		// NOTE: LIMIT ON REQUEST BODY!!!!!!
 		reader := http.MaxBytesReader(w, r.Body, 2*1024*1024) // 2 KiB
-		miiData, err = ioutil.ReadAll(reader)
+		miiData, err = io.ReadAll(reader)
 		if err != nil {
 			http.Error(w, "io.ReadAll error on request body: "+err.Error(), http.StatusBadRequest)
 			return
@@ -612,10 +855,6 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	literalOneRequestOnlyMutexFuckingHack.Lock()
-	defer literalOneRequestOnlyMutexFuckingHack.Unlock()
-	// process queue later
-
 	// Extract additional parameters from query or form
 	expressionStr := r.URL.Query().Get("expression")
 	// for comparing in the map
@@ -634,16 +873,34 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "specify a width", http.StatusBadRequest)
 		return
 	}
-	// TODO ON SCALE: THIS IS CURRENTLY SCALED BY CEMU RIGHT NOW
-	// NO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	// TODO: WE HAVE TO SCALE ALL BUT 3x, 5x, 7x,
+	// will be scaled by either js or us tbd
 	scale, _ := strconv.Atoi(r.URL.Query().Get("scale"))
+	if scale < 1 {
+		// default scale of 1, because scale of 0 will not work
+		//scale = 1
+		// actually default scale is now 2!!!!!!
+		scale = 2
+	}
 	resolution := width * scale
 	if resolution > maxResolution {
 		http.Error(w,
 			fmt.Sprintf("maximum resolution is %d but yours is %d\n", maxResolution, resolution),
 			http.StatusBadRequest)
+		return
 	}
+
+	// all of these scales produce no greenspill in the renderer
+	// ... so they can/will be sent inside of render parameters.
+	scaleValues := []int{3, 5, 7}
+	// scaleInRequest = do not scale ourselves
+	var scaleInRequest bool
+	for _, num := range scaleValues {
+		if num == scale {
+			scaleInRequest = true
+			break
+		}
+	}
+
 	var mode uint8
 	modeStr := r.URL.Query().Get("type")
 	switch modeStr {
@@ -653,6 +910,7 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 	case "face_only":
 		mode = 1
 	}
+	// default mode or any other value stays at 0
 	/*backgroundR, _ := strconv.Atoi(r.URL.Query().Get("backgroundR"))
 	backgroundG, _ := strconv.Atoi(r.URL.Query().Get("backgroundG"))
 	backgroundB, _ := strconv.Atoi(r.URL.Query().Get("backgroundB"))
@@ -660,9 +918,9 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 	// read bgcolor
 	// if there is # then read as hex
 	// if there is no # then handle studio RGBA format
-	var bgColor color.NRGBA
+	//var bgColor color.NRGBA
 	// set as default to initialize color in case func does not return
-	bgColor.G = targetG
+	bgColor := targetKey
 	bgColorParam := r.URL.Query().Get("bgColor")
 	// only process bgColor if it is longer than 0
 	if len(bgColorParam) > 0 {
@@ -673,36 +931,52 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	// this is what the color will pop out as when we see it, which...
+	bgColorFromOutputForErrorDetection := bgColor
+	if bgColor == targetKey {
+		// will be transparent if it is the target key
+		bgColorFromOutputForErrorDetection = color.NRGBA{R: 0, G: 0, B: 0, A: 0}
+	}
 
 	// TODO: NOT TO BE SPECIFIED BY USER, PRETTY MUCH ONLY HERE AS A PLACEHOLDER
-	horizontalTotal, _ := strconv.Atoi(r.URL.Query().Get("horizontaltotal"))
-	horizontalChunk, _ := strconv.Atoi(r.URL.Query().Get("horizontalchunk"))
+	/*
+		horizontalTotal, _ := strconv.Atoi(r.URL.Query().Get("horizontaltotal"))
+		horizontalChunk, _ := strconv.Atoi(r.URL.Query().Get("horizontalchunk"))
+	*/
 	// NOTE: you may have been able to get away with parsing uint but that is 64
 
 	// Compute CRC for Mii data
 	miiCRC := crc32.ChecksumIEEE(miiData)
 	//_ = crc32.ChecksumIEEE(miiData)
 
+	// ifN NOT scale in request we are scaling ourselves
+	// in which case the scale should be 1
+	scaleToRender := scale
+	if !scaleInRequest {
+		scaleToRender = 1
+	}
+
 	// Setup RenderParameters with received or default values
 	params := RenderParameters{
 		//MiiDataHash:     0xCAFEBEEF,//miiCRC,
-		MiiDataHash:     miiCRC,
-		Resolution:      uint16(resolution),
-		Mode:            uint8(mode),
-		Expression:      uint8(expression),
-		BackgroundR:     bgColor.R,
-		BackgroundG:     bgColor.G,
-		BackgroundB:     bgColor.B,
-		Scale:           uint8(scale),
-		HorizontalTotal: uint8(horizontalTotal),
-		HorizontalChunk: uint8(horizontalChunk),
+		MiiDataHash: miiCRC,
+		Resolution:  uint16(resolution),
+		Mode:        uint8(mode),
+		Expression:  uint8(expression),
+		BackgroundR: bgColor.R,
+		BackgroundG: bgColor.G,
+		BackgroundB: bgColor.B,
+		Scale:       uint8(scaleToRender),
+		/*HorizontalTotal: horizontalTotal,
+		HorizontalChunk: horizontalChunk,
+		*/
 	}
 
 	// TODO REOPTIMIZE WHERE THIS IS BECAUSE WE DO BINARY ENCODING AGAIN!!!!!....
 	// TODO:  ALSO JUMPING BACK HERE, BEFORE THE NEW IMAGE IS READY, MAY SAY "OH IT IS STILL BLANK LEMME RESUBMIT"
-resendRequest:
+	//resendRequest:
 	// check if this request is already in renderRequests
-	markersMutex.Lock() // Lock the mutex before modifying or reading the markers slice
+	//markersMutex.Lock() // Lock the mutex before modifying or reading the markers slice
 	var request renderRequest
 	// TODO: BUT REQUEST IS RE-ENCODED AND RESENT EVEN IF IT ALREADY EXISTS
 	/*var alreadyExists bool
@@ -729,22 +1003,41 @@ resendRequest:
 	*/request = renderRequest{
 		parameters: params,
 		//channel: make(chan renderResponse),
-		timestamp: time.Now(),
-		//done:      make(chan struct{}),
+		timestamp:   time.Now(),
+		ready:       make(chan struct{}),
+		done:        make(chan struct{}),
+		connErrChan: make(chan struct{}),
 	}
-	log.Println("sending this struct: ", params)
-	renderRequests = append(renderRequests, &request)
+	//log.Println("sending this struct: ", params)
+	/*renderRequests = append(renderRequests, &request)
 	markersMutex.Unlock()
-
+	*/
 
 	//}
 
 	// here you can wait for permission to send request
-	/*renderRequestQueue <- &request
+	renderRequestQueue <- &request
 	log.Println("added to queue: ", request)
+	// receive from ready channel
+	<-request.ready
+	log.Println("continuing with request: ", request)
 	// when this thing returns
-	defer func() { request.done <- struct{}{} }()
-*/
+	defer func() {
+		log.Println("signaling request is done")
+		select {
+		case request.done <- struct{}{}:
+		default:
+		}
+	}()
+
+resendRequest:
+	// add to render requests here
+	markersMutex.Lock()
+	renderRequests = append(renderRequests, &request)
+	markersMutex.Unlock()
+
+	// notify cemu state thread to unsuspend cemu if necessary
+	notifyActivity()
 	//resendRequest: // not here
 	// Serialize the params to bytes as before
 	encodedParams := &bytes.Buffer{}
@@ -765,11 +1058,25 @@ resendRequest:
 	copy(buf[0x38:], encodedParams.Bytes())
 
 	// TODO: you probably want to resend here but it means only the originating thread will resend the request
-	// submit New!
-	nfpChannel <- buf
+	// non blocking send in case nfp channel is hung up??? bc semaphore is not answering
+	select {
+	case nfpChannel <- buf:
+	default:
+	}
 
+	log.Println("request submitted to nfp channel...")
 	// notify the screenshot channel to detect and start watching for requests
-	newRequestChannel <- struct{}{}
+	select {
+	// also a non-blocking send...
+	case newRequestChannel <- struct{}{}:
+	default:
+	}
+
+	// NOTE: there is a phenomenon in which...
+	// the screenshot channel will read the screen,
+	// and if the exact request we tried to send is already there,
+	// it will actually return it back and STILL send the new request
+	// which is potentially wasteful, i don't see it as that big of an issue as of now
 
 	// now wait for one of two channel receives
 	// i tried using a for loop instead but it broke my mind
@@ -781,6 +1088,7 @@ restartSelect:
 			goto restartSelect
 		}
 		if !cmp.Equal(renderedResponse.parameters, params) {
+			// add extra space so it looks less wrong??
 			fmt.Println("", renderedResponse.parameters, "\n(response) vs (request)\n", params)
 			log.Println("found response of same hash but not matching params, skipping")
 			goto restartSelect
@@ -795,21 +1103,48 @@ restartSelect:
 		centerPixel := renderedResponse.pixels.At(sizeMiddle, sizeMiddle).(color.NRGBA)
 		// Check if the center pixel is transparent
 		// CHECK BLANK IMAGE AND THEN JUMP BACK UHHHHH
-		if centerPixel.A == 0 {
-			// TODO:!!! CHECK IF IT IS BACKGROUND COLOR. IF THAT IS SPECIFIED. OK?
+		// if the middle pixel is either the background color OR target transparency...
+		if centerPixel == bgColorFromOutputForErrorDetection {
+			//if centerPixel.A == 0 {
 			log.Println("Warning: The pixel in the very center of the image is blank (transparent)!!!, jumping back and resending.")
 			goto resendRequest
 		}
 		header.Set("Content-Type", "image/png")
-		// TODO: set Content-Disposition here at some point
-		// TODO: potential format liiike... date-miiName-resolution-expression
-		header.Set("Content-Disposition", "inline; filename=\"child porn.png\"")
-		if err := png.Encode(w, &renderedResponse.pixels); err != nil {
+		//currentTimeStamp := time.Now().Format("2006-01-02-15_04_05")
+		/*fileName := fmt.Sprintf("%X-%d-%s.png", currentTimeStamp,
+		params.MiiDataHash, resolution, expressionStr)*/
+		// TODO: re-evaluate Content-Disposition format liiike... date-miiName-resolution-expression but then again parsing mii name will potentially introduce unicode trouble ugh
+		// you could maaaaybeee use base32 here to "simulate" mii hash string but ehhHHH
+		// TODO: expressionStr, modeStr are CONTROLLED BY USER!!!!!
+		fileName := fmt.Sprintf("%X_%s_%s_%d.png", params.MiiDataHash,
+			expressionStr, modeStr, width)
+		header.Set("Content-Disposition", "inline; filename=\""+fileName+"\"")
+
+		// HERE WE HAVE TO SCALE IF SCALE VAL IS PRIME!!!
+		pixels := &renderedResponse.pixels
+		// this shouldn't be 1 when in request?
+		if !scaleInRequest {
+			scaledImage := image.NewNRGBA(image.Rect(0, 0, width, width))
+			// Resize:
+			draw.ApproxBiLinear.Scale(scaledImage, scaledImage.Rect,
+				&renderedResponse.pixels, renderedResponse.pixels.Bounds(), draw.Over, nil)
+			pixels = scaledImage
+		}
+
+		if err := png.Encode(w, pixels); err != nil {
 			//http.Error(w, "Failed to encode image: "+err.Error(), http.StatusInternalServerError)
 			log.Println("png.Encode error:", err)
 		}
+		// TODO: IDK IF THESE RETURNS ARE EVEN NECCESARY I JUST ADDED THEM BC THIS WAS HANGING??
+		return
+	// oh no, cemu is not running
+	case <-request.connErrChan:
+		http.Error(w,
+			"OH NO!!! cemu doesn't appear to be running...\nreceived connection refused ☹️",
+			http.StatusBadGateway)
+		return
 	case <-time.After(timeout):
-		log.Printf("timeout after %i seconds\n", timeout)
+		log.Println(params, ": timeout after", timeout, "seconds")
 		// remove this request
 		markersMutex.RLock()
 		for i, theirRequest := range renderRequests {
@@ -832,16 +1167,17 @@ restartSelect:
 		}
 		chosenString := choices[rand.Intn(len(choices))]
 		http.Error(w, chosenString, http.StatusGatewayTimeout)
+		return
 	}
 
 }
 
 // adapted from https://stackoverflow.com/a/54200713
 var errInvalidFormat = errors.New("invalid format")
-
 var errAlphaZero = errors.New("alpha component is zero")
 
 func ParseHexColorFast(s string) (c color.NRGBA, err error) {
+	// initialize A to full opacity
 	c.A = 0xff
 
 	hexToByte := func(b byte) byte {
@@ -863,6 +1199,7 @@ func ParseHexColorFast(s string) (c color.NRGBA, err error) {
 			c.R = hexToByte(s[1])<<4 + hexToByte(s[2])
 			c.G = hexToByte(s[3])<<4 + hexToByte(s[4])
 			c.B = hexToByte(s[5])<<4 + hexToByte(s[6])
+		// TODO: is this format really necessary to have?
 		case 4: // #RGB
 			c.R = hexToByte(s[1]) * 17
 			c.G = hexToByte(s[2]) * 17

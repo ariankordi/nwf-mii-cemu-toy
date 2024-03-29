@@ -4,7 +4,11 @@
 # binaries
 processor-go/processor-server
 processor-go/processor-server.exe
+# dlv debug
 __debug_*
+# old versions
+processor-go/*-2024-03*
 
 # swap
 *.kate-swp
+.DS_Store
