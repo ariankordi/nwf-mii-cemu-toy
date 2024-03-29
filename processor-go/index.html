@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Mii Renderer (REAL)</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+
+<body>
+    <h1>Mii Renderer (REAL)</h1>
+    <!-- GET is default for forms anyway but barely anyone remembers that
+    so this is being specified manually too for readability purposes yes. -->
+    <form action="render.png" method="GET">
+        <label for="input_type">Mii input type:</label>
+        <!-- only useful for backend when you are not using js bc js will disable the inputs -->
+        <select id="input_type" name="input_type">
+            <option value="nnid" selected>Nintendo Network ID</option>
+            <!-- default -->
+            <option value="data">
+                Mii data (Base64 or STUDIO CODE TBD)
+            </option>
+            <option value="file">
+                Wii U FFSD File (TBD NEED POST REQUEST)
+            </option>
+            <option value="qrcode">Scan QR code (TBD)</option>
+            <option value="amiibo">Amiibo data (TBD)</option>
+        </select>
+        <br>
+        <div id="file-group">
+            <input type="file" name="file" id="file"><br>
+            <label class="small" for="file">(96 byte FFLStoreData Mii binary format)</label>
+            <div>
+                (TODO TODO you need to VERIFY THE LENGTH, and the CRC16 of
+                the file. AND the base64. AND convert to POST. THIS SUCKS)
+            </div>
+        </div>
+        <div id="qrcode-group">
+            <button type="button">From camera</button>
+            <button type="button">Select file or photo</button>
+            <p style="color: red">
+                THIS IS NOT IMPLEMENTED AND WILL NOT WORK. IT WILL NOT DO
+                ANYTHING. DO NOT TRY IT BECAUSE IT WILL DO NOTHING. SEGGS.
+                P*RN. AAAAAAAAAA
+            </p>
+            <input type="hidden" name="qrcode" id="qrcode">
+        </div>
+        <div id="amiibo-group">
+            <button type="button">Open amiibo dump</button>
+            <p style="color: red">
+                TBD / NOT IMPLEMENTED: I CANNOT FIND A JS IMPLEMENTATION AT
+                THE MOMENT. I WILL MAKE ONE AT SOME POINT <br>TBD TBD TODO
+                TODO THIS ALSO NEEDS DETAILED DIRECTIONS AND AN
+                EXPLANATION...
+            </p>
+            <input type="hidden" name="amiibo" id="amiibo">
+        </div>
+        <div id="nnid-group">
+            <!-- you may want to add labels differentiate in the case of no js -->
+            <input id="nnid" name="nnid" class="long-field" type="text"
+                placeholder="Nintendo Network ID created on a Wii U or 3DS." maxlength="16"
+                pattern="^[0-9a-zA-Z\-_.]+$">
+            <!-- tbd you should add or check minlength
+                   it was temporarily removed bc its annoying to see
+                  red before you are finished typing -->
+            <br>
+            <!-- TODO THIS SHOULD PROBABLY SEND A RANDOM NUMBER? with JS -->
+            <input type="checkbox" id="force_refresh" name="force_refresh" value="1">
+            <label for="force_refresh">Force refresh NNID without cache</label>
+            <br><span class="small">This option will refresh your Mii if we keep showing you an
+                old version. It will not solve any other problems.</span>
+        </div>
+        <div id="data-group">
+            <input class="long-field" type="text" name="data"
+                placeholder="Base64 Mii data, like from account.nintendo.net, 96 bytes" minlength="100" maxlength="140"
+                pattern="^(?=(.{4})*$)[A-Za-z0-9+\/]*={0,2}$"
+                value="AwBgMIJUICvpzY4vnWYVrXy7ikd01AAAWR1KAGEAcwBtAGkAbgBlAAAAAAAAABw3EhB7ASFuQxwNZMcYAAgegg0AMEGzW4JtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAML0">
+            <!-- I have read that b64(96 bytes) will be exactly
+        128 bytes but we are allowing more headroom -->
+        </div>
+        <label for="type">Type: </label>
+        <select name="type" id="type">
+            <option value="face">Face</option>
+            <option value="face_only">Face Only</option>
+            <!--<option value="all_body">Body</option>-->
+        </select><br>
+        <label for="expression">Expression:</label>
+        <select name="expression" id="expression">
+            <option value="normal">Normal</option>
+            <option value="smile">Smile</option>
+            <option value="anger">Anger</option>
+            <option value="sorrow">Sorrow</option>
+            <option value="surprise">Surprise</option>
+            <option value="blink">Blink</option>
+            <option value="normal_open_mouth">Normal (open mouth)</option>
+            <option value="smile_open_mouth">Smile (open mouth)</option>
+            <option value="anger_open_mouth">Anger (open mouth)</option>
+            <option value="surprise_open_mouth">
+                Surprise (open mouth)
+            </option>
+            <option value="sorrow_open_mouth">Sorrow (open mouth)</option>
+            <option value="blink_open_mouth">Blink (open mouth)</option>
+            <option value="wink_left">Wink (left eye open)</option>
+            <option value="wink_right">Wink (right eye open)</option>
+            <option value="wink_left_open_mouth">
+                Wink (left eye and mouth open)
+            </option>
+            <option value="wink_right_open_mouth">
+                Wink (right eye and mouth open)
+            </option>
+            <option value="like_wink_left">
+                Wink (left eye open and smiling)
+            </option>
+            <option value="like_wink_right">
+                Wink (right eye open and smiling)
+            </option>
+            <option value="frustrated">Frustrated</option>
+        </select><br>
+        <label for="resolution-slider">Resolution:</label>
+        <input id="resolution-slider" type="range" min="96" max="1080" step="2" value="270">
+        <input class="short-number" name="width" id="width" type="number" step="2" value="270">
+        <label for="width">px</label>
+        <br>
+        <label for="scale">Upscale/antialiasing, 2x/4x is fine:</label>
+        <input type="number" name="scale" id="scale" min="1" max="8" value="2">
+        <span>x</span><br>
+        <label for="bgColor">Background color:</label>
+        <input name="bgColor" id="bgColor" type="color" value="#00ff00">
+        <label for="transparent-checkbox">Transparent?</label>
+        <input id="transparent-checkbox" type="checkbox" checked disabled>
+        <br>
+        <input type="submit" data-value="Rendering...">
+    </form>
+    <hr>
+    <h3>Outputs</h3>
+    <ul id="results">
+        <li>
+            <img
+                src="https://studio.mii.nintendo.com/miis/image.png?data=000d142a303f434b717a7b84939ba6b2bbbec5cbc9d0dee6fd0109090f16746f757c77737e747c696b767d747b828d&type=face&expression=normal&width=270">
+            <div style="color: hotpink">
+                (Above is from studio.mii.nintendo.com) <br>TODO: put a
+                static image of jasmine here maybe. maybe one from mii
+                studio maybe one rendered by this or both. idfk tbh<br>also
+                putting this here will tell nintendo our referer meaning it
+                will tell them about this site even thouygh they don't care
+                but lmoa
+            </div>
+        </li>
+        <li class="load-error" style="display: none">
+            Image below failed to load!!
+            <div class="small">
+                (You probably want to open Inspect Element network panel to
+                see what went wrong)
+            </div>
+        </li>
+    </ul>
+
+    <script src="assets/script.js"></script>
+
+    <hr>
+    <h2>NOTICE</h2>
+    <p>
+        Please remember the following if you're thinking about using this
+        for a project:
+    </p>
+    <ul>
+        <li>
+            Only submit one request at a time, even if it takes a moment. Do
+            not refresh while it's loading, this will make it worse.
+        </li>
+        <li>
+            For the love of God, do NOT depend on this!!!!! In other words,
+            make sure your app works when this is DOWN!!!!
+        </li>
+        <li>
+            When you use a transparent background, we are literally just
+            greenscreening your Mii. Your images may have green around the
+            edges. Make sure to check all of the images you generate.
+        </li>
+        <li>
+            For reasons out of our control, this may return images that look
+            corrupted, and it may just time out for no reason. It should
+            return a 504 code on timeout, please make sure to retry your
+            requests or let your user choose when to retry.
+        </li>
+        <li>
+            If you're using this in a Miiverse clone or something, you will
+            probably need to let users switch between an opaque background
+            or transparent background and then generate for dark and light
+            backgrounds.
+        </li>
+        <li>Beware that the API may change or break at any time.</li>
+    </ul>
+</body>
+
+</html>
