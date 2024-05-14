@@ -192,9 +192,9 @@ window.byteArrayToRenderParams = function(buffer) {
         Mode: buffer[6],
         Expression: buffer[7],
         BackgroundR: buffer[8],
-        BackgroundG: buffer[9],
-        BackgroundB: buffer[10],
-        Scale: buffer[11],
+        Scale: buffer[9],
+        BackgroundG: buffer[10],
+        BackgroundB: buffer[11],
         // because buffer can end before these are defined
         // NOTE: no longer optional because we are padding it out
         HorizontalTotal: /*buffer.length > 12 ? */buffer[12],// : 0,
@@ -223,7 +223,7 @@ window.dynamicGetInfoFunction = function(result, data) {
     // convert utf-16be nfp name to buffer
     var buffer = utf16ToArray(data.name);
     // pad out buffer
-    for (var i = 0; i < 16; i++) {
+    for (var i = 0; i < bufferLength; i++) {
         if(buffer[i] !== undefined) {
             continue;
         }
@@ -286,9 +286,11 @@ window.dynamicGetInfoFunction = function(result, data) {
         // draw marker on top of image
         drawBytesToCanvas(buffer, ctx);
 
-        var filename = Math.floor(Date.now() / 1000) + '-render-finish';
+        /*var filename = Math.floor(Date.now() / 1000) + '-render-finish';
         new nwf.io.File(filename, dir).save(blankBlob);
         nwf.utils.log('render-finish written');
+        */
+        // not reliable, TODO: investigate if this should be the trigger for processor-server to screenshot
     }, {
         // params.Mode higher is TRUEY (greater than 0) means FACE ONLY
         show_body: (params.Mode ? false : true),

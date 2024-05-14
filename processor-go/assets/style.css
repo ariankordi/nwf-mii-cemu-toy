@@ -11,32 +11,54 @@
   color: white;
   background-color: black;
 }
+/* link color from freebsd.org (dark)
+for both light and dark */
+:link,
+:visited {
+  color: #BAD7FF;
+}
+
+@font-face {
+  font-family: nintendo_NTLG;
+  src: url(nintendo_NTLG.woff2);
+}
 
 body {
   /*font-family: sans-serif;
-  */
-  font-family: -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, Helvetica,
-    Arial, sans-serif;
+*/
+  font-family:
+      nintendo_NTLG,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      Helvetica,
+      Arial,
+      sans-serif;
 
-  line-height: 150%;
+  line-height: 180%;
   text-align: center;
 }
 .small {
   font-size: 12px;
 }
-#results {
+/* only intended to show in other langs */
+.subtitle {
+  margin: -10px -10px 10px;
+  font-size: 18px;
+}
+.results {
   list-style-type: none;
   padding: 0;
 }
 ul {
   list-style-position: inside;
 }
-#results > li {
+.results > li {
   margin: 0 auto 5px;
   padding: 5px;
 }
-#results img {
+.results img {
   border-radius: 5px;
   /*max-width: calc(100vw - 32px);
   */max-width: 100%;
@@ -52,16 +74,27 @@ ul {
   border: 1px solid red;
 }
 .long-field {
-  width: 30em;
+  /* now entire site is thin
+  width: 30em;*/
+  margin: 5px;
+  font-size: 16px;
+  width: 90%;
 }
 /* for pattern attribute */
 .long-field:required:invalid:not(:placeholder-shown) {
   background-color: lightpink;
 }
+/* mobile */
+@media (width > 40em) {
+  body {
+      max-width: 26em;
+      margin: 0 auto;
+  }
+}
 
 .fade-in {
   opacity: 0;
-  animation: fadeInAnimation cubic-bezier(0.165, 0.840, 0.440, 1.000) 0.4s;
+  animation: fadeInAnimation cubic-bezier(0.165, 0.84, 0.44, 1) 0.4s;
   animation-fill-mode: forwards;
 }
 

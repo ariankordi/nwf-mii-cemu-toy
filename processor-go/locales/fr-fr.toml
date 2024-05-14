@@ -1,0 +1,237 @@
+[amiibo_instruction]
+other = "À DÉTERMINER / NON IMPLÉMENTÉ : JE NE TROUVE PAS D'IMPLÉMENTATION JS POUR LE MOMENT. JE VAIS EN CRÉER UNE À UN CERTAIN MOMENT. À DÉTERMINER À DÉTERMINER À FAIRE À FAIRE CECI NÉCESSITE AUSSI DES INSTRUCTIONS DÉTAILLÉES ET UNE EXPLICATION..."
+
+[background_color_label]
+other = "Couleur de fond :"
+
+[beta_warning]
+other = "ceci est une version beta très basique ne vous attendez à rien. ne vous attendez pas à ce qu'elle plie votre linge et soit votre onaho personnel"
+
+[beta_warning_title]
+other = "SI VOUS AVEZ TROUVÉ CELA PAR HASARD"
+
+[button_open_amiibo_dump]
+other = "Ouvrir le dump amiibo"
+
+[contact_info]
+other = "Pour des commentaires, questions, préoccupations, aide, etc. vous pouvez me contacter sur Discord: \".arian.\" ou par e-mail: ariankordi@ariankordi.net (Je ne parle pas français, donc je devrai utiliser un traducteur, désolé)."
+
+[data_placeholder]
+other = "Données Mii en Base64, comme celles de account.nintendo.net, 96 octets"
+
+[expression_anger]
+other = "Colère"
+
+[expression_anger_open_mouth]
+other = "Colère (bouche ouverte)"
+
+[expression_blink]
+other = "Clignement"
+
+[expression_blink_open_mouth]
+other = "Clignement (bouche ouverte)"
+
+[expression_frustrated]
+other = "Frustré"
+
+[expression_label]
+other = "Expression :"
+
+[expression_like_wink_left]
+other = "Clin d'œil (œil gauche ouvert et souriant)"
+
+[expression_like_wink_right]
+other = "Clin d'œil (œil droit ouvert et souriant)"
+
+[expression_normal]
+other = "Normal"
+
+[expression_normal_open_mouth]
+other = "Normal (bouche ouverte)"
+
+[expression_smile]
+other = "Sourire"
+
+[expression_smile_open_mouth]
+other = "Sourire (bouche ouverte)"
+
+[expression_sorrow]
+other = "Tristesse"
+
+[expression_sorrow_open_mouth]
+other = "Tristesse (bouche ouverte)"
+
+[expression_surprise]
+other = "Surprise"
+
+[expression_surprise_open_mouth]
+other = "Surprise (bouche ouverte)"
+
+[expression_wink_left]
+other = "Clin d'œil (œil gauche ouvert)"
+
+[expression_wink_left_open_mouth]
+other = "Clin d'œil (œil gauche et bouche ouverts)"
+
+[expression_wink_right]
+other = "Clin d'œil (œil droit ouvert)"
+
+[expression_wink_right_open_mouth]
+other = "Clin d'œil (œil droit et bouche ouverts)"
+
+[file_input_label]
+other = "(format binaire Mii FFLStoreData de 96 octets)"
+
+[file_input_todo]
+other = "(À FAIRE À FAIRE vous devez VÉRIFIER LA LONGUEUR, et le CRC16 du fichier. ET le base64. ET convertir en POST. C'EST EMBÊTANT)"
+
+[force_refresh_description]
+other = "Cette option actualisera votre Mii si nous continuons à vous montrer une ancienne version. Elle ne résoudra aucun autre problème."
+
+[force_refresh_label]
+other = "Actualisation forcée NNID sans cache"
+
+[github_prefix]
+other = "Le code (ou du moins le backend) pour cela est sur GitHub. N'hésitez pas à le consulter :"
+
+[heading_main]
+other = "Rendu de Mii (RÉEL)"
+
+[label_input_type]
+other = "Type d'entrée Mii :"
+
+[html_lang]
+other = "fr-FR"
+
+[load_error_message]
+other = "L'image ci-dessous n'a pas pu être chargée !! (Vous voudrez probablement ouvrir l'image dans un nouvel onglet pour voir ce qui a mal tourné)"
+
+[nnid_placeholder]
+other = "Nintendo Network ID créé sur Wii U ou 3DS."
+
+[option_amiibo]
+other = "Données Amiibo (À DÉTERMINER)"
+
+[option_face]
+other = "Visage"
+
+[option_face_only]
+other = "Seulement le visage"
+
+[option_file]
+other = "Fichier FFSD Wii U"
+
+[option_nnid]
+other = "Nintendo Network ID"
+
+[our_output_description]
+other = "L'image ci-dessus est rendue par ce site !"
+
+[outputs_section_heading]
+other = "Sorties"
+
+[page_title]
+other = "Rendu de Mii (RÉEL)"
+
+[qrcode_instruction]
+other = "CELA N'EST PAS IMPLÉMENTÉ ET NE FONCTIONNERA PAS. CELA NE FERA RIEN. NE L'ESSAYEZ PAS CAR CELA NE FERA RIEN. SEGGS. P*RNO. AAAAAAAAAA"
+
+[resolution_label]
+other = "Résolution :"
+
+[resolution_slider_label]
+other = "Résolution :"
+
+[samples_section_heading]
+other = "Échantillons"
+
+[scale_label]
+other = "Mise à l'échelle/anti-aliasing, 2x/4x est bien :"
+
+[studio_output_description]
+other = "L'image ci-dessus provient de studio.mii.nintendo.com."
+
+[submit_button_text]
+other = "Rendu..."
+
+[transparent_checkbox_label]
+other = "Transparent ?"
+
+[tutorial_message]
+other = "Cliquez sur \"Type d'entrée Mii\" pour voir comment vous pouvez importer un Mii. Ensuite, cliquez sur Soumettre pour commencer."
+
+[type_label]
+other = "Type :"
+
+[unfinished_warning]
+other = "EXTRÊMEMENT INACHEVÉ. si quelque chose d'essentiel manque, VEUILLEZ me le faire savoir mais il y a des chances que je prévoie déjà de l'inclure mais veuillez me le faire savoir quand même"
+
+
+[option_pnid]
+other = "Pretendo Network ID"
+
+[option_data]
+other = "Données Mii en Base64"
+
+[option_qrcode]
+other = "Scanner le code QR Mii"
+
+[button_open_camera]
+other = "Ouvrir la caméra"
+
+[button_close_camera]
+other = "Fermer la caméra"
+
+[label_select_camera]
+other = "Sélectionnez la caméra : "
+
+[option_back_camera]
+other = "Caméra arrière (par défaut)"
+
+[option_front_camera]
+other = "Caméra frontale/utilisateur"
+
+[option_start_camera_more_options]
+other = "(Ouvrez la caméra pour plus d'options)"
+
+[status_ready]
+other = "Statut : Prêt à scanner."
+
+[qr_status_scanning]
+other = "Scan en cours... Vous pouvez diriger votre caméra vers un code QR."
+
+[qr_status_waiting]
+other = "Attente du timeout de QrScanner.scanImage() de 10s..."
+
+[qr_status_loaded]
+other = "Mii chargé : "
+
+[qr_status_no_qr]
+other = "Aucun code QR trouvé."
+
+[qr_status_error]
+other = "Erreur : "
+
+[qr_status_no_mii]
+other = "Ce code QR ne contient pas de Mii."
+
+[qr_status_no_camera]
+other = "Aucune caméra trouvée, ou les permissions n'ont pas été accordées."
+
+[input_pnid_placeholder]
+other = "Identifiant Pretendo Network ID créé sur pretendo.network."
+
+[label_force_refresh_pnid]
+other = "Forcer le rafraîchissement de l'ID Pretendo sans cache"
+
+[pretendo_network_description]
+other = "Pretendo Network est une relance des services Nintendo Network et Miiverse pour la Wii U et la 3DS. Découvrez-les ici : "
+
+[mii_data_field_description]
+other = "Ce champ accepte les données Mii en Base64 régulier de 96 octets que vous pouvez trouver sur account.nintendo.net ou l'API Miiverse."
+
+[change_language]
+other = "Changer de langue"
+
+[file_photo_selection_prompt]
+other = "Vous pouvez également sélectionner un fichier ou une photo :"
