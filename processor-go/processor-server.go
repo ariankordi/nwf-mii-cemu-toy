@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"image"
+	"path/filepath"
+
+	"strings"
 
 	"log"
 
@@ -19,6 +22,15 @@ import (
 
 	"flag"
 	"net/http"
+	// for tls sni whitelist
+	"crypto/tls"
+
+	"html/template"
+
+	"github.com/nicksnyder/go-i18n/i18n"
+
+	// compresses static assets but not dynamic pages
+	"codeberg.org/meta/gzipped/v2"
 
 	//"slices" // for slices.Delete which did not even work
 )
@@ -102,18 +114,58 @@ func removeExpiredRequestsThread() {
 	}
 }
 
+// Declare a variable to hold the pre-compiled templates.
+var templates *template.Template
+
+func loadLocaleFiles(dir string) {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		log.Println("Error reading directory", dir, ":", err)
+		return
+	}
+	for _, f := range files {
+		// Construct the full path and load each file
+		filePath := filepath.Join(dir, f.Name())
+		if err := i18n.LoadTranslationFile(filePath); err != nil {
+			log.Println("Error loading file", filePath, ":", err)
+		}
+	}
+}
+
+// TODO: you may want to set this to the computer's language
+const defaultLang = "en-US"
+
+// createLocaleFuncMap creates a template.FuncMap with the localized translation function.
+func createLocaleFuncMap(r *http.Request) (template.FuncMap, error) {
+	query := r.URL.Query()
+	//cookieLang := r.Cookie("lang")
+	cookieLang := query.Get("locale.lang")
+	// Determine the language from the "Accept-Language" header.
+	acceptLang := r.Header.Get("Accept-Language")
+	Tfunc, err := i18n.Tfunc(cookieLang, acceptLang, defaultLang)
+	// Default to English if there's an error
+	if err != nil {
+		return nil, err
+	}
+
+	// map translation function to be used as "T" in template
+	return template.FuncMap{"T": Tfunc}, nil
+}
+
 func main() {
-	var port, certFile, keyFile string
+	var port, certFile, keyFile, hostnamesSniAllowArg string
 	flag.StringVar(&port, "port", ":8080", "http port to listen to, OR https if you specify cert and key")
 	flag.StringVar(&certFile, "cert", "", "TLS certificate file")
 	flag.StringVar(&keyFile, "key", "", "TLS key file")
+	flag.StringVar(&hostnamesSniAllowArg, "hostnames", "", "Allowlist of hostnames for TLS SNI")
+
 	// make default false on windows because it does not work currently
 	defaultEnableSuspending := true
 	if runtime.GOOS == "windows" {
 		defaultEnableSuspending = false
 	}
 	var enableSuspending bool
-	flag.BoolVar(&enableSuspending, "enable-suspending", defaultEnableSuspending, "Enable suspending the Cemu process, currently broken on Windows but be my guest")
+	flag.BoolVar(&enableSuspending, "enable-suspending", defaultEnableSuspending, "Enable suspending the Cemu process to save CPU")
 	flag.Parse()
 
 	// TODO make this better, flags perhaps for different backends
@@ -148,7 +200,18 @@ func main() {
 		go monitorActivityAndManageProcess()
 	}
 	// add frontend
-	http.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("assets"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", gzipped.FileServer(gzipped.Dir("assets"))))
+
+	// Load locale files
+	loadLocaleFiles("locales")
+
+	// Pre-compile templates
+	/*var err error
+	templates, err = template.ParseFiles("views/index.html")
+	if err != nil {
+		log.Fatal("Error loading templates: ", err)
+	}*/
+
 	// index = /index.html
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/favicon.ico" {
@@ -161,15 +224,59 @@ func main() {
 			w.Header().Set("Content-Type", "text/html")
 			w.WriteHeader(http.StatusNotFound)
 			// todo please find a more elegant way to do this
-			http.ServeFile(w, r, "404.html")
+			// TODO: seeing superfluous writeheader calls here.?
+			http.ServeFile(w, r, "views/404-scary.html") //"404.html")
 			return
 		}
-		http.ServeFile(w, r, "index.html")
+		// serve index
+		// gets the user's language from the request
+		funcMap, err := createLocaleFuncMap(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		//tmpl := templates.Lookup("index.html").Funcs(funcMap)
+		var tmpl *template.Template
+		tmpl, err = template.New("index.html").Funcs(funcMap).ParseFiles("views/index.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if err = tmpl.Execute(w, nil); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		//http.ServeFile(w, r, "index.html")
 	})
 	log.Println("now listening")
 	var err error
 	if certFile != "" && keyFile != "" {
-		err = http.ListenAndServeTLS(port, certFile, keyFile, nil)
+		hostnamesSniAllow := strings.Split(hostnamesSniAllowArg, ",")
+		// Create a custom TLS configuration (default)
+		tlsConfig := &tls.Config{}
+
+		// TODO YOU PROBABLY WANT TO LOG ALL OF THE HOSTNAMES
+		// If we have a list of allowed TLS SNI names, configure GetConfigForClient
+		if len(hostnamesSniAllow) > 0 && hostnamesSniAllow[0] != "" {
+			tlsConfig.GetConfigForClient = func(helloInfo *tls.ClientHelloInfo) (*tls.Config, error) {
+				for _, hostname := range hostnamesSniAllow {
+					if helloInfo.ServerName == hostname {
+						return nil, nil // Proceed with normal config
+					}
+				}
+				// TODO YOU WANT TO MAKE THIS LOG BETTER
+				log.Println(helloInfo.Conn.RemoteAddr(), "sent unrecognized hostname from client:", helloInfo.ServerName)
+				return &tls.Config{Certificates: []tls.Certificate{}}, nil // Close connection
+			}
+		}
+
+		// Create an HTTP server with the custom TLS configuration
+		server := &http.Server{
+			Addr:      port,
+			TLSConfig: tlsConfig,
+		}
+		err = server.ListenAndServeTLS(certFile, keyFile)
 	} else {
 		// no handler because we defined HandleFunc
 		err = http.ListenAndServe(port, nil)
@@ -191,18 +298,22 @@ var client = &http.Client{
 // hardcoded maximum resolution for single image
 const maxResolution = 1080
 
+// reordered on 2024-05-11 to avoid premature termination with all black BG
 type RenderParameters struct {
 	// This "hash" is a CRC32 for now, which I know isn't a hash.
 	// It can be used as a marker pattern for the start of the data
 	MiiDataHash uint32
+	// resolution can have a zero i thiiinkkk
 	Resolution  uint16
+	// mode can also be zero
 	Mode        uint8
-	// TODO: zero R, G, & B results in premature null so this needs reorganization
+	// expression should always be non-zero
 	Expression  uint8
 	BackgroundR uint8
+	// scale is also non-zero
+	Scale       uint8
 	BackgroundG uint8
 	BackgroundB uint8
-	Scale       uint8
 	// For splitting an image into multiple chunks
 	HorizontalTotal uint8
 	HorizontalChunk uint8

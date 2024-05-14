@@ -1,0 +1,238 @@
+[amiibo_instruction]
+other = "NÃO IMPLEMENTADO: NÃO CONSEGUI ENCONTRAR UMA IMPLEMENTAÇÃO EM JS NO MOMENTO. FAREI UMA EM ALGUM MOMENTO. TAMBÉM PRECISA DE DIREÇÕES DETALHADAS E UMA EXPLICAÇÃO..."
+
+[background_color_label]
+other = "Cor de fundo:"
+
+[beta_warning]
+other = "isto é uma versão beta muito básica, não espere nada dela. não espere que ela dobre suas roupas ou seja seu gerador de miis como na Nintendo Network"
+
+[beta_warning_title]
+other = "SE DE ALGUMA FORMA VOCÊ ENCONTROU ISSO:"
+
+[button_open_amiibo_dump]
+other = "Abrir arquivo de amiibo"
+
+[contact_info]
+other = "Para comentários, perguntas, preocupações, ajuda, etc. você pode entrar em contato comigo no Discord: \".arian.\" ou por e-mail: ariankordi@ariankordi.net (Eu não falo português, então terei que usar um tradutor, desculpe)."
+
+[data_placeholder]
+other = "Dados Mii em Base64, como em account.nintendo.net, 96 bytes"
+
+[expression_anger]
+other = "Raiva"
+
+[expression_anger_open_mouth]
+other = "Raiva (boca aberta)"
+
+[expression_blink]
+other = "Piscar"
+
+[expression_blink_open_mouth]
+other = "Piscar (boca aberta)"
+
+[expression_frustrated]
+other = "Frustrado"
+
+[expression_label]
+other = "Expressão:"
+
+[expression_like_wink_left]
+other = "Piscar (olho esquerdo aberto e sorrindo)"
+
+[expression_like_wink_right]
+other = "Piscar (olho direito aberto e sorrindo)"
+
+[expression_normal]
+other = "Normal"
+
+[expression_normal_open_mouth]
+other = "Normal (boca aberta)"
+
+[expression_smile]
+other = "Sorriso"
+
+[expression_smile_open_mouth]
+other = "Sorriso (boca aberta)"
+
+[expression_sorrow]
+other = "Tristeza"
+
+[expression_sorrow_open_mouth]
+other = "Tristeza (boca aberta)"
+
+[expression_surprise]
+other = "Surpresa"
+
+[expression_surprise_open_mouth]
+other = "Surpresa (boca aberta)"
+
+[expression_wink_left]
+other = "Piscar (olho esquerdo aberto)"
+
+[expression_wink_left_open_mouth]
+other = "Piscar (olho esquerdo e boca abertos)"
+
+[expression_wink_right]
+other = "Piscar (olho direito aberto)"
+
+[expression_wink_right_open_mouth]
+other = "Piscar (olho direito e boca abertos)"
+
+[file_input_label]
+other = "(Formato binário Mii FFLStoreData de 96 bytes)"
+
+[file_input_todo]
+other = "(ainda é necessário VERIFICAR O TAMANHO, e o CRC16 do arquivo. E o base64. E converter para POST. Por agora, está péssimo!)"
+
+[force_refresh_description]
+other = "Esta opção atualizará seu Mii se continuarmos mostrando uma versão antiga. Não resolverá outros problemas."
+
+[force_refresh_label]
+other = "Forçar atualização NNID sem cache"
+
+[github_prefix]
+other = "O código (ou pelo menos o backend) para isso está no GitHub. Fique à vontade para conferir:"
+
+[heading_main]
+other = "Renderizador de Mii (É SÉRIO!)"
+
+[label_input_type]
+other = "Tipo de entrada Mii:"
+
+[html_lang]
+other = "pt-BR"
+
+[load_error_message]
+other = "Houve algum erro ao carregar a renderização :( (Você provavelmente vai querer abrir a imagem em uma nova aba para ver o que deu errado)"
+
+[nnid_placeholder]
+other = "Nintendo Network ID criada em um Wii U ou 3DS."
+
+[option_amiibo]
+other = "Dados de amiibo (ainda em desenvolvimento)"
+
+[option_face]
+other = "Face"
+
+[option_face_only]
+other = "Apenas Face"
+
+[option_file]
+other = "Arquivo FFSD do Wii U"
+
+[option_nnid]
+other = "Nintendo Network ID"
+
+[our_output_description]
+other = "A imagem acima foi renderizada por este site!"
+
+[outputs_section_heading]
+other = "Imagens Renderizadas"
+
+[page_title]
+other = "Renderizador de Miis (REAL)"
+
+[qrcode_instruction]
+other = "ISTO NÃO ESTÁ IMPLEMENTADO E NÃO FUNCIONARÁ. NÃO FARÁ NADA. NÃO TENTE PORQUE NÃO FARÁ NADA. SEXO. P*RNO. AAAAAAAAAA"
+
+[resolution_label]
+other = "Resolução:"
+
+[resolution_slider_label]
+other = "Resolução:"
+
+[samples_section_heading]
+other = "Amostras"
+
+[scale_label]
+other = "Upscale/antialiasing, 2x/4x está bom:"
+
+[studio_output_description]
+other = "A imagem acima é de \"studio.mii.nintendo.com\"."
+
+[submit_button_text]
+other = "Renderizando..."
+
+[transparent_checkbox_label]
+
+other = "Transparente?"
+
+[tutorial_message]
+other = "Clique em \"Tipo de entrada Mii\" para ver como você pode importar um Mii. Então, clique em Enviar para começar."
+
+[type_label]
+other = "Tipo:"
+
+[unfinished_warning]
+other = "Ainda não está completo! Se houver algo essencial faltando, POR FAVOR me avise, mas há uma chance de eu já estar planejando isso, mas me avise de qualquer forma."
+
+
+[option_pnid]
+other = "Pretendo Network ID"
+
+[option_data]
+other = "Dados Mii em Base64"
+
+[option_qrcode]
+other = "Escanear código QR do Mii"
+
+[button_open_camera]
+other = "Abrir câmera"
+
+[button_close_camera]
+other = "Fechar câmera"
+
+[label_select_camera]
+other = "Selecionar câmera: "
+
+[option_back_camera]
+other = "Câmera traseira (padrão)"
+
+[option_front_camera]
+other = "Câmera frontal/do usuário"
+
+[option_start_camera_more_options]
+other = "(Iniciar câmera para mais opções)"
+
+[status_ready]
+other = "Status: Pronto para escanear."
+
+[qr_status_scanning]
+other = "Escanear... Você pode apontar sua câmera para um código QR."
+
+[qr_status_waiting]
+other = "Aguardando o timeout de QrScanner.scanImage() de 10s..."
+
+[qr_status_loaded]
+other = "Mii carregado: "
+
+[qr_status_no_qr]
+other = "Nenhum código QR encontrado."
+
+[qr_status_error]
+other = "Erro: "
+
+[qr_status_no_mii]
+other = "Este código QR não contém um Mii."
+
+[qr_status_no_camera]
+other = "Nenhuma câmera encontrada, ou permissões não foram concedidas."
+
+[input_pnid_placeholder]
+other = "Pretendo Network ID criado em pretendo.network."
+
+[label_force_refresh_pnid]
+other = "Forçar atualização do PNID sem cache"
+
+[pretendo_network_description]
+other = "Pretendo Network é um renascimento dos serviços Nintendo Network e Miiverse para o Wii U e 3DS. Confira aqui: "
+
+[mii_data_field_description]
+other = "Este campo aceita dados Mii em Base64 regular de 96 bytes que você pode encontrar em account.nintendo.net ou na API do Miiverse."
+
+[change_language]
+other = "Mudar idioma"
+
+[file_photo_selection_prompt]
+other = "Você também pode selecionar um arquivo ou foto:"

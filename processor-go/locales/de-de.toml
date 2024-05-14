@@ -1,0 +1,237 @@
+[amiibo_instruction]
+other = "NOCH NICHT IMPLEMENTIERT: ICH KANN DERZEIT KEINE JS-IMPLEMENTIERUNG FINDEN. ICH WERDE IRGENDWANN EINE MACHEN. NOCH ZU BESTIMMEN NOCH ZU BESTIMMEN TODO TODO DAS BENÖTIGT AUCH DETAILLIERTE ANWEISUNGEN UND EINE ERKLÄRUNG..."
+
+[background_color_label]
+other = "Hintergrundfarbe:"
+
+[beta_warning]
+other = "dies ist eine minimalistische Beta-Vorabversion, erwarte nicht zu viel davon. Erwarte nicht, dass sie deine Wäsche faltet oder dein persönlicher Onaho wird"
+
+[beta_warning_title]
+other = "WENN DU DAS IRGENDWIE GEFUNDEN HAST"
+
+[button_open_amiibo_dump]
+other = "Amiibo-Dump öffnen"
+
+[contact_info]
+other = "Für Kommentare, Fragen, Bedenken, Hilfe usw. können Sie mich auf Discord: \".arian.\" kontaktieren oder per E-Mail: ariankordi@ariankordi.net (Ich spreche kein Deutsch, daher muss ich einen Übersetzer verwenden, entschuldigung)."
+
+[data_placeholder]
+other = "Base64 Mii-Daten, wie von account.nintendo.net, 96 Bytes"
+
+[expression_anger]
+other = "Ärger"
+
+[expression_anger_open_mouth]
+other = "Ärger (offener Mund)"
+
+[expression_blink]
+other = "Blinzeln"
+
+[expression_blink_open_mouth]
+other = "Blinzeln (offener Mund)"
+
+[expression_frustrated]
+other = "Frustration"
+
+[expression_label]
+other = "Ausdruck:"
+
+[expression_like_wink_left]
+other = "Zwinkern (linkes Auge offen und lächelnd)"
+
+[expression_like_wink_right]
+other = "Zwinkern (rechtes Auge offen und lächelnd)"
+
+[expression_normal]
+other = "Normal"
+
+[expression_normal_open_mouth]
+other = "Normal (offener Mund)"
+
+[expression_smile]
+other = "Lächeln"
+
+[expression_smile_open_mouth]
+other = "Lächeln (offener Mund)"
+
+[expression_sorrow]
+other = "Traurigkeit"
+
+[expression_sorrow_open_mouth]
+other = "Traurigkeit (offener Mund)"
+
+[expression_surprise]
+other = "Überraschung"
+
+[expression_surprise_open_mouth]
+other = "Überraschung (offener Mund)"
+
+[expression_wink_left]
+other = "Zwinkern (linkes Auge offen)"
+
+[expression_wink_left_open_mouth]
+other = "Zwinkern (linkes Auge und Mund offen)"
+
+[expression_wink_right]
+other = "Zwinkern (rechtes Auge offen)"
+
+[expression_wink_right_open_mouth]
+other = "Zwinkern (rechtes Auge und Mund offen)"
+
+[file_input_label]
+other = "(96-Byte-FFLStoreData-Mii-Binärformat)"
+
+[file_input_todo]
+other = "(TODO TODO du musst DIE LÄNGE VERIFIZIEREN, sowie die CRC16 der Datei. UND das Base64. UND in POST konvertieren. DAS IST MIST)"
+
+[force_refresh_description]
+other = "Diese Option wird dein Mii aktualisieren, falls wir dir eine alte Version anzeigen. Es wird keine anderen Probleme lösen."
+
+[force_refresh_label]
+other = "NNID ohne Cache erzwingen"
+
+[github_prefix]
+other = "Der Code (oder zumindest das Backend) dafür befindet sich auf GitHub. Fühl dich frei, es zu überprüfen:"
+
+[heading_main]
+other = "Mii-Renderer (ECHT)"
+
+[label_input_type]
+other = "Mii-Eingabetyp:"
+
+[html_lang]
+other = "de-DE"
+
+[load_error_message]
+other = "Das Bild unten konnte nicht geladen werden!! (Sie möchten das Bild wahrscheinlich in einem neuen Tab öffnen, um zu sehen, was schiefgelaufen ist)"
+
+[nnid_placeholder]
+other = "Nintendo Network ID, erstellt auf einem Wii U oder 3DS."
+
+[option_amiibo]
+other = "Amiibo-Daten (NOCH ZU BESTIMMEN)"
+
+[option_face]
+other = "Gesicht"
+
+[option_face_only]
+other = "Nur Gesicht"
+
+[option_file]
+other = "Wii U FFSD-Datei"
+
+[option_nnid]
+other = "Nintendo Network ID"
+
+[our_output_description]
+other = "Das Bild oben wird von dieser Seite gerendert!"
+
+[outputs_section_heading]
+other = "Ausgaben"
+
+[page_title]
+other = "Mii-Renderer (ECHT)"
+
+[qrcode_instruction]
+other = "DAS IST NICHT IMPLEMENTIERT UND WIRD NICHT FUNKTIONIEREN. ES WIRD NICHTS TUN. VERSUCHE ES NICHT, DENN ES WIRD NICHTS BEWIRKEN. SEGGS. P*RN. AAAAAAAAAA"
+
+[resolution_label]
+other = "Auflösung:"
+
+[resolution_slider_label]
+other = "Auflösung:"
+
+[samples_section_heading]
+other = "Beispiele"
+
+[scale_label]
+other = "Hochskalierung/Anti-Aliasing, 2x/4x ist in Ordnung:"
+
+[studio_output_description]
+other = "Das Bild oben ist von studio.mii.nintendo.com."
+
+[submit_button_text]
+other = "Rendering..."
+
+[transparent_checkbox_label]
+other = "Transparent?"
+
+[tutorial_message]
+other = "Klicke auf \"Mii-Eingabetyp\", um zu sehen, wie du ein Mii importieren kannst. Klicke dann auf Senden, um zu beginnen."
+
+[type_label]
+other = "Typ:"
+
+[unfinished_warning]
+other = "SUPER SUPER UNFERTIG. Wenn etwas Wesentliches fehlt, BITTE lass es mich wissen, aber es besteht die Chance, dass ich es bereits plane, aber bitte lass es mich trotzdem wissen"
+
+
+[option_pnid]
+other = "Pretendo Network ID"
+
+[option_data]
+other = "Base64 Mii-Daten"
+
+[option_qrcode]
+other = "Mii QR-Code scannen"
+
+[button_open_camera]
+other = "Kamera öffnen"
+
+[button_close_camera]
+other = "Kamera schließen"
+
+[label_select_camera]
+other = "Kamera auswählen: "
+
+[option_back_camera]
+other = "Rückkamera (Standard)"
+
+[option_front_camera]
+other = "Frontkamera/Nutzerkamera"
+
+[option_start_camera_more_options]
+other = "(Kamera starten für mehr Optionen)"
+
+[status_ready]
+other = "Status: Bereit zum Scannen."
+
+[qr_status_scanning]
+other = "Scannen... Sie können Ihre Kamera auf einen QR-Code richten."
+
+[qr_status_waiting]
+other = "Warten auf QrScanner.scanImage() 10s Timeout..."
+
+[qr_status_loaded]
+other = "Mii geladen: "
+
+[qr_status_no_qr]
+other = "Kein QR-Code gefunden."
+
+[qr_status_error]
+other = "Fehler: "
+
+[qr_status_no_mii]
+other = "Dieser QR-Code enthält kein Mii."
+
+[qr_status_no_camera]
+other = "Keine Kamera gefunden oder Berechtigungen wurden nicht erteilt."
+
+[input_pnid_placeholder]
+other = "Pretendo Network ID erstellt auf pretendo.network."
+
+[label_force_refresh_pnid]
+other = "Aktualisierung der PNID ohne Cache erzwingen"
+
+[pretendo_network_description]
+other = "Pretendo Network ist eine Wiederbelebung der Nintendo Network und Miiverse Dienste für die Wii U und 3DS. Schauen Sie hier: "
+
+[mii_data_field_description]
+other = "Dieses Feld akzeptiert reguläre 96-Byte Base64 Mii-Daten, die Sie auf account.nintendo.net oder der Miiverse-API finden können."
+
+[change_language]
+other = "Sprache ändern"
+
+[file_photo_selection_prompt]
+other = "Sie können auch eine Datei oder ein Foto auswählen:"

@@ -72,10 +72,13 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if data was specified then this is allowed to be a GET
-	b64MiiData := r.URL.Query().Get("data")
+	// start parsing query params
+	query := r.URL.Query()
 
-	nnid := r.URL.Query().Get("nnid")
+	// if data was specified then this is allowed to be a GET
+	b64MiiData := query.Get("data")
+
+	nnid := query.Get("nnid")
 	// if there is no mii data, but there IS an nnid...
 	// (data takes priority over nnid)
 	if b64MiiData == "" && nnid != "" {
@@ -85,19 +88,23 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 				http.StatusBadRequest)
 			return
 		}
-		pid, err := fetchNNIDToPID(nnid)
+		// selects which api endpoint to use from apiBases
+		// 0 (default) is nintendo, 1 is pretendo
+		apiID, _ := strconv.Atoi(query.Get("api_id"))
+
+		pid, err := fetchNNIDToPID(nnid, apiID)
 		if err != nil {
 			// usually the resolution error means the nnid does not exist
 			// it can also just mean it cannot reach the account server or it failed
 			// it can also mean but i donot care enough to add differentiation logic
-			http.Error(w, err.Error(), http.StatusNotFound)
+			http.Error(w, "error resolving nnid to pid: "+err.Error(), http.StatusNotFound)
 			return
 		}
 
-		forceRefresh, _ := strconv.ParseBool(r.URL.Query().Get("force_refresh"))
-		b64MiiData, err = fetchMii(pid, forceRefresh)
+		forceRefresh, _ := strconv.ParseBool(query.Get("force_refresh"))
+		b64MiiData, err = fetchMii(pid, apiID, forceRefresh)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "error fetching mii after nnid to pid resolution: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -124,6 +131,7 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 	if b64MiiData != "" {
 		// if data is specified, which is base64-encoded
 		// NOTE: probably should be base64 url encoding
+		log.Println("b64 query param coming in:", b64MiiData)
 		miiData, err = base64.StdEncoding.DecodeString(b64MiiData)
 		if err != nil {
 			http.Error(w, "base64 query param decode error: "+err.Error(), http.StatusBadRequest)
@@ -175,7 +183,7 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Extract additional parameters from query or form
-	expressionStr := r.URL.Query().Get("expression")
+	expressionStr := query.Get("expression")
 	// for comparing in the map
 	expressionStr = strings.ToUpper(expressionStr)
 	expression, _ := expressionKeyMap[expressionStr]
@@ -187,13 +195,13 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 	// Assuming other parameters are passed as query parameters for simplicity
 
 	// TODO: VERIFY THESE!!!! ranges for ALL except RGB
-	width, _ := strconv.Atoi(r.URL.Query().Get("width"))
+	width, _ := strconv.Atoi(query.Get("width"))
 	if width < 1 {
 		http.Error(w, "specify a width", http.StatusBadRequest)
 		return
 	}
 	// will be scaled by either js or us tbd
-	scale, _ := strconv.Atoi(r.URL.Query().Get("scale"))
+	scale, _ := strconv.Atoi(query.Get("scale"))
 	if scale < 1 {
 		// default scale of 1, because scale of 0 will not work
 		//scale = 1
@@ -221,7 +229,7 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var mode uint8
-	modeStr := r.URL.Query().Get("type")
+	modeStr := query.Get("type")
 	switch modeStr {
 	case "all_body":
 		http.Error(w, "we are sorry but we cannot render your whole body mii waifu in 4k at this time....", http.StatusNotImplemented)
@@ -230,9 +238,9 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 		mode = 1
 	}
 	// default mode or any other value stays at 0
-	/*backgroundR, _ := strconv.Atoi(r.URL.Query().Get("backgroundR"))
-	backgroundG, _ := strconv.Atoi(r.URL.Query().Get("backgroundG"))
-	backgroundB, _ := strconv.Atoi(r.URL.Query().Get("backgroundB"))
+	/*backgroundR, _ := strconv.Atoi(query.Get("backgroundR"))
+	backgroundG, _ := strconv.Atoi(query.Get("backgroundG"))
+	backgroundB, _ := strconv.Atoi(query.Get("backgroundB"))
 	*/
 	// read bgcolor
 	// if there is # then read as hex
@@ -240,12 +248,15 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 	//var bgColor color.NRGBA
 	// set as default to initialize color in case func does not return
 	bgColor := targetKey
-	bgColorParam := r.URL.Query().Get("bgColor")
+	bgColorParam := query.Get("bgColor")
 	// only process bgColor if it is longer than 0
 	if len(bgColorParam) > 0 {
 		// this function will panic if length is 0
 		bgColor, err = ParseHexColorFast(bgColorParam)
-		if err != nil {
+		// if alpha is zero, that means it is transparent therefore you can set the default here
+		if err == errAlphaZero {
+			bgColor = targetKey
+		} else if err != nil {
 			http.Error(w, "bgColor format is wrong: "+err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -259,8 +270,8 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: NOT TO BE SPECIFIED BY USER, PRETTY MUCH ONLY HERE AS A PLACEHOLDER
 	/*
-		horizontalTotal, _ := strconv.Atoi(r.URL.Query().Get("horizontaltotal"))
-		horizontalChunk, _ := strconv.Atoi(r.URL.Query().Get("horizontalchunk"))
+		horizontalTotal, _ := strconv.Atoi(query.Get("horizontaltotal"))
+		horizontalChunk, _ := strconv.Atoi(query.Get("horizontalchunk"))
 	*/
 	// NOTE: you may have been able to get away with parsing uint but that is 64
 
@@ -423,6 +434,7 @@ restartSelect:
 		// Check if the center pixel is transparent
 		// CHECK BLANK IMAGE AND THEN JUMP BACK UHHHHH
 		// if the middle pixel is either the background color OR target transparency...
+		// TODO: ALSO CHECK A PIXEL AT THE CORNER. BOTTOM RIGHT CORNER? if that is NOT OUR BACKGROUND
 		if centerPixel == bgColorFromOutputForErrorDetection {
 			//if centerPixel.A == 0 {
 			log.Println("Warning: The pixel in the very center of the image is blank (transparent)!!!, jumping back and resending.")
@@ -499,6 +511,9 @@ func ParseHexColorFast(s string) (c color.NRGBA, err error) {
 		switch {
 		case b >= '0' && b <= '9':
 			return b - '0'
+		// NOTE: the official mii studio api DOES NOT accept lowercase
+		// ... however, this function is used for both studio format RGBA hex
+		// as well as traditional RGB hex so we will forgive it
 		case b >= 'a' && b <= 'f':
 			return b - 'a' + 10
 		case b >= 'A' && b <= 'F':
@@ -539,6 +554,7 @@ func ParseHexColorFast(s string) (c color.NRGBA, err error) {
 		if a > 0 {
 			c.R, c.G, c.B = r, g, b
 		} else {
+			// alpha is zero, meaning transparent
 			err = errAlphaZero
 		}
 	}

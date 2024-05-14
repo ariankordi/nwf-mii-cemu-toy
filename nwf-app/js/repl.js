@@ -58,7 +58,7 @@ function saveFile(filename, data, readyFunc, failFunc) {
     file.save(blob);
 }
 
-function 	saveBlob(filename, blob, readyFunc, failFunc) {
+function saveBlob(filename, blob, readyFunc, failFunc) {
     var file = new nwf.io.File(filename, dir);
 
     file.addEventListener(nwf.events.IOEvent.SAVE_COMPLETE, function(evt) {

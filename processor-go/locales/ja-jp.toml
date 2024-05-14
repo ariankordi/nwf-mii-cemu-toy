@@ -1,0 +1,243 @@
+[amiibo_instruction]
+other = "未定 / 未実装：現時点ではJSの実装が見つかりません。いずれ作成予定です。未定 未定 TODO TODO これには詳細な指示と説明が必要です..."
+
+[background_color_label]
+other = "背景色："
+
+[beta_warning]
+other = "これは最低限のベータ版PoCです。何も期待しないでください。あなたの洗濯をたたんだり、個人のオナホになったりすることを期待しないでください"
+
+[beta_warning_title]
+other = "もしこれを何とか見つけたなら"
+
+[button_from_camera]
+other = "カメラから"
+
+[button_open_amiibo_dump]
+other = "amiiboダンプを開く"
+
+[button_select_file_photo]
+other = "ファイルまたは写真を選択"
+
+[contact_info]
+other = "コメント、質問、懸念事項、助けが必要などがある場合は、遠慮なくDiscordで私に連絡してください！: \".arian.\" もしくはメール (またはiMessageでも可): ariankordi@ariankordi.net。翻訳に問題がある場合は、教えてください。新しい人と話すのが好きなので、遠慮なく。翻訳に限らず、この仕組みについて何でも聞いてください。ありがとう！"
+
+[data_placeholder]
+other = "account.nintendo.netからのBase64 Miiデータ、96バイト"
+
+[expression_anger]
+other = "怒り"
+
+[expression_anger_open_mouth]
+other = "怒り（口開け）"
+
+[expression_blink]
+other = "まばたき"
+
+[expression_blink_open_mouth]
+other = "まばたき（口開け）"
+
+[expression_frustrated]
+other = "いらいら"
+
+[expression_label]
+other = "表情："
+
+[expression_like_wink_left]
+other = "ウィンク（左目開き、笑顔）"
+
+[expression_like_wink_right]
+other = "ウィンク（右目開き、笑顔）"
+
+[expression_normal]
+other = "普通"
+
+[expression_normal_open_mouth]
+other = "普通（口開け）"
+
+[expression_smile]
+other = "笑顔"
+
+[expression_smile_open_mouth]
+other = "笑顔（口開け）"
+
+[expression_sorrow]
+other = "悲しみ"
+
+[expression_sorrow_open_mouth]
+other = "悲しみ（口開け）"
+
+[expression_surprise]
+other = "驚き"
+
+[expression_surprise_open_mouth]
+other = "驚き（口開け）"
+
+[expression_wink_left]
+other = "ウィンク（左目開き）"
+
+[expression_wink_left_open_mouth]
+other = "ウィンク（左目と口を開けて）"
+
+[expression_wink_right]
+other = "ウィンク（右目開き）"
+
+[expression_wink_right_open_mouth]
+other = "ウィンク（右目と口を開けて）"
+
+[file_input_label]
+other = "(96バイトのFFLStoreData Miiバイナリ形式)"
+
+[file_input_todo]
+other = "(TODO TODO ファイルの長さを検証し、CRC16とbase64を確認し、POSTに変換する必要があります。これは大変です)"
+
+[force_refresh_description]
+other = "古いバージョンのMiiを表示し続ける場合、このオプションでMiiを更新できます。他の問題を解決するわけではありません。"
+
+[force_refresh_label]
+other = "キャッシュなしでNNIDを強制更新"
+
+[github_prefix]
+other = "これのコード（または少なくともバックエンド）はGitHubにあります。是非チェックしてみてください："
+
+[heading_main]
+other = "Miiレンダラー（リアル）"
+
+[label_input_type]
+other = "Mii入力タイプ："
+
+[html_lang]
+other = "ja-JP"
+
+[load_error_message]
+other = "下の画像の読み込みに失敗しました!!（何が間違っていたのかを確認するために、新しいタブで画像を開くことをお勧めします）"
+
+[nnid_placeholder]
+other = "Wii Uまたは3DSで作成されたニンテンドーネットワークID。"
+
+[option_amiibo]
+other = "Amiiboデータ（未定）"
+
+[option_face]
+other = "顔"
+
+[option_face_only]
+other = "顔のみ"
+
+[option_file]
+other = "Wii U FFSDファイル"
+
+[option_nnid]
+other = "ニンテンドーネットワークID"
+
+[our_output_description]
+other = "上の画像はこのサイトでレンダリングされたものです！"
+
+[outputs_section_heading]
+other = "出力"
+
+[page_title]
+other = "Miiレンダラー（リアル）"
+
+[qrcode_instruction]
+other = "これは実装されておらず、何も機能しません。何もしないので、試さないでください。何もしないので、試しても無駄です。SEGGS。P*RN。AAAAAAAAAA"
+
+[resolution_label]
+other = "解像度："
+
+[resolution_slider_label]
+other = "解像度："
+
+[samples_section_heading]
+other = "サンプル"
+
+[scale_label]
+other = "アップスケール/アンチエイリアス、2倍/4倍で十分です："
+
+[studio_output_description]
+other = "上の画像はstudio.mii.nintendo.comからのものです。"
+
+[submit_button_text]
+other = "レンダリング中..."
+
+[transparent_checkbox_label]
+other = "透明？"
+
+[tutorial_message]
+other = "\"Mii入力タイプ\"をクリックしてMiiをインポートする方法を確認してください。その後、提出をクリックして開始します。"
+
+[type_label]
+other = "タイプ："
+
+[unfinished_warning]
+other = "非常に未完成。何か重要なものが欠けている場合は、教えてください。しかし、計画中かもしれないので、とにかく教えてください"
+
+
+[option_pnid]
+other = "Pretendo Network ID"
+
+[option_data]
+other = "Base64形式のMiiデータ"
+
+[option_qrcode]
+other = "MiiのQRコードをスキャン"
+
+[button_open_camera]
+other = "カメラを開く"
+
+[button_close_camera]
+other = "カメラを閉じる"
+
+[label_select_camera]
+other = "カメラを選択："
+
+[option_back_camera]
+other = "背面カメラ（デフォルト）"
+
+[option_front_camera]
+other = "フロント/ユーザー向けカメラ"
+
+[option_start_camera_more_options]
+other = "（より多くのオプションのためにカメラを開始）"
+
+[status_ready]
+other = "ステータス：スキャン準備完了。"
+
+[qr_status_scanning]
+other = "スキャニング中... QRコードにカメラを向けてください。"
+
+[qr_status_waiting]
+other = "QrScanner.scanImage()の10秒のタイムアウトを待っています..."
+
+[qr_status_loaded]
+other = "読み込まれたMii："
+
+[qr_status_no_qr]
+other = "QRコードが見つかりません。"
+
+[qr_status_error]
+other = "エラー："
+
+[qr_status_no_mii]
+other = "このQRコードにはMiiが含まれていません。"
+
+[qr_status_no_camera]
+other = "カメラが見つからないか、許可が与えられていません。"
+
+[input_pnid_placeholder]
+other = "pretendo.networkで作成されたPretendo Network ID。"
+
+[label_force_refresh_pnid]
+other = "キャッシュなしでPNIDを強制更新"
+
+[pretendo_network_description]
+other = "Pretendo Networkは、Wii Uと3DS用の任天堂ネットワークとMiiverseサービスの再開です。こちらをチェック："
+
+[mii_data_field_description]
+other = "このフィールドは、account.nintendo.netまたはMiiverse APIで見つかる96バイトの標準Base64 Miiデータを受け入れます。"
+
+[change_language]
+other = "言語を変更"
+
+[file_photo_selection_prompt]
+other = "ファイルまたは写真を選択することもできます："

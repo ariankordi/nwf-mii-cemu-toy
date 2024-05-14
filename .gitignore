@@ -2,13 +2,34 @@
 *.raw
 
 # binaries
-processor-go/processor-server
-processor-go/processor-server.exe
+processor-go/processor-go
+processor-go/processor-go.exe
 # dlv debug
 __debug_*
 # old versions
-processor-go/*-2024-03*
+#processor-go/*-2024-03*
+processor-go/OLD VERSIONS/
 
-# swap
-*.kate-swp
+# sqlite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# basically the entirety of fpng/not needed
+playground/*.c*
+playground/*.h*
+playground/*.o
+
+# shh
+processor-go/assets/warioland3/
+# compressed assets
+processor-go/assets/*.br
+processor-go/assets/*.gz
+processor-go/assets/vendor-js/*.br
+processor-go/assets/vendor-js/*.gz
+
+# swap, misc
+*swp
 .DS_Store
+.fuse_hidden*
+

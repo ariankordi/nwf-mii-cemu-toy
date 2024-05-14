@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>404 Not Found</title>
+        <style>
+            body,
+            html {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                background-color: #16181f;
+                overflow: hidden;
+            }
+
+            #fullscreen-image {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1;
+                opacity: 0;
+                transition: opacity 0.2s ease-in;
+            }
+
+            #fullscreen-image img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain; /* This will ensure the entire image fits within the screen without cropping */
+            }
+        </style>
+    </head>
+    <body>
+        <div id="fullscreen-image">
+            <img
+                src="https://external-preview.redd.it/J9g43By27_0rVykz9Zs9Hp8topQ4SHVN3UjTCZQToE4.png?auto=webp&s=88a9ddbd58c5892375db642bec08add248974b1b"
+                alt="who are you running from?"
+                id="background-image"
+            />
+        </div>
+        <audio
+            id="audio-element"
+            src="https://fi.zophar.net/soundfiles/gameboy-gbs/game-boy-camera/49%20BGM%20%2340.mp3"
+            preload="auto"
+        ></audio>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const audio = document.getElementById("audio-element");
+                const imageDiv = document.getElementById("fullscreen-image");
+                let audioPlayed = false; // Flag to track if audio has already been played
+
+                function tryPlayAudio() {
+                    if (!audioPlayed) {
+                        // Attempt to play the audio
+                        const playPromise = audio.play();
+
+                        if (playPromise !== undefined) {
+                            playPromise
+                                .then(() => {
+                                    // Autoplay started successfully
+                                    showAndFadeInImage();
+                                    audioPlayed = true;
+                                })
+                                .catch((error) => {
+                                    // Autoplay was prevented, waiting for user gesture
+                                    // We leave the setup as is, user interaction will attempt to play again
+                                });
+                        }
+                    }
+                }
+
+                function showAndFadeInImage() {
+                    imageDiv.style.opacity = 1;
+
+                    setTimeout(() => {
+                        // Further interaction after fade completes ensures audio plays if it hasn't started
+                        if (!audioPlayed) {
+                            audio.play();
+                            audioPlayed = true;
+                        }
+                    }, 400); // Wait for the fade-in to complete (2 seconds as per the CSS transition duration)
+                }
+
+                // Attach event listener for the initial user interaction across the whole body
+                document.body.addEventListener("click", () => {
+                    tryPlayAudio();
+                });
+
+                document.addEventListener("visibilitychange", function () {
+                    if (document.visibilityState === "visible" && audioPlayed) {
+                        audio.play();
+                    } else {
+                        audio.pause();
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

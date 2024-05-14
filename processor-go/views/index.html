@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="{{T "html_lang" }}">
+
+<head>
+    <title>{{T "page_title" }}</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+
+<body>
+    <h1>{{T "heading_main" }}</h1>
+    <!-- test if current language is not english -->
+    {{if and (ne (T "html_lang") "en-US") (ne (T "html_lang") "en-GB")}}
+    <h2 class="subtitle">Mii Renderer</h2>
+    {{end}}
+    <form action="render.png" method="GET">
+        <label for="input_type">{{T "label_input_type" }}</label>
+        <!-- only useful for backend when you are not using js bc js will disable the inputs -->
+        <select id="input_type" name="input_type">
+            <option value="nnid" selected>{{T "option_nnid" }}</option>
+            <!-- nnid above is default -->
+            <option value="pnid">{{T "option_pnid" }}</option>
+            <option value="data">{{T "option_data" }}</option>
+            <option value="file">{{T "option_file" }}</option>
+            <option value="qrcode">{{T "option_qrcode" }}</option>
+        </select>
+        <br>
+        <div id="file-group">
+            <input type="file" name="file" id="file" required><br>
+            <label class="small" for="file">{{T "file_input_label" }}</label>
+            <div>{{T "file_input_todo" }}</div>
+        </div>
+        <div id="qrcode-group">
+            <button id="start-camera" type="button">{{T "button_open_camera" }}</button>
+            <button id="stop-camera" type="button" style="display: none;">{{T "button_close_camera" }}</button>
+            <br>
+            <div id="qr-camera-group" style="display: none">
+                <label for="cam-list">{{T "label_select_camera" }}</label>
+                <select id="cam-list">
+                    <option value="environment" selected>{{T "option_back_camera" }}</option>
+                    <option value="user">{{T "option_front_camera" }}</option>
+                </select>
+                <video id="qr-video" style="max-width: 100%"></video>
+            </div>
+            {{T "file_photo_selection_prompt" }}
+            <input type="file" id="qr-file" accept="image/*">
+
+            <!-- QR code statuses -->
+            <div id="qr-status-ready" style="font-weight: bold;">{{T "status_ready" }}</div>
+            <div id="qr-status-scanning" style="font-weight: bold; color: blue; display: none;">{{T "qr_status_scanning" }}</div>
+            <div id="qr-status-waiting" style="font-weight: bold; color: orange; display: none;">{{T "qr_status_waiting" }}</div>
+            <div id="qr-status-loaded" style="font-weight: bold; color: green; display: none;">{{T "qr_status_loaded" }}<span></span></div>
+            <div id="qr-status-no-qr" style="font-weight: bold; color: red; display: none;">{{T "qr_status_no_qr" }}</div>
+            <div id="qr-status-error" style="font-weight: bold; color: red; display: none;">{{T "qr_status_error" }}<span></span></div>
+            <div id="qr-status-no-mii" style="font-weight: bold; color: red; display: none;">{{T "qr_status_no_mii" }}<span class="small"></span></div>
+            <div id="qr-status-no-camera" style="font-weight: bold; color: red; display: none;">{{T "qr_status_no_camera" }}</div>
+
+
+            <input type="hidden" name="data" id="qrcode">
+        </div>
+        <div id="nnid-group">
+            <!-- you may want to add labels to differentiate in the case of no js -->
+            <input id="nnid" name="nnid" class="long-field" type="text" placeholder="{{T "nnid_placeholder" }}"
+                maxlength="16" pattern="^[0-9a-zA-Z\-_.]+$" required>
+            <!-- tbd you should add or check minlength
+                   it was temporarily removed bc its annoying to see
+                  red before you are finished typing -->
+            <br>
+            <!-- TODO THIS SHOULD PROBABLY SEND A RANDOM NUMBER? with JS -->
+            <input type="checkbox" id="force_refresh" name="force_refresh" value="1">
+            <label for="force_refresh">{{T "force_refresh_label" }}</label>
+            <br><span class="small">{{T "force_refresh_description" }}</span>
+        </div>
+        <div id="pnid-group">
+            <!-- you may want to add labels to differentiate in the case of no js -->
+            <input id="pnid" name="nnid" class="long-field" type="text"
+                placeholder="{{T "input_pnid_placeholder" }}"
+                maxlength="16" pattern="^[0-9a-zA-Z\-_.]+$" required>
+            <!-- DIFFERENTIATES between NNID and PNID request -->
+            <input name="api_id" type="hidden" value="1">
+            <!-- tbd you should add or check minlength
+                   it was temporarily removed bc its annoying to see
+                  red before you are finished typing -->
+            <br>
+            <!-- TODO THIS SHOULD PROBABLY SEND A RANDOM NUMBER? with JS -->
+            <input type="checkbox" id="force_refresh_pnid" name="force_refresh" value="1">
+            <label for="force_refresh_pnid">{{T "label_force_refresh_pnid" }}</label>
+            <br><span class="small">{{T "force_refresh_description" }}</span>
+            <br><span>{{T "pretendo_network_description" }}
+              <a target="_blank" href="https://pretendo.network/">pretendo.network</a>
+            </span>
+        </div>
+        <div id="data-group">
+            <input class="long-field" type="text" name="data" placeholder="{{T "data_placeholder" }}" minlength="100"
+                maxlength="140" pattern="^(?=(.{4})*$)[A-Za-z0-9+\/]*={0,2}$" required
+                value="AwBgMIJUICvpzY4vnWYVrXy7ikd01AAAWR1KAGEAcwBtAGkAbgBlAAAAAAAAABw3EhB7ASFuQxwNZMcYAAgegg0AMEGzW4JtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAML0">
+            <!-- I have read that b64(96 bytes) will be exactly
+                128 bytes but we are allowing more headroom -->
+            <div>{{T "mii_data_field_description" }}</div>
+        </div>
+        <label for="type">{{T "type_label" }}</label>
+        <select name="type" id="type">
+            <option value="face">{{T "option_face" }}</option>
+            <option value="face_only">{{T "option_face_only" }}</option>
+            <!--<option value="all_body">Body</option>-->
+        </select><br>
+        <label for="expression">{{T "expression_label" }}</label>
+        <select name="expression" id="expression">
+            <option value="normal">{{T "expression_normal" }}</option>
+            <option value="smile">{{T "expression_smile" }}</option>
+            <option value="anger">{{T "expression_anger" }}</option>
+            <option value="sorrow">{{T "expression_sorrow" }}</option>
+            <option value="surprise">{{T "expression_surprise" }}</option>
+            <option value="blink">{{T "expression_blink" }}</option>
+            <option value="normal_open_mouth">{{T "expression_normal_open_mouth" }}</option>
+            <option value="smile_open_mouth">{{T "expression_smile_open_mouth" }}</option>
+            <option value="anger_open_mouth">{{T "expression_anger_open_mouth" }}</option>
+            <option value="surprise_open_mouth">{{T "expression_surprise_open_mouth" }}</option>
+            <option value="sorrow_open_mouth">{{T "expression_sorrow_open_mouth" }}</option>
+            <option value="blink_open_mouth">{{T "expression_blink_open_mouth" }}</option>
+            <option value="wink_left">{{T "expression_wink_left" }}</option>
+            <option value="wink_right">{{T "expression_wink_right" }}</option>
+            <option value="wink_left_open_mouth">{{T "expression_wink_left_open_mouth" }}</option>
+            <option value="wink_right_open_mouth">{{T "expression_wink_right_open_mouth" }}</option>
+            <option value="like_wink_left">{{T "expression_like_wink_left" }}</option>
+            <option value="like_wink_right">{{T "expression_like_wink_right" }}</option>
+            <option value="frustrated">{{T "expression_frustrated" }}</option>
+        </select><br>
+        <label for="resolution-slider">{{T "resolution_slider_label" }}</label>
+        <input id="resolution-slider" type="range" min="96" max="1080" step="2" value="270">
+        <input class="short-number" name="width" id="width" type="number" step="2" value="270">
+        <label for="width">px</label>
+        <br>
+        <label for="scale">{{T "scale_label" }}</label>
+        <input type="number" name="scale" id="scale" min="1" max="8" value="2">
+        <span>x</span><br>
+        <label for="bgColor">{{T "background_color_label" }}</label>
+        <input name="bgColor" id="bgColor" type="color" value="#00ff00">
+        <label for="transparent-checkbox">{{T "transparent_checkbox_label" }}</label>
+        <input id="transparent-checkbox" type="checkbox" checked disabled>
+        <br>
+        <input type="submit" data-value="{{T "submit_button_text" }}">
+    </form>
+    <hr>
+    <h3>{{T "outputs_section_heading" }}</h3>
+    <ul id="results" class="results">
+        <li id="tutorial">
+            <div style="color: plum">{{T "tutorial_message" }}</div>
+        </li>
+        <li class="load-error" style="display: none">
+            {{T "load_error_message" }}
+            <br>
+        </li>
+    </ul>
+    <hr>
+    <h3>{{T "samples_section_heading" }}</h3>
+    <ul id="samples" class="results">
+        <li>
+            <img src="assets/jasmine-sample-270.png" alt="Jasmine">
+            <div style="color: hotpink">{{T "our_output_description" }}</div>
+            <img src="assets/jasmine-studio-270.png"
+                not-src="https://studio.mii.nintendo.com/miis/image.png?data=000d142a303f434b717a7b84939ba6b2bbbec5cbc9d0dee6fd0109090f16746f757c77737e747c696b767d747b828d&type=face&expression=normal&width=270">
+            <div style="color: peachpuff">{{T "studio_output_description" }}</div>
+        </li>
+    </ul>
+    <script src="assets/script.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/gh/criteo-forks/qr-scanner/qr-scanner.umd.min.js"></script>-->
+    <!-- async because it's not needed to RENDER the page
+    ... but will be needed laaateerrrr.... -->
+    <script async src="assets/mii-qr-handler.js"></script>
+    <!-- NOTE: mii-qr-handler actually does depend on qr-scanner AND sjcl both to work -->
+    <script async src="assets/vendor-js/gh-criteo-forks-qr-scanner-qr-scanner.umd.min.js"></script>
+    <!-- TODO: this sjcl (manually crafted) bundle could be smaller if it contained less deps -->
+    <!-- NOTE: both jses took manually from jsdelivr -->
+    <script async src="assets/vendor-js/sjcl-108-min-plus-codecBytes.js"></script>
+
+    <hr>
+    <h2>{{T "beta_warning_title" }}</h2>
+    <ul style="padding: 0; text-align: left">
+        <li>{{T "beta_warning" }}</li>
+        <li>{{T "unfinished_warning" }}</li>
+        <li>{{T "github_prefix" }} <a href="https://github.com/ariankordi/nwf-mii-cemu-toy">ariankordi/nwf-mii-cemu-toy</a>
+        <li>{{T "contact_info" }}</li>
+    </ul>
+
+    <form method="GET">
+        <select id="language" name="locale.lang">
+            <!-- Conditionally set selected based on {{T "html_lang" }} -->
+            <option value="en-US" {{if eq (T "html_lang") "en-US" }}selected{{end}}>English (US)</option>
+            <option value="en-GB" {{if eq (T "html_lang") "en-GB" }}selected{{end}}>English (UK)</option>
+            <option value="es-419" {{if eq (T "html_lang") "es-419" }}selected{{end}}>Español (LATAM)</option>
+            <option value="pt-BR" {{if eq (T "html_lang") "pt-BR" }}selected{{end}}>Português (Brasil)</option>
+            <option value="fr-FR" {{if eq (T "html_lang") "fr-FR" }}selected{{end}}>Français</option>
+            <option value="de-DE" {{if eq (T "html_lang") "de-DE" }}selected{{end}}>Deutsch</option>
+            <option value="ja-JP" {{if eq (T "html_lang") "ja-JP" }}selected{{end}}>日本語 🥺</option>
+            <!-- Add more languages as needed, following the same pattern -->
+        </select>
+        <input type="submit" value="{{T "change_language" }}">
+    </form>
+
+
+</body>
+</html>

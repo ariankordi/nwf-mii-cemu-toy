@@ -1,0 +1,234 @@
+[amiibo_instruction]
+other = "TBD / NOT IMPLEMENTED: I CANNOT FIND A JS IMPLEMENTATION AT THE MOMENT. I WILL MAKE ONE AT SOME POINT. TBD TBD TODO TODO THIS ALSO NEEDS DETAILED DIRECTIONS AND AN EXPLANATION..."
+
+[background_color_label]
+other = "Background color:"
+
+[beta_warning]
+other = "this is a barebones beta PoC do not expect anything of it. do not expect it to fold your laundry and be your personal onaho"
+
+[beta_warning_title]
+other = "IF YOU SOMEHOW FOUND THIS"
+
+[button_open_amiibo_dump]
+other = "Open amiibo dump"
+
+[contact_info]
+other = "for comments, questions, concerns, help, etc. PLEASE don't hesitate to contact me on discord!: \".arian.\" or email (you can also iMessage this): ariankordi@ariankordi.net. i barely have any new messages per day so I welcome any new people, we can discuss anything even if it doesn't have to do with the site. :)"
+
+[data_placeholder]
+other = "Base64 Mii data, like from account.nintendo.net, 96 bytes"
+
+[expression_anger]
+other = "Anger"
+
+[expression_anger_open_mouth]
+other = "Anger (open mouth)"
+
+[expression_blink]
+other = "Blink"
+
+[expression_blink_open_mouth]
+other = "Blink (open mouth)"
+
+[expression_frustrated]
+other = "Frustrated"
+
+[expression_label]
+other = "Expression:"
+
+[expression_like_wink_left]
+other = "Wink (left eye open and smiling)"
+
+[expression_like_wink_right]
+other = "Wink (right eye open and smiling)"
+
+[expression_normal]
+other = "Normal"
+
+[expression_normal_open_mouth]
+other = "Normal (open mouth)"
+
+[expression_smile]
+other = "Smile"
+
+[expression_smile_open_mouth]
+other = "Smile (open mouth)"
+
+[expression_sorrow]
+other = "Sorrow"
+
+[expression_sorrow_open_mouth]
+other = "Sorrow (open mouth)"
+
+[expression_surprise]
+other = "Surprise"
+
+[expression_surprise_open_mouth]
+other = "Surprise (open mouth)"
+
+[expression_wink_left]
+other = "Wink (left eye open)"
+
+[expression_wink_left_open_mouth]
+other = "Wink (left eye and mouth open)"
+
+[expression_wink_right]
+other = "Wink (right eye open)"
+
+[expression_wink_right_open_mouth]
+other = "Wink (right eye and mouth open)"
+
+[file_input_label]
+other = "(96 byte FFLStoreData Mii binary format)"
+
+[file_input_todo]
+other = "(TODO TODO you need to VERIFY THE LENGTH, and the CRC16 of the file. AND the base64. AND convert to POST. THIS SUCKS)"
+
+[force_refresh_description]
+other = "This option will refresh your Mii if we keep showing you an old version. It will not solve any other problems."
+
+[force_refresh_label]
+other = "Force refresh NNID without cache"
+
+[github_prefix]
+other = "The code (or at least the backend) is available on GitHub. Feel free to check it out:"
+
+[heading_main]
+other = "Mii Renderer (REAL)"
+
+[label_input_type]
+other = "Mii input type:"
+
+[html_lang]
+other = "en-US"
+
+[load_error_message]
+other = "Image below failed to load!! (You probably want to open the image in a new tab to see what went wrong)"
+
+[nnid_placeholder]
+other = "Nintendo Network ID created on a Wii U or 3DS."
+
+[option_amiibo]
+other = "Amiibo data (TBD)"
+
+[option_face]
+other = "Face"
+
+[option_face_only]
+other = "Face Only"
+
+[option_file]
+other = "Wii U FFSD File"
+
+[option_nnid]
+other = "Nintendo Network ID"
+
+[our_output_description]
+other = "The image above is rendered by this site!"
+
+[outputs_section_heading]
+other = "Outputs"
+
+[page_title]
+other = "Mii Renderer (REAL)"
+
+[qrcode_instruction]
+other = "THIS IS NOT IMPLEMENTED AND WILL NOT WORK. IT WILL NOT DO ANYTHING. DO NOT TRY IT BECAUSE IT WILL DO NOTHING. SEGGS. P*RN. AAAAAAAAAA"
+
+[resolution_label]
+other = "Resolution:"
+
+[resolution_slider_label]
+other = "Resolution:"
+
+[samples_section_heading]
+other = "Samples"
+
+[scale_label]
+other = "Upscale/antialiasing, 2x/4x is fine:"
+
+[studio_output_description]
+other = "The image above is from studio.mii.nintendo.com."
+
+[submit_button_text]
+other = "Rendering..."
+
+[transparent_checkbox_label]
+other = "Transparent?"
+
+[tutorial_message]
+other = "Click \"Mii input type\" to see how you can import a Mii. Then, click Submit to begin."
+
+[type_label]
+other = "Type:"
+
+[unfinished_warning]
+other = "SUPER SUPER UNFINISHED. if there's something essential missing, PLEASE let me know but there's a chance I am already planning it but please let me know anyway"
+
+
+[option_pnid]
+other = "Pretendo Network ID"
+
+[option_data]
+other = "Base64 Mii data"
+
+[option_qrcode]
+other = "Scan Mii QR Code"
+
+[button_open_camera]
+other = "Open camera"
+
+[button_close_camera]
+other = "Close camera"
+
+[label_select_camera]
+other = "Select camera: "
+
+[option_back_camera]
+other = "Back Camera (default)"
+
+[option_front_camera]
+other = "User/Front Facing Camera"
+
+[status_ready]
+other = "Status: Ready to scan."
+
+[qr_status_scanning]
+other = "Scanning... You can point your camera at a QR code."
+
+[qr_status_waiting]
+other = "Waiting for QrScanner.scanImage() 10s timeout..."
+
+[qr_status_loaded]
+other = "Loaded Mii: "
+
+[qr_status_no_qr]
+other = "No QR code found."
+
+[qr_status_error]
+other = "Error: "
+
+[qr_status_no_mii]
+other = "This QR Code does not contain a Mii."
+
+[qr_status_no_camera]
+other = "No camera found, or permissions were not granted."
+
+[input_pnid_placeholder]
+other = "Pretendo Network ID created on pretendo.network."
+
+[label_force_refresh_pnid]
+other = "Force refresh PNID without cache"
+
+[pretendo_network_description]
+other = "Pretendo Network is a revival of the Nintendo Network and Miiverse services for the Wii U and 3DS. Check them out here: "
+
+[mii_data_field_description]
+other = "This field accepts 96-byte regular Base64 Mii data you can find on account.nintendo.net or the Miiverse API."
+
+[change_language]
+other = "Change Language"
+
+[file_photo_selection_prompt]
+other = "You can also select a file or photo:"
