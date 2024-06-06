@@ -81,10 +81,10 @@ form.addEventListener('submit', function(event) {
     var reader = new FileReader();
     reader.onload = function(e) {
       // When file is read, replace/add the 'data' parameter with the file content in Base64
-      var base64Data = e.target.result.split(',')[1]; // Remove the 'data:*/*;base64,' part
+      var base64Data = e.target.result.split(',')[1]; // Remove the 'data:;base64,' part
       var formData = new FormData(form);
       formData.set('data', base64Data); // Replace or add 'data' parameter with the file's Base64 content
-      var params = new URLSearchParams(formData).toString();
+      var params = new URLSearchParams([...formData.entries()]).toString();
       createAndAppendImage(params);
     };
     reader.readAsDataURL(fileInput.files[0]);
@@ -92,7 +92,7 @@ form.addEventListener('submit', function(event) {
   }
   // Proceed normally if no file is selected
   var formData = new FormData(form);
-  var params = new URLSearchParams(formData).toString();
+  var params = new URLSearchParams([...formData.entries()]).toString();
   createAndAppendImage(params);
 
   function createAndAppendImage(params) {
@@ -129,7 +129,7 @@ form.addEventListener('submit', function(event) {
       resultList.insertBefore(li, resultList.firstChild);
       // remove on successful load
       var tutorial = document.getElementById('tutorial');
-      tutorial && tutorial.remove();
+      tutorial && tutorial.parentElement.removeChild(tutorial);
     };
   }
 });

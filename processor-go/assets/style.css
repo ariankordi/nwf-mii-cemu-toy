@@ -94,14 +94,36 @@ ul {
 
 .fade-in {
   opacity: 0;
-  animation: fadeInAnimation cubic-bezier(0.165, 0.84, 0.44, 1) 0.4s;
+  -webkit-animation: fadeInAnimation 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  -moz-animation: fadeInAnimation 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  -o-animation: fadeInAnimation 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  animation: fadeInAnimation 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  -webkit-animation-fill-mode: forwards;
+  -moz-animation-fill-mode: forwards;
+  -o-animation-fill-mode: forwards;
   animation-fill-mode: forwards;
+}
+
+@-webkit-keyframes fadeInAnimation {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@-moz-keyframes fadeInAnimation {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@-o-keyframes fadeInAnimation {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes fadeInAnimation {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
 /*
 .fade-in {
   opacity: 0;
