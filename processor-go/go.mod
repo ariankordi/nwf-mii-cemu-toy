@@ -11,8 +11,14 @@ require (
 )
 
 require (
+	github.com/kaitai-io/kaitai_struct_go_runtime v0.10.0
+	golang.org/x/text v0.14.0
+)
+
+require (
 	codeberg.org/meta/gzipped/v2 v2.0.0-20231111234332-aa70c3194756 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/kevinpollet/nego v0.0.0-20211010160919-a65cd48cee43 // indirect
@@ -26,6 +32,7 @@ require (
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	gopkg.in/yaml.v2 v2.2.1 // indirect
+	gorm.io/driver/mysql v1.5.6 // indirect
 	gorm.io/driver/sqlite v1.5.5 // indirect
 	gorm.io/gorm v1.25.9 // indirect
 )

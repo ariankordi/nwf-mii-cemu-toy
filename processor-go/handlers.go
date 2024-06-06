@@ -20,6 +20,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/sigurn/crc16"
 
+	// for gorm.ErrRecordNotFound
+	"gorm.io/gorm"
+
 	"errors"
 	"io"
 	"time"
@@ -72,6 +75,8 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var miiData []byte
+
 	// start parsing query params
 	query := r.URL.Query()
 
@@ -92,27 +97,51 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 		// 0 (default) is nintendo, 1 is pretendo
 		apiID, _ := strconv.Atoi(query.Get("api_id"))
 
-		pid, err := fetchNNIDToPID(nnid, apiID)
-		if err != nil {
-			// usually the resolution error means the nnid does not exist
-			// it can also just mean it cannot reach the account server or it failed
-			// it can also mean but i donot care enough to add differentiation logic
-			http.Error(w, "error resolving nnid to pid: "+err.Error(), http.StatusNotFound)
-			return
+		if useNNIDToMiiMapForAPI0 && apiID == 0 {
+			// use nnid to mii map database instead...
+			nnid = normalizeNNID(nnid)
+
+			var mii NNIDToMiiDataMap
+			result := mdb.Model(&mii).Where("nnid = ?", nnid).First(&mii)
+
+			if result.Error != nil {
+				if result.Error == gorm.ErrRecordNotFound {
+					http.Error(w, "NNID not found in archive", http.StatusNotFound)
+				} else {
+					http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+				}
+				return
+			}
+
+			// use later
+			miiData = mii.Data
+		} else {
+			pid, err := fetchNNIDToPID(nnid, apiID)
+			if err != nil {
+				// usually the resolution error means the nnid does not exist
+				// it can also just mean it cannot reach the account server or it failed
+				// it can also mean but i donot care enough to add differentiation logic
+				http.Error(w, "error resolving nnid to pid: "+err.Error(), http.StatusNotFound)
+				return
+			}
+
+			forceRefresh, _ := strconv.ParseBool(query.Get("force_refresh"))
+
+			var miiResponse MiisResponse
+
+			miiResponse, err = fetchMii(pid, apiID, forceRefresh)
+			if err != nil {
+				http.Error(w, "error fetching mii after nnid to pid resolution: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			b64MiiData = miiResponse.Miis[0].Data
 		}
 
-		forceRefresh, _ := strconv.ParseBool(query.Get("force_refresh"))
-		b64MiiData, err = fetchMii(pid, apiID, forceRefresh)
-		if err != nil {
-			http.Error(w, "error fetching mii after nnid to pid resolution: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		// that function just set b64MiiData as mii data
 	}
 
 	// TODO SHOULD THIS GO BEFORE OR AFTER ??!?!?
-	if b64MiiData == "" && r.Method != "POST" {
+	if b64MiiData == "" && len(miiData) < 1 && r.Method != "POST" {
 		// TODO: replace this with something funny
 		http.Error(w, "you have to POST or specify data url param (TODO: replace this with something funny like skibidi toilet idk)", http.StatusMethodNotAllowed)
 		return
@@ -123,12 +152,12 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 	// ... but default is 1 mb which should be fine
 
 	// Read Mii data from the request. You could decide the format (base64 or binary) using a header or part of the request
-	var miiData []byte
+	//var miiData []byte // defining this earlier
 
 	var err error
 
 	// query param takes priority over body
-	if b64MiiData != "" {
+	if b64MiiData != "" && len(miiData) < 1 {
 		// if data is specified, which is base64-encoded
 		// NOTE: probably should be base64 url encoding
 		log.Println("b64 query param coming in:", b64MiiData)
@@ -137,7 +166,7 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "base64 query param decode error: "+err.Error(), http.StatusBadRequest)
 			return
 		}
-	} else {
+	} else if len(miiData) < 1 {
 		// read request body, instead of query param
 		// NOTE: LIMIT ON REQUEST BODY!!!!!!
 		reader := http.MaxBytesReader(w, r.Body, 2*1024*1024) // 2 KiB
@@ -485,7 +514,7 @@ restartSelect:
 			break
 		}
 		markersMutex.RUnlock()
-		rand.Seed(time.Now().UnixNano())
+		//rand.Seed(time.Now().UnixNano())
 		choices := []string{
 			"timed out we sorry please allow us to such your ditch i mean WHAT",
 			"timed out. we are sorry. for compensation we willl be providing peanits sucking service to you shortly 🙂",
