@@ -28,8 +28,11 @@ processor-go/assets/*.gz
 processor-go/assets/vendor-js/*.br
 processor-go/assets/vendor-js/*.gz
 
+# node_modules
+node_modules
+*.*tmp*
+
 # swap, misc
 *swp
 .DS_Store
 .fuse_hidden*
-

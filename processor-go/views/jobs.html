@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Jobs</title>
+        <style>
+            body,
+            html {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
+
+            #fullscreen-image {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1;
+            }
+
+            #fullscreen-image img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain; /* This will ensure the entire image fits within the screen without cropping */
+            }
+        </style>
+    </head>
+    <body>
+        <div id="fullscreen-image">
+            <img
+                src="/assets/jobs%20inc.png"
+                alt="Jobs"
+            />
+        </div>
+    </body>
+</html>

@@ -33,6 +33,14 @@ import (
 	"codeberg.org/meta/gzipped/v2"
 
 	//"slices" // for slices.Delete which did not even work
+
+	// gorm dialector type
+	// TODO:
+	// * do not require either database type
+	// ... or gorm in general if you don't even want it
+	"gorm.io/driver/sqlite"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 type renderResponse struct {
@@ -140,9 +148,12 @@ func createLocaleFuncMap(r *http.Request) (template.FuncMap, error) {
 	query := r.URL.Query()
 	//cookieLang := r.Cookie("lang")
 	cookieLang := query.Get("locale.lang")
+	// this is the language that opengraph clients
+	// will request for other languages, i think
+	ogLang := query.Get("fb_locale")
 	// Determine the language from the "Accept-Language" header.
 	acceptLang := r.Header.Get("Accept-Language")
-	Tfunc, err := i18n.Tfunc(cookieLang, acceptLang, defaultLang)
+	Tfunc, err := i18n.Tfunc(ogLang, cookieLang, acceptLang, defaultLang)
 	// Default to English if there's an error
 	if err != nil {
 		return nil, err
@@ -159,6 +170,28 @@ func main() {
 	flag.StringVar(&keyFile, "key", "", "TLS key file")
 	flag.StringVar(&hostnamesSniAllowArg, "hostnames", "", "Allowlist of hostnames for TLS SNI")
 
+	var (
+		// cache db connection string
+		nnasCacheDBDSN         string
+		// nnid to mii map connection string
+		// when nnid to mii map database is used...
+		// instead of nnid cache for api 0...
+		// ... instead it resolves the data directly in this db
+		nnidToMiiMapDBDSN      string
+		// table name for nnid to mii map
+		//nnidToMiiMapDBTabName  string
+
+		// connections which could be any db
+		nnasCacheDBConn        gorm.Dialector
+		nnidToMiiMapDBConn     gorm.Dialector
+	)
+	// TODO: hacky non descriptive or helpful name
+	const defaultNNASCacheDBDSN = "./nnas_cache_b4_multi.db"
+	flag.StringVar(&nnasCacheDBDSN, "cache-db", defaultNNASCacheDBDSN, "Cache DB SQLite location")
+	flag.StringVar(&nnidToMiiMapDBDSN, "nnid-to-mii-map-db", "", "MySQL connection string for NNID to Mii mapping database. If you exclude this, it will not be used. If it is the same as the cache DSN, it will use that database instead.")
+	// defined/used in nnid_fetch.go
+	flag.StringVar(&nnidToMiiDataTable, "nnid-to-mii-map-table", "nnid_to_mii_data_map", "NNID to Mii mapping table if it's not the default.")
+
 	// make default false on windows because it does not work currently
 	defaultEnableSuspending := true
 	if runtime.GOOS == "windows" {
@@ -168,8 +201,19 @@ func main() {
 	flag.BoolVar(&enableSuspending, "enable-suspending", defaultEnableSuspending, "Enable suspending the Cemu process to save CPU")
 	flag.Parse()
 
-	// TODO make this better, flags perhaps for different backends
-	initNNASCacheDB()
+	// NOTE: you can change these to use any db if you want
+	nnasCacheDBConn = sqlite.Open(nnasCacheDBDSN)
+	// nnid mii map db was passed in, so USE IT!!
+	if nnidToMiiMapDBDSN != "" {
+		if nnidToMiiMapDBDSN == nnasCacheDBDSN {
+			log.Println("nnid to mii map dsn is same as nnas cache dsn, using nnas cache database for nnid to mii map (may or may not actually work)")
+			nnidToMiiMapDBConn = nnasCacheDBConn
+		} else {
+			log.Println("using nnid to mii map mysql database")
+			nnidToMiiMapDBConn = mysql.Open(nnidToMiiMapDBDSN)
+		}
+	}
+	initNNIDFetchDatabases(nnasCacheDBConn, nnidToMiiMapDBConn)
 	http.HandleFunc("/mii_data/", miiHandler)
 
 	http.HandleFunc("/render.png", miiPostHandler)
@@ -216,6 +260,12 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/favicon.ico" {
 			http.ServeFile(w, r, "assets/favicon.ico")
+			return
+		}
+		// funny easter egg, shows an image of steve jobs
+		if r.URL.Path == "/jobs" {
+			w.Header().Set("Content-Type", "text/html")
+			http.ServeFile(w, r, "views/jobs.html")
 			return
 		}
 		if r.URL.Path != "/" {
