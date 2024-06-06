@@ -232,3 +232,6 @@ other = "Change Language"
 
 [file_photo_selection_prompt]
 other = "You can also select a file or photo:"
+
+[miis_from_nnids_prior_notice]
+other = "This will only show Miis from NNIDs as they were prior to April 8th, 2024."

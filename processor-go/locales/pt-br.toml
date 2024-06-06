@@ -236,3 +236,6 @@ other = "Mudar idioma"
 
 [file_photo_selection_prompt]
 other = "Você também pode selecionar um arquivo ou foto:"
+
+[miis_from_nnids_prior_notice]
+other = "Isso mostrará apenas Miis de NNIDs como eram antes de 8 de abril de 2024."

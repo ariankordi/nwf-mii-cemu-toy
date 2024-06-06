@@ -1,9 +1,9 @@
 # nwf-mii-cemu-toy
 Locally hosted Mii renderer using Nintendo Web Framework's Mii extension.
 
-TBD TBD, there's a better readme coming soon, and this is not ready for actual use.
+Not recommended for actual use as of now. Actual Mii renderer is planned soon using the [FFL decomp](https://github.com/ariankordi/FFL-Testing).
 ## unfinished
-Currently, the project is in a state where it's nearly done. It needs stability improvements and a frontend, but, I haven't found the motivation to work on it in weeks and I'm just posting it here out of guilt. Yikes, right?
+This project has been at a standstill since I realized some of its conceptual flaws and pretty much didn't feel like working on it any further, at least for the backend - the frontend I'll still update.
 ### directions
 Don't expect support from me for any part of this process, but here's a brief tutorial on how to get this up.
 * Craft a NWF app, copying `index.html` and `js` from `nwf-app` into your game's `content/app` folder.
@@ -29,12 +29,17 @@ If you want to experiment with extensions, please make sure the `nwf:version` ma
 * Run Cemu and the game, which should show some black text on a white background.
     - Make sure that your MLC has all files necessary for working with Miis. In other words, if games like New Super Mario Bros. U or anything else that uses Miis crashes, this will pretend to work but won't work.
 * If you want to play with the REPL, open `python playground/repl3.py`, using the game's `/user/common/temp/` folder (only exists when it is open), and try typing some JS commands after you've initialized it.
-* Compile and run `processor-go/processor-server.go`.
+* Compile and run `processor-go` by going into the directory, running `go build`, and then `./processor-go`.
     - This is the main web server for this service.
     - It only supports one request at a time.
 
-There is no frontend as of writing this, meaning it effectively only functions as an API.
-
 Example request: `/render.png?type=face&expression=normal&width=512&scale=2&bgColor=%2300ff00&data=data=AwFAMJoQIAAdfpgjULENrXILeXYnoAAAARxKAGEAcwBtAGkAbgBlAAAAAAAAABMhEwB7ASFuQxoNNMcWAAYSwgwAACmzU0hQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALs%2B`
 
+You should be able to see the frontend if you head to / on the web server.
+
 Usually Cemu will consume an excessive amount of CPU if you're not on Windows. The program should automatically suspend and unsuspend the Cemu process, making it look frozen when it's really not (it may also suspend Cemu while it's loading the game, so load it first and then open the server). As of writing, this suspending mechanism doesn't quite work on Windows - the process is able to be suspended but not unsuspended...
+
+### Localization Credits!!!
+Thanks to @GabIsAwesome for the Portuguese (Brazil) translation.
+
+~~All other translations are AI-generated.~~

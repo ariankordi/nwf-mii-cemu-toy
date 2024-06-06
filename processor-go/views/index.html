@@ -17,7 +17,7 @@
         <label for="input_type">{{T "label_input_type" }}</label>
         <!-- only useful for backend when you are not using js bc js will disable the inputs -->
         <select id="input_type" name="input_type">
-            <option value="nnid" selected>{{T "option_nnid" }}</option>
+            <option value="nnid" selected>{{T "option_nnid" }}🕰</option>
             <!-- nnid above is default -->
             <option value="pnid">{{T "option_pnid" }}</option>
             <option value="data">{{T "option_data" }}</option>
@@ -60,16 +60,18 @@
         </div>
         <div id="nnid-group">
             <!-- you may want to add labels to differentiate in the case of no js -->
-            <input id="nnid" name="nnid" class="long-field" type="text" placeholder="{{T "nnid_placeholder" }}"
+            <input id="nnid" name="nnid" class="long-field" type="text" placeholder="{{T "nnid_placeholder" }}" value="JasmineChlora"
                 maxlength="16" pattern="^[0-9a-zA-Z\-_.]+$" required>
             <!-- tbd you should add or check minlength
                    it was temporarily removed bc its annoying to see
                   red before you are finished typing -->
             <br>
             <!-- TODO THIS SHOULD PROBABLY SEND A RANDOM NUMBER? with JS -->
-            <input type="checkbox" id="force_refresh" name="force_refresh" value="1">
+            <!--<input type="checkbox" id="force_refresh" name="force_refresh" value="1">
             <label for="force_refresh">{{T "force_refresh_label" }}</label>
             <br><span class="small">{{T "force_refresh_description" }}</span>
+            -->
+            <h3 style="margin: 0;">{{T "miis_from_nnids_prior_notice" }}</h3>
         </div>
         <div id="pnid-group">
             <!-- you may want to add labels to differentiate in the case of no js -->
@@ -77,7 +79,9 @@
                 placeholder="{{T "input_pnid_placeholder" }}"
                 maxlength="16" pattern="^[0-9a-zA-Z\-_.]+$" required>
             <!-- DIFFERENTIATES between NNID and PNID request -->
-            <input name="api_id" type="hidden" value="1">
+            <!-- TODO: disabled for now because this interferes when js is not there to disable it by default
+            but perhaps all other fields should be disabled by default -->
+            <input name="api_id" type="hidden" value="1" disabled>
             <!-- tbd you should add or check minlength
                    it was temporarily removed bc its annoying to see
                   red before you are finished typing -->
