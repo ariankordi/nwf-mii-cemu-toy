@@ -1,11 +1,13 @@
 package main
 
 import (
-	"net/http"
 	"crypto/tls"
+	"math/rand"
+	"net/http"
 
 	"encoding/json"
 	"encoding/xml"
+
 	// encode binary (mii map) to base64
 	"encoding/base64"
 
@@ -22,9 +24,9 @@ import (
 	// PURELY just for nnid cache
 	"gorm.io/gorm"
 
+	"bytes"
 	"processor-go/mii2studio"
 	"unicode/utf16"
-	"bytes"
 )
 
 var apiBases = map[int]string{
@@ -44,12 +46,12 @@ var apiBases = map[int]string{
 type NNIDToPID struct {
 	// nnid is normalized in the database
 	NNID  string `gorm:"primaryKey;column:nnid"`
-	PID   int64  `gorm:"not null;column:pid"`
+	PID   uint64 `gorm:"not null;column:pid"`
 	APIID int    `gorm:"primaryKey;not null"`
 }
 type CachedResult struct {
 	ID             uint      `gorm:"primaryKey"`
-	PID            int64     `gorm:"index;not null;column:pid"`
+	PID            uint64    `gorm:"index;not null;column:pid"`
 	Result         string    `gorm:"not null"`
 	DateFetched    time.Time `gorm:"not_null"`
 	DateLastLatest time.Time `gorm:"not_null"`
@@ -61,10 +63,14 @@ var nnidToMiiDataTable string
 
 // alternative to fetching mii data, intended for nintendo
 type NNIDToMiiDataMap struct {
-	Nnid         string    `gorm:"primaryKey;size:16;column:nnid"`
+	// NOTE: this value is int(11), signed in masscsv2db-june.py
+	PID            uint64    `gorm:"primaryKey;column:pid"`
+	// nnid to search with
+	NormalizedNNID string    `gorm:"size:16;column:normalized_nnid;index:ix_normalized_nnid"`
+	NNID           string    `gorm:"size:16;column:nnid"`
 	// FFSD / sizeof FFLStoreData
-	Data         []byte    `gorm:"size:96; not null"`
-	LastModified time.Time `gorm:"not null"`
+	Data           []byte    `gorm:"size:96;not null"`
+	LastModified   time.Time `gorm:"not null;default:current_timestamp"`
 }
 func (NNIDToMiiDataMap) TableName() string {
 	// otherwise gorm will pluralize it and
@@ -102,7 +108,7 @@ type MiisResponse struct {
 		// also excluding ID, Primary
 		Data   string `xml:"data" json:"data"`
 		Name   string `xml:"name" json:"name"`
-		PID    int64  `xml:"pid" json:"pid"`
+		PID    uint64 `xml:"pid" json:"pid"`
 		UserID string `xml:"user_id" json:"user_id"`
 	} `xml:"mii" json:"miis"`
 }
@@ -171,7 +177,7 @@ func nnasHTTPRequest(endpoint string, apiID int) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
-func fetchNNIDToPID(nnid string, apiID int) (int64, error) {
+func fetchNNIDToPID(nnid string, apiID int) (uint64, error) {
 	var mapping NNIDToPID
 
 	normalizedNNID := normalizeNNID(nnid)
@@ -198,14 +204,14 @@ func fetchNNIDToPID(nnid string, apiID int) (int64, error) {
 		return 0, fmt.Errorf("NNID does not exist")
 	}
 
-	pid, _ := strconv.ParseInt(response.MappedIDs[0].OutID, 10, 64)
+	pid, _ := strconv.ParseUint(response.MappedIDs[0].OutID, 10, 64)
 	// place normalized NNID in the database
 	cdb.Create(&NNIDToPID{NNID: normalizedNNID, PID: pid, APIID: apiID})
 
 	return pid, nil
 }
 
-func fetchMii(pid int64, apiID int, forceRefresh bool) (MiisResponse, error) {
+func fetchMii(pid uint64, apiID int, forceRefresh bool) (MiisResponse, error) {
 	now := time.Now()
 	var cache CachedResult
 
@@ -274,61 +280,6 @@ func fetchMii(pid int64, apiID int, forceRefresh bool) (MiisResponse, error) {
 	return miiResponse, fmt.Errorf("no Mii data found")
 }
 
-/*
-func miiHandler(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) != 3 || parts[2] == "" {
-		http.Error(w, "usage: /mii_data/(nnid here)", http.StatusBadRequest)
-		return
-	}
-	nnid := parts[2]
-
-	query := r.URL.Query()
-	apiID, _ := strconv.Atoi(query.Get("api_id"))
-
-	if useNNIDToMiiMapForAPI0 && apiID == 0 {
-		// use nnid to mii map database instead...
-		nnid = normalizeNNID(nnid)
-
-		var miiData NNIDToMiiDataMap
-		result := mdb.Model(&miiData).Where("nnid = ?", nnid).First(&miiData)
-
-		if result.Error != nil {
-			if result.Error == gorm.ErrRecordNotFound {
-				http.Error(w, "NNID not found in archive", http.StatusNotFound)
-			} else {
-				http.Error(w, result.Error.Error(), http.StatusInternalServerError)
-			}
-			return
-		}
-
-		// set last modified date as Last-Modified http header
-		w.Header().Set("Last-Modified", miiData.LastModified.Format(http.TimeFormat))
-		// encode to base64
-		w.Write([]byte(base64.StdEncoding.EncodeToString(miiData.Data)))
-		return
-	}
-
-	forceRefresh, _ := strconv.ParseBool(query.Get("force_refresh"))
-
-	pid, err := fetchNNIDToPID(nnid, apiID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	}
-
-	miiResponse, err := fetchMii(pid, apiID, forceRefresh)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	// fetchMii should guarantee that this exists
-	miiData := miiResponse.Miis[0].Data
-
-	w.Write([]byte(miiData))
-}
-*/
-
 // inspired by NNIDLT, kind of
 type ResponseData struct {
 	Data          string `json:"data"`
@@ -337,7 +288,7 @@ type ResponseData struct {
 		LastModified *time.Time `json:"last_modified,omitempty"`
 	} `json:"images"`
 	Name          string `json:"name"`
-	PID           int64  `json:"pid"`
+	PID           uint64 `json:"pid"`
 	StudioURLData string `json:"studio_url_data"`
 	UserID        string `json:"user_id"`
 }
@@ -347,6 +298,7 @@ func miiHandler(w http.ResponseWriter, r *http.Request) {
 	header.Set("Access-Control-Allow-Private-Network", "true")
 	header.Set("Access-Control-Allow-Origin", "*")
 	header.Set("Access-Control-Allow-Headers", "Accept")
+	header.Set("Access-Control-Expose-Headers", "Last-Modified")
 	if r.Method == "OPTIONS" {
 		// do not return any text on OPTIONS and preflight headers were already sent
 		return
@@ -373,7 +325,7 @@ func miiHandler(w http.ResponseWriter, r *http.Request) {
 	if useNNIDToMiiMapForAPI0 && apiID == 0 {
 		nnid = normalizeNNID(nnid)
 		var miiData NNIDToMiiDataMap
-		result := mdb.Model(&miiData).Where("nnid = ?", nnid).First(&miiData)
+		result := mdb.Model(&miiData).Where("normalized_nnid = ?", nnid).First(&miiData)
 		if result.Error != nil {
 			if result.Error == gorm.ErrRecordNotFound {
 				http.Error(w, "NNID not found in archive", http.StatusNotFound)
@@ -385,42 +337,16 @@ func miiHandler(w http.ResponseWriter, r *http.Request) {
 
 		// nnidtomiidatamap contains binary data
 		miiDataBytes = &miiData.Data
+		lastModified = miiData.LastModified
 
 		// only set other props if this is NOT simple octet stream
 		if !acceptsOctetStream {
 			data.StudioURLData = mii2studio.Map3DSStoreDataToStudioURLData(miiData.Data)
 
-			lastModified = miiData.LastModified
-			data.UserID = nnid
-			// NOTE: NAME IS NOT DEFINED, YET.
-			// TODO: separate out offset and length or the whole thing into another function
-			// Extract the UTF-16 LE slice
-			utf16Data := miiData.Data[0x1a : 0x1a+0x14]
+			data.PID = miiData.PID
+			data.UserID = miiData.NNID
 
-			// Convert UTF-16 LE to a slice of uint16
-			u16s := make([]uint16, 10)
-			for i := 0; i < len(u16s); i++ {
-				u16s[i] = uint16(utf16Data[2*i]) | uint16(utf16Data[2*i+1])<<8
-			}
-			// Find the null terminator
-			nullIndex := -1
-			for i, v := range u16s {
-				if v == 0 {
-				nullIndex = i
-				break
-				}
-			}
-			// If null terminator is found, slice up to that point
-			if nullIndex != -1 {
-				u16s = u16s[:nullIndex]
-			}
-			// Convert UTF-16 to UTF-8
-			runes := utf16.Decode(u16s)
-			var utf8Buf bytes.Buffer
-			for _, r := range runes {
-				utf8Buf.WriteRune(r)
-			}
-			data.Name = utf8Buf.String()
+			data.Name = utf16LESliceToString(miiData.Data[0x1a : 0x1a+0x14])
 		}
 	} else {
 		// force refresh is actually only applicable if not using archive
@@ -457,20 +383,27 @@ func miiHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// set last modified only if it is defined
+	if !lastModified.IsZero() {
+		w.Header().Set("Last-Modified", lastModified.Format(http.TimeFormat))
+	}
 	// octet stream = need raw bytes
 	if acceptsOctetStream {
 		// decode mii data in bytes, from base64 data if we need it
 		if miiDataBytes == nil {
+			// if miiDataBytes is a nil pointer...
 			var err error
-			*miiDataBytes, err = base64.StdEncoding.DecodeString(data.Data)
+			// ...then allocate it here, instead of dereferencing nil
+			var miiDataBytesTmp []byte
+			// note this could be done without any of the above
+			// if only this didn't return err too
+			miiDataBytesTmp, err = base64.StdEncoding.DecodeString(data.Data)
 			if err != nil {
 				http.Error(w, "Failed to decode base64 data", http.StatusInternalServerError)
 				return
 			}
-		}
-		// set last modified only if it is defined
-		if !lastModified.IsZero() {
-			w.Header().Set("Last-Modified", lastModified.Format(http.TimeFormat))
+			miiDataBytes = &miiDataBytesTmp
+
 		}
 		w.Write(*miiDataBytes)
 	} else {
@@ -487,11 +420,113 @@ func miiHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to marshal JSON", http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(response)
 	}
 }
 
+func utf16LESliceToString(utf16Data []byte) string {
+	// Convert UTF-16 LE to a slice of uint16
+	u16s := make([]uint16, 10)
+	for i := 0; i < len(u16s); i++ {
+		u16s[i] = uint16(utf16Data[2*i]) | uint16(utf16Data[2*i+1])<<8
+	}
+	// Find the null terminator
+	nullIndex := -1
+	for i, v := range u16s {
+		if v == 0 {
+			nullIndex = i
+			break
+		}
+	}
+	// If null terminator is found, slice up to that point
+	if nullIndex != -1 {
+		u16s = u16s[:nullIndex]
+	}
+	// Convert UTF-16 to UTF-8
+	runes := utf16.Decode(u16s)
+	var utf8Buf bytes.Buffer
+	for _, r := range runes {
+		utf8Buf.WriteRune(r)
+	}
+	return utf8Buf.String()
+}
+
+func randomMiiHandler(w http.ResponseWriter, r *http.Request) {
+	header := w.Header()
+	header.Set("Access-Control-Allow-Private-Network", "true")
+	header.Set("Access-Control-Allow-Origin", "*")
+	header.Set("Access-Control-Allow-Headers", "Accept")
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	query := r.URL.Query()
+	seedStr := query.Get("seed")
+
+	// should be zero if it is invalid, otherwise int64
+	seed, err := strconv.ParseInt(seedStr, 10, 64)
+	if seedStr != "" && err != nil {
+		http.Error(w, "seed has to be a number", http.StatusBadRequest)
+		return
+	}
+
+	// Fetch min and max pid
+	var minPID, maxPID uint64
+	// TODO TODO: GET TABLE NAME IN A BETTER WAY
+	// TODO: SHOULD ALSO BE INITIALIZED AT BEGINNING MAYBE IDK
+	mdb.Raw("SELECT MIN(pid) FROM " + nnidToMiiDataTable).Scan(&minPID)
+	mdb.Raw("SELECT MAX(pid) FROM " + nnidToMiiDataTable).Scan(&maxPID)
+
+	randomPIDInput := int64(maxPID-minPID)
+	var randomPIDPre int64
+	if seed != 0 {
+		// use seed if it is valid
+		rng := rand.New(rand.NewSource(seed))
+		randomPIDPre = rng.Int63n(randomPIDInput)
+	} else {
+		randomPIDPre = rand.Int63n(randomPIDInput)
+	}
+	randomPID := minPID + uint64(randomPIDPre)
+
+	var miiData NNIDToMiiDataMap
+	result := mdb.Where("pid >= ?", randomPID).Order("pid ASC").First(&miiData)
+	if result.Error != nil {
+		http.Error(w, "Failed to retrieve random NNID", http.StatusInternalServerError)
+		return
+	}
+
+
+	acceptsOctetStream := r.Header.Get("Accept") == "application/octet-stream"
+
+	var data ResponseData
+
+	// only set other props if this is NOT simple octet stream
+	if !acceptsOctetStream {
+		data.StudioURLData = mii2studio.Map3DSStoreDataToStudioURLData(miiData.Data)
+
+		data.PID = miiData.PID
+		data.UserID = miiData.NNID
+
+		data.Name = utf16LESliceToString(miiData.Data[0x1a : 0x1a+0x14])
+	}
+
+	w.Header().Set("Last-Modified", miiData.LastModified.Format(http.TimeFormat))
+	// octet stream = need raw bytes
+	if acceptsOctetStream {
+		w.Write(miiData.Data)
+	} else {
+		// consuming base64 mii data...
+		data.Data = base64.StdEncoding.EncodeToString(miiData.Data)
+		response, err := json.Marshal(data)
+		if err != nil {
+			http.Error(w, "Failed to marshal JSON", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Write(response)
+	}
+}
 
 /*
 func main() {

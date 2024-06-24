@@ -215,6 +215,7 @@ func main() {
 	}
 	initNNIDFetchDatabases(nnasCacheDBConn, nnidToMiiMapDBConn)
 	http.HandleFunc("/mii_data/", miiHandler)
+	http.HandleFunc("/mii_data_random", randomMiiHandler)
 
 	http.HandleFunc("/render.png", miiPostHandler)
 	go nfpSubmitSemThread()
