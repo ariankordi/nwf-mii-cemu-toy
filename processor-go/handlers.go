@@ -102,7 +102,7 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 			nnid = normalizeNNID(nnid)
 
 			var mii NNIDToMiiDataMap
-			result := mdb.Model(&mii).Where("nnid = ?", nnid).First(&mii)
+			result := mdb.Model(&mii).Where("normalized_nnid = ?", nnid).First(&mii)
 
 			if result.Error != nil {
 				if result.Error == gorm.ErrRecordNotFound {
