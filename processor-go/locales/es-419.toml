@@ -80,7 +80,7 @@ other = "Guiño (ojo derecho abierto)"
 other = "Guiño (ojo derecho y boca abiertos)"
 
 [file_input_label]
-other = "(Formato binario de Mii FFLStoreData de 96 bytes)"
+other = "(Formato binario de Mii CFL/FFLStoreData de 96 bytes)"
 
 [file_input_todo]
 other = "(TBD TODO necesitas VERIFICAR LA LONGITUD, y el CRC16 del archivo. Y el base64. Y convertir a POST. ESTO ES UN PROBLEMA)"
@@ -119,7 +119,7 @@ other = "Cara"
 other = "Solo cara"
 
 [option_file]
-other = "Archivo FFSD de Wii U"
+other = "Archivo Mii FFSD/CFSD"
 
 [option_nnid]
 other = "Nintendo Network ID"
@@ -238,3 +238,51 @@ other = "También puede seleccionar un archivo o una foto:"
 
 [miis_from_nnids_prior_notice]
 other = "Esto solo mostrará Miis de NNIDs tal como estaban antes del 8 de abril de 2024."
+
+[data_error_size_mismatch]
+other = "Estos datos no tienen 96 bytes de longitud. ¿Estás seguro de que es FFLStoreData? Tamaño: "
+
+[data_error_invalid_checksum]
+other = "Estos datos tienen un checksum CRC16 inválido."
+
+[data_error_size_0]
+other = "Los datos están vacíos. ¡Vaya!"
+
+[data_error_size_92_part1]
+other = "Los datos no tienen 96 bytes de longitud (FFLStoreData), pero el tamaño de los datos (92) coincide con FFLiMiiDataOfficial (también conocido como \".3dsmii\" o \"CFCD/FFCD\")."
+
+[data_error_size_92_part2]
+other = "Esto es solo FFLStoreData pero sin un checksum CRC16, así que por favor añádelo."
+
+[data_error_size_88_part1]
+other = "Los datos no tienen 96 bytes de longitud (FFLStoreData), pero el tamaño de los datos (88) coincide con nn::mii::CharInfo (también conocido como \".charinfo\", AFLiNXCharInfo, visto en títulos de Switch)."
+
+[data_error_size_88_part2]
+other = "Estos son datos de Mii destinados a Switch, por lo que necesitarás convertirlos en consecuencia."
+
+[data_error_size_88_part3]
+other = "Si tienes acceso al SDK de Switch, primero que nada, llámame por favor."
+
+[data_error_size_88_part4]
+other = "Pero si lo tienes, puedes usar la siguiente función para convertir CharInfo a nn::mii::Ver3StoreData, también conocido como FFLStoreData/CFLStoreData."
+
+[data_error_size_72_part1]
+other = "Los datos no tienen 96 bytes de longitud (FFLStoreData), pero el tamaño de los datos (72) coincide con FFLiMiiDataCore (también conocido como \"core data\" pero no es lo mismo que CharInfo)."
+
+[data_error_size_72_part2]
+other = "Esto es casi lo mismo que FFLStoreData pero sin un CRC16 ni un nombre de creador, por lo que necesitarás convertirlos en consecuencia."
+
+[data_error_size_74_part1]
+other = "Los datos no tienen 96 bytes de longitud (FFLStoreData), pero el tamaño de los datos (74) coincide con RFLCharData/FFLiMiiDataOfficialRFL (también conocido como \".mii\")."
+
+[data_error_size_74_part2]
+other = "Estos son datos de Mii destinados a Wii, por lo que necesitarás convertirlos en consecuencia."
+
+[above_input_type_choose_text]
+other = "Elige NNID, PNID, Código QR, o datos:"
+
+[button_random_nnid]
+other = "NNID Aleatorio"
+
+[last_modified]
+other = "Última modificación: "

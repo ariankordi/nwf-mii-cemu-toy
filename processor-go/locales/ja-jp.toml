@@ -86,7 +86,7 @@ other = "ウィンク（右目開き）"
 other = "ウィンク（右目と口を開けて）"
 
 [file_input_label]
-other = "(96バイトのFFLStoreData Miiバイナリ形式)"
+other = "(96バイトのCFL/FFLStoreData Miiバイナリ形式)"
 
 [file_input_todo]
 other = "(TODO TODO ファイルの長さを検証し、CRC16とbase64を確認し、POSTに変換する必要があります。これは大変です)"
@@ -125,7 +125,7 @@ other = "顔"
 other = "顔のみ"
 
 [option_file]
-other = "Wii U FFSDファイル"
+other = "Mii FFSD/CFSDファイル"
 
 [option_nnid]
 other = "ニンテンドーネットワークID"
@@ -244,3 +244,52 @@ other = "ファイルまたは写真を選択することもできます："
 
 [miis_from_nnids_prior_notice]
 other = "これは2024年4月8日以前のNNIDsのMiisのみを表示します。"
+
+
+[data_error_size_mismatch]
+other = "このデータは96バイト長ではありません。FFLStoreDataであることを確認しましたか？ サイズ: "
+
+[data_error_invalid_checksum]
+other = "このデータは無効なCRC16チェックサムを持っています。"
+
+[data_error_size_0]
+other = "データが空です。おっと！"
+
+[data_error_size_92_part1]
+other = "データは96バイト長ではありません（FFLStoreData）が、データのサイズ（92）はFFLiMiiDataOfficial（別名 \".3dsmii\" または \"CFCD/FFCD\"）に一致します。"
+
+[data_error_size_92_part2]
+other = "これはCRC16チェックサムがないFFLStoreDataに過ぎないので、それを追加してください。"
+
+[data_error_size_88_part1]
+other = "データは96バイト長ではありません（FFLStoreData）が、データのサイズ（88）はnn::mii::CharInfo（別名 \".charinfo\"、AFLiNXCharInfo、Switchタイトルに見られる）に一致します。"
+
+[data_error_size_88_part2]
+other = "これはSwitch用のMiiデータであるため、適切に変換する必要があります。"
+
+[data_error_size_88_part3]
+other = "Switch SDKにアクセスできる場合は、まず私に連絡してください。"
+
+[data_error_size_88_part4]
+other = "しかし、アクセスできる場合は、以下の関数を使用してCharInfoをnn::mii::Ver3StoreData、別名FFLStoreData/CFLStoreDataに変換できます。"
+
+[data_error_size_72_part1]
+other = "データは96バイト長ではありません（FFLStoreData）が、データのサイズ（72）はFFLiMiiDataCore（別名「core data」、CharInfoとは異なります）に一致します。"
+
+[data_error_size_72_part2]
+other = "これはほぼFFLStoreDataと同じですが、CRC16や作成者名がないため、適切に変換する必要があります。"
+
+[data_error_size_74_part1]
+other = "データは96バイト長ではありません（FFLStoreData）が、データのサイズ（74）はRFLCharData/FFLiMiiDataOfficialRFL（別名 \".mii\"）に一致します。"
+
+[data_error_size_74_part2]
+other = "これはWii用のMiiデータであるため、適切に変換する必要があります。"
+
+[above_input_type_choose_text]
+other = "NNID、PNID、QRコード、またはデータを選択してください："
+
+[button_random_nnid]
+other = "ランダムなNNID"
+
+[last_modified]
+other = "最終更新日： "

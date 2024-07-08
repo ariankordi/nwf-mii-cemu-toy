@@ -5,6 +5,49 @@
     <title>{{T "page_title" }}</title>
     <link rel="stylesheet" href="assets/style.css">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <!-- I THINK THIS DESCRIPTION SHOULD BE THE SAME AS ONE ON THE PAGE?
+    <meta name="description" content="This site renders Mii images
+    in Wii U style, with many expressions to choose from.
+    It accepts Mii data from your old NNID (Wii U/3DS account),
+    a Mii QR Code, or even your Pretendo Network ID.">
+    -->
+    <meta name="keywords" content="
+    Mii, Mii Renderer, Mii QR, Mii Image,
+    Mii Data, Mii Base64,
+    3DS, Wii U,
+    Check Mii Out Channel, Mii Grabber,
+    Arian Kordi, PF2M, Closedverse, Arian Closedverse, Pretendo,
+    Miiverse, Nintendo Network ID">
+
+    <!-- THESE KEYWORDS ARE FOR FUTURE USE, TODO EXPAND UPON THEM LATER
+    <meta name="keywords" content="
+    Mii, Mii Renderer, Wii Character, Mii Character, Mii QR, Mii Image,
+    Mii Data, Mii Base64, FFSD File, CFSD File, FFLStoreData, CFLStoreData,
+    Wii RFL, 3DS CFL, Wii U FFL, Miitomo AFL, Switch nn::mii,
+    Wii, 3DS, Switch, Wii U, Miitomo, Tomodachi Life, Miitopia,
+    Mii Maker, Mii Channel, Mii Creator, Mii Studio, Mii Library,
+    Check Mii Out Channel, Mii Grabber, Miiverse Clone, Miiverse Revival,
+    Arian Kordi, PF2M, Closedverse, Arian Closedverse, Pretendo,
+    WiiConnect24, Miiverse, Nintendo Network, NNID,
+    Nintendo Account ID, 3DS Account, Wii U Account">
+    -->
+
+    <meta property="og:locale" content="en_US">
+    <!-- NOTE ALL SUPPORTED LOCALES GO HERE -->
+    <meta property="og:locale:alternate" content="en_GB">
+    <meta property="og:locale:alternate" content="es_419">
+    <meta property="og:locale:alternate" content="ja_JP">
+    <meta property="og:locale:alternate" content="fr_FR">
+    <meta property="og:locale:alternate" content="de_DE">
+    <meta property="og:locale:alternate" content="pt_BR">
+    <meta property="og:url" content="https://mii-unsecure.ariankordi.net/">
+    <meta property="og:image" content="https://mii-unsecure.ariankordi.net/assets/page-screenshot-2024-07-07.png">
+    <!-- TODO BELOW IS TO BE LOCALIZED -->
+    <meta property="og:title" content="{{T "page_title" }}"/>
+    <meta property="og:description" content="That's right, we will render your Miis with our bare f*cking hands.
+    This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*ss Mii Studio API. NO. This runs on OUR MACHINES. On MY COMPUTER. On MY very own Microsoft Corporation Surface Laptop 4, Intel® Core™ i7-1185G7, 16 GB RAM, 256 GB SSD, Matte Black">
+
 </head>
 
 <body>
@@ -14,6 +57,7 @@
     <h2 class="subtitle">Mii Renderer</h2>
     {{end}}
     <form action="render.png" method="GET">
+        <div style="color: plum">{{T "above_input_type_choose_text" }}</div>
         <label for="input_type">{{T "label_input_type" }}</label>
         <!-- only useful for backend when you are not using js bc js will disable the inputs -->
         <select id="input_type" name="input_type">
@@ -26,9 +70,10 @@
         </select>
         <br>
         <div id="file-group">
-            <input type="file" name="file" id="file" required><br>
-            <label class="small" for="file">{{T "file_input_label" }}</label>
-            <div>{{T "file_input_todo" }}</div>
+            <input type="file" name="file" id="file" required>
+            <br><label class="small" for="file">{{T "file_input_label" }}</label>
+            <input type="hidden" name="data" id="file-data" required>
+            <div id="file-loaded" style="font-weight: bold; color: green; display: none;">{{T "qr_status_loaded" }}<span></span></div>
         </div>
         <div id="qrcode-group">
             <button id="start-camera" type="button">{{T "button_open_camera" }}</button>
@@ -61,7 +106,8 @@
         <div id="nnid-group">
             <!-- you may want to add labels to differentiate in the case of no js -->
             <input id="nnid" name="nnid" class="long-field" type="text" placeholder="{{T "nnid_placeholder" }}" value="JasmineChlora"
-                maxlength="16" pattern="^[0-9a-zA-Z\-_.]+$" required>
+                maxlength="16" pattern="^[0-9a-zA-Z\-_.]+$" required
+                data-action="/mii_data/">
             <!-- tbd you should add or check minlength
                    it was temporarily removed bc its annoying to see
                   red before you are finished typing -->
@@ -71,7 +117,27 @@
             <label for="force_refresh">{{T "force_refresh_label" }}</label>
             <br><span class="small">{{T "force_refresh_description" }}</span>
             -->
+            <button id="random-nnid" type="button" data-action="/mii_data_random">{{T "button_random_nnid" }}</button>
+            <div id="nnid-loaded" style="font-weight: bold; color: green; display: none;">{{T "qr_status_loaded" }}<span></span></div>
+            <div id="nnid-last-modified" style="font-weight: bold; display: none;">{{T "last_modified" }}<span></span></div>
             <h3 style="margin: 0;">{{T "miis_from_nnids_prior_notice" }}</h3>
+            <!--<details>
+              <summary style="font-weight: bold;">
+                This will only show Miis from NNIDs
+                as they were prior to April 8th, 2024.
+                Read more here.
+              </summary>
+              <p>As of 2024-05-09 (possibly earlier), Nintendo shut down the API endpoint
+              that this site and everything else, including Miiverse clone, used to
+              look up Mii images from NNIDs.</p>
+              <p>Personally, I had kinda sorta somewhat prepared for this. On April 8th,
+              the day of the Nintendo Network game server shutdown, I went ahead
+              and archived every Mii from the Friend Presence server.</p>
+              <p>Do you know how the Wii U Friends List shows Miis from any NNID,
+              regardless of whether they were made on a 3DS or if it was even deleted?
+              It's not getting it through /v1/api/miis, because that will not
+              show you deleted NNIDs.</p>
+            </details>-->
         </div>
         <div id="pnid-group">
             <!-- you may want to add labels to differentiate in the case of no js -->
@@ -95,13 +161,47 @@
             </span>
         </div>
         <div id="data-group">
-            <input class="long-field" type="text" name="data" placeholder="{{T "data_placeholder" }}" minlength="100"
+            <input class="long-field" id="data" type="text" name="data"
+                placeholder="{{T "data_placeholder" }}" minlength="100"
                 maxlength="140" pattern="^(?=(.{4})*$)[A-Za-z0-9+\/]*={0,2}$" required
                 value="AwBgMIJUICvpzY4vnWYVrXy7ikd01AAAWR1KAGEAcwBtAGkAbgBlAAAAAAAAABw3EhB7ASFuQxwNZMcYAAgegg0AMEGzW4JtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAML0">
             <!-- I have read that b64(96 bytes) will be exactly
                 128 bytes but we are allowing more headroom -->
-            <div>{{T "mii_data_field_description" }}</div>
+            <span>{{T "mii_data_field_description" }}</span>
+            <div id="data-loaded" style="font-weight: bold; color: green; display: none;">{{T "qr_status_loaded" }}<span></span></div>
         </div>
+        <!-- these errors are used for file and data thus is being placed here -->
+        <div id="data-error-size-mismatch" style="font-weight: bold; color: red; display: none;">
+            {{T "data_error_size_mismatch" }}<span></span></div>
+        <div id="data-error-invalid-checksum" style="font-weight: bold; color: red; display: none;">
+            {{T "data_error_invalid_checksum" }}</div>
+
+        <div id="data-error-size-0" style="font-weight: bold; color: red; display: none;">{{T "data_error_size_0" }}</div>
+
+        <div id="data-error-size-92" style="font-weight: bold; color: red; display: none;">
+            {{T "data_error_size_92_part1" }}<br>{{T "data_error_size_92_part2" }}</div>
+
+        <div id="data-error-size-88" style="font-weight: bold; color: red; display: block;">
+            {{T "data_error_size_88_part1" }}<br>{{T "data_error_size_88_part2" }}<br>{{T "data_error_size_88_part3" }}<br>{{T "data_error_size_88_part4" }}<br><code>nn::mii::Database::Convert(CharInfo* pInfo,const Ver3StoreData&amp; ver3StoreData)</code></div>
+
+        <div id="data-error-size-72" style="font-weight: bold; color: red; display: none;">
+            {{T "data_error_size_72_part1" }}<br>{{T "data_error_size_72_part2" }}</div>
+
+        <div id="data-error-size-74" style="font-weight: bold; color: red; display: none;">
+            {{T "data_error_size_74_part1" }}<br>{{T "data_error_size_74_part2" }}</div>
+
+        <!-- 76 is RFLStoreData but this is rarely used
+        even in data transmission, seems to only be used
+        in the Mii Channel database and MKW ghosts among others -->
+        <!-- switch mii store data types:
+        nn::mii::detail::CoreDataRaw - 48 bytes
+          * size from method nn::mii::detail::CoreDataRaw::SetDefault
+            - contains memset for 0x30 = size is 0x30/48
+        nn::mii::detail::StoreDataRaw - 70 bytes, i think
+          * size from method nn::mii::detail::StoreDataRaw::UpdateDeviceCrc
+            - writes 16 bits to 0x44 = size is 0x46/70
+            - but MiidataSdb kaitai struct accepts 68 too...
+        -->
         <label for="type">{{T "type_label" }}</label>
         <select name="type" id="type">
             <option value="face">{{T "option_face" }}</option>
@@ -147,7 +247,7 @@
         <input type="hidden" id="errorSessionID" name="errorSessionID">
         <input type="hidden" id="errorRequestID" name="errorRequestID">
 
-        <input type="submit" data-value="{{T "submit_button_text" }}">
+        <input id="submit" type="submit" data-value="{{T "submit_button_text" }}">
     </form>
     <hr>
     <h3>{{T "outputs_section_heading" }}</h3>
@@ -220,6 +320,8 @@
 
     <meta name="arianhandler-html-path" content="assets/warioland3/complicated.html">
 
+    <!-- padding after language select form -->
+    <br>
 
 </body>
 </html>
