@@ -55,7 +55,7 @@ function decryptAesCcm(encryptedData) {
   return finalResult;
 }
 
-const fileInput = document.getElementById('qr-file');
+const qrFileInput = document.getElementById('qr-file');
 const video = document.getElementById('qr-video');
 const camList = document.getElementById('cam-list');
 const videoGroup = document.getElementById('qr-camera-group');
@@ -159,7 +159,7 @@ camList.addEventListener('change', event => {
   scanner.setCamera(event.target.value);
 });
 
-fileInput.addEventListener('change', event => {
+qrFileInput.addEventListener('change', event => {
   const file = event.target.files[0];
   scanFile(file);
 });
@@ -270,7 +270,7 @@ function crc16(data) {
   let msb = crc >> 8;
   let lsb = crc & 0xFF;
 
-  for (let i = 0; i < data.length; i++) {
+  for(let i = 0; i < data.length; i++) {
     let c = data[i];
     let x = c ^ msb;
     x ^= (x >> 4);
