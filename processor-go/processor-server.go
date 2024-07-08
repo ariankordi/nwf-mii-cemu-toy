@@ -104,7 +104,7 @@ func main() {
 	flag.StringVar(&nnidToMiiDataTable, "nnid-to-mii-map-table", "nnid_to_mii_data_map", "NNID to Mii mapping table if it's not the default.")
 
 	upstreamAddr := flag.String("upstream", "localhost:12346", "Upstream TCP server address")
-	//flag.BoolVar(&useXForwardedFor, "use-x-forwarded-for", false, "Use X-Forwarded-For header for client IP")
+	flag.BoolVar(&useXForwardedFor, "use-x-forwarded-for", false, "Use X-Forwarded-For header for client IP")
 
 	flag.Parse()
 
@@ -129,7 +129,7 @@ func main() {
 
 
 	http.HandleFunc("/error_reporting", sseErrorHandler)
-	http.HandleFunc("/render.png", renderImage)
+	http.HandleFunc("/render.png", logRequest(http.HandlerFunc(renderImage)).ServeHTTP)
 
 	// add frontend
 	http.Handle("/assets/", http.StripPrefix("/assets/", gzipped.FileServer(gzipped.Dir("assets"))))
