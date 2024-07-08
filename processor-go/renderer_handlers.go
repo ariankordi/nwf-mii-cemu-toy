@@ -263,8 +263,29 @@ func sendRenderRequest(request RenderRequest) ([]byte, error) {
 //const ssaaFactor = 2
 
 // renderImage handles the /render.png endpoint
-func renderImage(w http.ResponseWriter, r *http.Request) {
+func renderImage(ow http.ResponseWriter, r *http.Request) {
+	// NOTE: permissive config here is somewhat temporary
+	header := ow.Header()
+	header.Set("Access-Control-Allow-Private-Network", "true")
+	header.Set("Access-Control-Allow-Origin", "*")
+	header.Set("Access-Control-Allow-Methods", "POST")
+	header.Set("Access-Control-Allow-Headers", "Content-Type")
+	if r.Method == "OPTIONS" {
+		// do not return any text on OPTIONS and preflight headers were already sent
+		return
+	}
+
 	query := r.URL.Query()
+
+	// use original response writer
+	w := ow
+	errorSessionID := query.Get("errorSessionID")
+	errorRequestID := query.Get("errorRequestID")
+	if errorSessionID != "" && errorRequestID != "" {
+		// ... unless error parameters are available
+		w = &errorResponseWriter{ResponseWriter: w, sessionID: errorSessionID, requestID: errorRequestID}
+	}
+
 	data := query.Get("data")
 	typeStr := query.Get("type")
 	if typeStr == "" {
@@ -407,6 +428,10 @@ func renderImage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "bgColor format is wrong: "+err.Error(), http.StatusBadRequest)
 			return
 		}
+	}
+	// HACK, HACK, TODO TODO REMOVE: force green to transparent
+	if bgColor.R == 0 && bgColor.G == 0xFF && bgColor.B == 0 {
+		bgColor.A = 0
 	}
 
 	// Determining if only the head should be rendered
@@ -572,7 +597,7 @@ now, PickupCharInfo calls:
 	}
 
 	// Sending the image as a PNG response
-	w.Header().Set("Content-Type", "image/png")
+	header.Set("Content-Type", "image/png")
 	png.Encode(w, img)
 }
 
@@ -657,4 +682,66 @@ func getExpressionFlag(input string) int {
 		return flag
 	}
 	return FFL_EXPRESSION_FLAG_NORMAL
+}
+
+// adapted from https://stackoverflow.com/a/54200713
+var errInvalidFormat = errors.New("invalid format")
+var errAlphaZero = errors.New("alpha component is zero")
+
+func ParseHexColorFast(s string) (c color.NRGBA, err error) {
+	// initialize A to full opacity
+	c.A = 0xff
+
+	hexToByte := func(b byte) byte {
+		switch {
+		case b >= '0' && b <= '9':
+			return b - '0'
+		// NOTE: the official mii studio api DOES NOT accept lowercase
+		// ... however, this function is used for both studio format RGBA hex
+		// as well as traditional RGB hex so we will forgive it
+		case b >= 'a' && b <= 'f':
+			return b - 'a' + 10
+		case b >= 'A' && b <= 'F':
+			return b - 'A' + 10
+		}
+		err = errInvalidFormat
+		return 0
+	}
+
+	if s[0] == '#' {
+		switch len(s) {
+		case 7: // #RRGGBB
+			c.R = hexToByte(s[1])<<4 + hexToByte(s[2])
+			c.G = hexToByte(s[3])<<4 + hexToByte(s[4])
+			c.B = hexToByte(s[5])<<4 + hexToByte(s[6])
+		// TODO: is this format really necessary to have?
+		case 4: // #RGB
+			c.R = hexToByte(s[1]) * 17
+			c.G = hexToByte(s[2]) * 17
+			c.B = hexToByte(s[3]) * 17
+		default:
+			err = errInvalidFormat
+		}
+	} else {
+		// Assuming the string is 8 hex digits representing RGBA without '#'
+		if len(s) != 8 {
+			err = errInvalidFormat
+			return
+		}
+
+		// Parse RGBA
+		r := hexToByte(s[0])<<4 + hexToByte(s[1])
+		g := hexToByte(s[2])<<4 + hexToByte(s[3])
+		b := hexToByte(s[4])<<4 + hexToByte(s[5])
+		a := hexToByte(s[6])<<4 + hexToByte(s[7])
+
+		// Only set RGB if A > 0
+		c.R, c.G, c.B, c.A = r, g, b, a
+		if a > 0 {
+			// alpha is zero, meaning transparent
+			err = errAlphaZero
+		}
+	}
+
+	return
 }

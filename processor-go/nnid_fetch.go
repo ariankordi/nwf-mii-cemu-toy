@@ -476,6 +476,11 @@ func randomMiiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !useNNIDToMiiMapForAPI0 {
+		http.Error(w, "this endpoint is not available because the nnid to mii map database isn't being used sorry", http.StatusServiceUnavailable)
+		return
+	}
+
 	// Fetch min and max pid
 	var minPID, maxPID uint64
 	// TODO TODO: GET TABLE NAME IN A BETTER WAY

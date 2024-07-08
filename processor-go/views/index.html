@@ -238,10 +238,15 @@
         <label for="scale">{{T "scale_label" }}</label>
         <input type="number" name="scale" id="scale" min="1" max="8" value="2">
         <span>x</span><br>
-        <label for="bgColor">{{T "background_color_label" }}</label>
-        <input name="bgColor" id="bgColor" type="color" value="#00ff00">
-        <label for="transparent-checkbox">{{T "transparent_checkbox_label" }}</label>
-        <input id="transparent-checkbox" type="checkbox" checked disabled>
+        <div><s>
+            <label for="bgColor">{{T "background_color_label" }}</label>
+            <input name="bgColor" id="bgColor" type="hidden" value="#00ff00">
+            <label for="transparent-checkbox">{{T "transparent_checkbox_label" }}</label>
+            <input id="transparent-checkbox" type="checkbox" checked disabled>
+        </s>
+        </div>
+        (as of july 8 background colors are not working sorry)
+
         <br>
 
         <input type="hidden" id="errorSessionID" name="errorSessionID">
