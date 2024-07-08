@@ -385,7 +385,7 @@ func miiHandler(w http.ResponseWriter, r *http.Request) {
 
 	// set last modified only if it is defined
 	if !lastModified.IsZero() {
-		w.Header().Set("Last-Modified", lastModified.Format(http.TimeFormat))
+		header.Set("Last-Modified", lastModified.Format(http.TimeFormat))
 	}
 	// octet stream = need raw bytes
 	if acceptsOctetStream {
@@ -420,7 +420,7 @@ func miiHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to marshal JSON", http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		header.Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(response)
 	}
 }
@@ -461,6 +461,11 @@ func randomMiiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set the headers to prevent caching
+	header.Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+	header.Set("Pragma", "no-cache")
+	header.Set("Expires", "0")
+
 	query := r.URL.Query()
 	seedStr := query.Get("seed")
 
@@ -500,6 +505,9 @@ func randomMiiHandler(w http.ResponseWriter, r *http.Request) {
 	acceptsOctetStream := r.Header.Get("Accept") == "application/octet-stream"
 
 	var data ResponseData
+	var lastModified time.Time
+
+	lastModified = miiData.LastModified
 
 	// only set other props if this is NOT simple octet stream
 	if !acceptsOctetStream {
@@ -511,11 +519,17 @@ func randomMiiHandler(w http.ResponseWriter, r *http.Request) {
 		data.Name = utf16LESliceToString(miiData.Data[0x1a : 0x1a+0x14])
 	}
 
-	w.Header().Set("Last-Modified", miiData.LastModified.Format(http.TimeFormat))
+	// set last modified only if it is defined
+	if !lastModified.IsZero() {
+		header.Set("Last-Modified", lastModified.Format(http.TimeFormat))
+	}
 	// octet stream = need raw bytes
 	if acceptsOctetStream {
 		w.Write(miiData.Data)
 	} else {
+		if !lastModified.IsZero() {
+			data.Images.LastModified = &lastModified
+		}
 		// consuming base64 mii data...
 		data.Data = base64.StdEncoding.EncodeToString(miiData.Data)
 		response, err := json.Marshal(data)
@@ -523,7 +537,7 @@ func randomMiiHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to marshal JSON", http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		header.Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(response)
 	}
 }

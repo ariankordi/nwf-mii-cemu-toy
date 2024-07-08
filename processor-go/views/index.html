@@ -143,6 +143,10 @@
         <label for="transparent-checkbox">{{T "transparent_checkbox_label" }}</label>
         <input id="transparent-checkbox" type="checkbox" checked disabled>
         <br>
+
+        <input type="hidden" id="errorSessionID" name="errorSessionID">
+        <input type="hidden" id="errorRequestID" name="errorRequestID">
+
         <input type="submit" data-value="{{T "submit_button_text" }}">
     </form>
     <hr>
@@ -178,6 +182,18 @@
     <!-- NOTE: both jses took manually from jsdelivr -->
     <script async src="assets/vendor-js/sjcl-108-min-plus-codecBytes.js"></script>
 
+    <!-- just a joke and should not inhibit loading
+    of any other scripts ples -->
+    <script>
+    // funny pranke
+    console.log('%cDO NOT PASTE ANYTHING HERE!!!!!!!!!!',
+                        'color: red; font-size: 90px;');
+    console.log('%cHowever, if you know JavaScript, you should go here: '
+                        // links to an image of steve jobs
+                        + location.protocol + '//' + location.host + '/jobs',
+            'color: lightskyblue; font-size: 40px;');
+    </script>
+
     <hr>
     <h2>{{T "beta_warning_title" }}</h2>
     <ul style="padding: 0; text-align: left">
@@ -201,6 +217,8 @@
         </select>
         <input type="submit" value="{{T "change_language" }}">
     </form>
+
+    <meta name="arianhandler-html-path" content="assets/warioland3/complicated.html">
 
 
 </body>

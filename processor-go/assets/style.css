@@ -70,7 +70,7 @@ ul {
 .load-error {
   color: red;
   border-radius: 5px;
-  max-width: 40vw;
+  max-width: 80vw;
   border: 1px solid red;
 }
 .long-field {
@@ -84,11 +84,14 @@ ul {
 .long-field:required:invalid:not(:placeholder-shown) {
   background-color: lightpink;
 }
-/* mobile */
+/* desktop (mobile is default) */
 @media (width > 40em) {
   body {
-      max-width: 26em;
-      margin: 0 auto;
+    max-width: 26em;
+    margin: 0 auto;
+  }
+  .load-error {
+    max-width: 40vw;
   }
 }
 

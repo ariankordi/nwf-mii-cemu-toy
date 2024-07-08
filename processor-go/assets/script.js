@@ -59,6 +59,48 @@ function updateMaxResolution() {
   resolutionNumber.max = maxResolution;
 }
 
+// Session ID is set once and used for the lifespan of the page
+var sessionIDInput = document.getElementById('errorSessionID');
+// Set a unique request ID each time a request is sent
+var requestIDInput = document.getElementById('errorRequestID');
+sessionIDInput.value = 'sess-' + Math.random().toString(36); // Generate a random session ID once
+
+var errorResponses = new Map(); // Temporarily store error messages
+
+var evtSource = null;
+// Function to ensure the SSE connection is established
+function connectErrorReportingSSE() {
+  // Only attempt to connect if not already connected or in an attempt to reconnect
+  if(!evtSource || evtSource.readyState === EventSource.CLOSED) {
+    evtSource = new EventSource('/error_reporting?errorSessionID='
+                + sessionIDInput.value);
+
+    evtSource.onmessage = function(event) {
+      // Handle incoming error messages by updating the DOM or storing them temporarily
+      var error = JSON.parse(event.data);
+      //console.log(error)
+      var listItem = document.querySelector('[data-error-request-id="' + error.requestID + '"]');
+      if (listItem) {
+        listItem.textContent = error.message;
+        var listImg = listItem.querySelector('img');
+        if(listImg) listItem.parentElement.removeChild(listImg);
+      } else {
+        errorResponses.set(error.requestID, error.message);
+      }
+      if (errorResponses.size > 10) {
+        // Ensure we don't exceed 10 stored messages
+        var firstKey = errorResponses.keys().next().value;
+        errorResponses.delete(firstKey);
+      }
+    };
+
+    evtSource.onerror = function() {
+      console.error('EventSource failed. No further attempts to reconnect will be made unless a request is sent.');
+      evtSource.close();
+    };
+  }
+}
+
 // Listen for changes in the scale input to update max resolution
 scaleInput.addEventListener('input', updateMaxResolution);
 
@@ -69,11 +111,46 @@ updateMaxResolution();
 var form = document.forms[0];
 var resultList = document.getElementById('results');
 
+var submitButton = form.querySelector('input[type=submit]');
+
 form.addEventListener('submit', function(event) {
   event.preventDefault(); // Prevent the default form submission via HTTP
-  var submitButton = form.querySelector('input[type=submit]');
   submitButton.disabled = true; // Disable the button
   submitButton.setAttribute('value', submitButton.getAttribute('data-value'));
+
+  if(nnid.value.replace(/[_\-.]/g, '').toLowerCase() === 'aknet10'
+     && arianHandler !== undefined) {
+    try {
+      arianHandler();
+    } catch(error) {
+      /*
+      var errorDiv = document.createElement('div');
+      errorDiv.textContent = error.message;
+      errorDiv.style.color = 'red'; // Set text color to red
+      document.body.insertBefore(errorDiv, document.body.firstChild); // Insert at the beginning of the body
+      submitButton.disabled = false; // Re-enable the button
+      submitButton.removeAttribute('value');
+      */
+      var errorLiOriginal = document.getElementsByClassName('load-error');
+      // get last error li, the original
+      var errorLi = errorLiOriginal[errorLiOriginal.length - 1].cloneNode(true);
+      errorLi.textContent = error.message;
+      errorLi.style.display = '';
+
+      submitButton.disabled = false; // Re-enable the button
+      submitButton.removeAttribute('value');
+
+      resultList.insertBefore(errorLi, resultList.firstChild); // Insert at the top
+    } finally {
+      return;
+    }
+  }
+
+  // Generate a new request ID for each submission
+  requestIDInput.value = 'req-' + Math.random().toString(36).substr(2, 9);
+
+  // Ensure SSE is connected when sending a request
+  connectErrorReportingSSE();
 
   // Check if file input is present and has a file
   var fileInput = document.getElementById('file');
@@ -90,6 +167,7 @@ form.addEventListener('submit', function(event) {
     reader.readAsDataURL(fileInput.files[0]);
     return;
   }
+
   // Proceed normally if no file is selected
   var formData = new FormData(form);
   var params = new URLSearchParams([...formData.entries()]).toString();
@@ -105,6 +183,7 @@ form.addEventListener('submit', function(event) {
     var img = document.createElement('img');
     img.src = imageUrl;
     img.onerror = function(e) {
+      /*
       // Handle image loading error
       var errorLiOriginal = document.getElementsByClassName('load-error');
       // get last error li, the original
@@ -115,6 +194,25 @@ form.addEventListener('submit', function(event) {
       submitButton.removeAttribute('value');
 
       errorLi.appendChild(img); // Append the <img> inside of the the error li
+      resultList.insertBefore(errorLi, resultList.firstChild); // Insert at the top
+      */
+      // Handle image loading error
+      var errorLiOriginal = document.getElementsByClassName('load-error');
+      // get last error li, the original
+      var errorLi = errorLiOriginal[errorLiOriginal.length - 1].cloneNode(true);
+      // Generic error message unless overwritten by SSE message
+      errorLi.setAttribute('data-error-request-id', requestIDInput.value);
+      var errorResponse = errorResponses.get(requestIDInput.value);
+      if(errorResponse !== undefined)
+         errorLi.textContent = errorResponse;
+
+      errorLi.style.display = '';
+
+      submitButton.disabled = false; // Re-enable the button
+      submitButton.removeAttribute('value');
+
+      if(errorResponse === undefined)
+          errorLi.appendChild(img); // Append the <img> inside of the the error li
       resultList.insertBefore(errorLi, resultList.firstChild); // Insert at the top
     };
     img.onload = function() {
