@@ -2,13 +2,16 @@ package main
 
 import (
 	"net/http"
+	"sync"
 
-	"golang.org/x/image/draw"
 	"image"
 	"image/color"
 	"image/png"
 
+	"golang.org/x/image/draw"
+
 	"encoding/base64"
+	"encoding/json"
 	"hash/crc32"
 	"strconv"
 	"strings"
@@ -63,9 +66,111 @@ var expressionKeyMap = map[string]uint8{
 // requests are timing out after this amount of time
 const timeout = 7 * time.Second
 
-func miiPostHandler(w http.ResponseWriter, r *http.Request) {
-	// NOTE: permissive config here is somewhat temporary
+var sessions = make(map[string]chan errorEvent) // Maps session IDs to error channels
+
+type errorEvent struct {
+	RequestID string `json:"requestID"`
+	Message   string `json:"message"`
+	Code      int    `json:"code"`
+	//Trace     string `json:"trace,omitempty"` // Optional field for stack trace
+}
+
+// Mutex for safe concurrent access to sessions map
+var mutex = &sync.Mutex{}
+
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+	sessionID  string
+	requestID  string
+}
+
+func (rw *responseWriter) WriteHeader(statusCode int) {
+	rw.statusCode = statusCode
+	rw.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (rw *responseWriter) Write(b []byte) (int, error) {
+	if rw.statusCode >= 400 {
+		mutex.Lock()
+		if ch, ok := sessions[rw.sessionID]; ok {
+			ch <- errorEvent{
+				RequestID: rw.requestID,
+				Message:   string(b),
+				Code:      rw.statusCode,
+			}
+		}
+		mutex.Unlock()
+	}
+	return rw.ResponseWriter.Write(b)
+}
+
+/*
+	jsonData, _ := json.Marshal(errEvt)
+	fmt.Fprint(w, "data: "+string(jsonData)+"\n\n")
+	flusher.Flush()
+	w.Header().Set("Access-Control-Allow-Origin", "*") // Add CORS wildcard header
+
+*/
+
+func sseErrorHandler(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
+	header.Set("Access-Control-Allow-Private-Network", "true")
+	header.Set("Access-Control-Allow-Origin", "*")
+	header.Set("Access-Control-Allow-Headers", "Cache-Control")
+
+	sessionID := r.URL.Query().Get("errorSessionID")
+	if sessionID == "" {
+		http.Error(w, "Error session ID required", http.StatusBadRequest)
+		return
+	}
+
+	header.Set("Content-Type", "text/event-stream")
+	header.Set("Cache-Control", "no-cache")
+	header.Set("Connection", "keep-alive")
+
+	mutex.Lock()
+	current, exists := sessions[sessionID]
+	if exists {
+		close(current) // Safely close existing channel
+	}
+	current = make(chan errorEvent, 10) // Always create a new channel
+	sessions[sessionID] = current
+	mutex.Unlock()
+
+	flusher, _ := w.(http.Flusher)
+
+	defer func() {
+		mutex.Lock()
+		if cur, ok := sessions[sessionID]; ok && cur == current {
+			close(cur) // Close the channel if it's still the current channel
+			delete(sessions, sessionID)
+		}
+		mutex.Unlock()
+	}()
+
+	for {
+		select {
+		case errEvt, ok := <-current:
+			if !ok {
+				return // Exit if channel is closed
+			}
+			jsonData, _ := json.Marshal(errEvt)
+			data := "data: " + string(jsonData) + "\n\n"
+			_, err := w.Write([]byte(data))
+			if err != nil {
+				return // Exit if we cannot write to the response
+			}
+			flusher.Flush()
+		case <-r.Context().Done():
+			return
+		}
+	}
+}
+
+func miiPostHandler(ow http.ResponseWriter, r *http.Request) {
+	// NOTE: permissive config here is somewhat temporary
+	header := ow.Header()
 	header.Set("Access-Control-Allow-Private-Network", "true")
 	header.Set("Access-Control-Allow-Origin", "*")
 	header.Set("Access-Control-Allow-Methods", "POST")
@@ -79,6 +184,15 @@ func miiPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	// start parsing query params
 	query := r.URL.Query()
+
+	// use original response writer
+	w := ow
+	errorSessionID := query.Get("errorSessionID")
+	errorRequestID := query.Get("errorRequestID")
+	if errorSessionID != "" && errorRequestID != "" {
+		// ... unless error parameters are available
+		w = &responseWriter{ResponseWriter: w, sessionID: errorSessionID, requestID: errorRequestID}
+	}
 
 	// if data was specified then this is allowed to be a GET
 	b64MiiData := query.Get("data")

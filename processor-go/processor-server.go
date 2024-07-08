@@ -217,6 +217,8 @@ func main() {
 	http.HandleFunc("/mii_data/", miiHandler)
 	http.HandleFunc("/mii_data_random", randomMiiHandler)
 
+
+	http.HandleFunc("/error_reporting", sseErrorHandler)
 	http.HandleFunc("/render.png", miiPostHandler)
 	go nfpSubmitSemThread()
 	go removeExpiredRequestsThread()
