@@ -199,6 +199,13 @@ func main() {
 	}
 	var enableSuspending bool
 	flag.BoolVar(&enableSuspending, "enable-suspending", defaultEnableSuspending, "Enable suspending the Cemu process to save CPU")
+
+	upstreamAddr := flag.String("upstream", "localhost:12346", "Upstream TCP server address")
+	//flag.BoolVar(&useXForwardedFor, "use-x-forwarded-for", false, "Use X-Forwarded-For header for client IP")
+
+	flag.Parse()
+
+	upstreamTCP = *upstreamAddr
 	flag.Parse()
 
 	// NOTE: you can change these to use any db if you want
@@ -220,6 +227,7 @@ func main() {
 
 	http.HandleFunc("/error_reporting", sseErrorHandler)
 	http.HandleFunc("/render.png", miiPostHandler)
+	http.HandleFunc("/render-new-temp-2024-07-08.png", renderImage)
 	go nfpSubmitSemThread()
 	go removeExpiredRequestsThread()
 	go processImageOnSemNotifyThread()
