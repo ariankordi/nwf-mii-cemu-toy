@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"log"
 	//"database/sql"
 	"encoding/base64"
 	"encoding/binary"
@@ -23,12 +24,15 @@ import (
 	"image/color"
 	"syscall"
 
+	roundrobin "github.com/hlts2/round-robin"
+
 	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
 	upstreamTCP      string
 	useXForwardedFor bool
+	rr               roundrobin.RoundRobin
 )
 
 const (
@@ -78,10 +82,24 @@ func sendRenderRequest(request RenderRequest) ([]byte, error) {
 		return nil, err
 	}
 
-	// Connecting to the render server
-	conn, err := net.Dial("tcp", upstreamTCP)
-	if err != nil {
-		return nil, err
+	// Determine the upstream render server to connect to
+	var conn net.Conn
+	if rr != nil {
+		// Use round-robin balancer
+		nextServer := rr.Next().Host
+		log.Println("using this upstream:", nextServer)
+		conn, err = net.Dial("tcp", nextServer)
+		if err != nil {
+			log.Println("\033[1;31mURGENT: Failed to connect to "+nextServer+". The upstream may be down:\033[0m", err)
+			return nil, err
+		}
+	} else {
+		// Use single upstream server
+		conn, err = net.Dial("tcp", upstreamTCP)
+		if err != nil {
+			log.Println("\033[1mFailed to connect to "+upstreamTCP+" \033[0m:", err)
+			return nil, err
+		}
 	}
 	defer conn.Close()
 
@@ -104,6 +122,8 @@ func sendRenderRequest(request RenderRequest) ([]byte, error) {
 
 // ssaaFactor controls the resolution and scale multiplier.
 //const ssaaFactor = 2
+
+var encoder = png.Encoder{CompressionLevel: png.BestSpeed}
 
 // renderImage handles the /render.png endpoint
 func renderImage(ow http.ResponseWriter, r *http.Request) {
@@ -186,7 +206,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 
 		if useNNIDToMiiMapForAPI0 && apiID == 0 {
 			// use nnid to mii map database instead...
-			nnid = normalizeNNID(nnid)
+			nnid = normalizeDashUnderscoreDot(nnid)
 
 			var mii NNIDToMiiDataMap
 			result := mdb.Model(&mii).Where("normalized_nnid = ?", nnid).First(&mii)
@@ -283,7 +303,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	// NOTE: WHAT SHOULD BOOLS LOOK LIKE...???
 	mipmapEnable := query.Get("mipmapEnable") != "" // is present?
 	lightEnable := query.Get("lightEnable") != "0" // 0 = no lighting
-	verifyCharInfo := query.Get("verifyMii") == "0" // 0 = no verify
+	verifyCharInfo := query.Get("verifyCharInfo") != "0" // verify default
 
 	// Parsing and validating expression flag
 	/*expressionFlag, err := strconv.Atoi(expressionFlagStr)
@@ -441,7 +461,7 @@ now, PickupCharInfo calls:
 
 	// Sending the image as a PNG response
 	header.Set("Content-Type", "image/png")
-	png.Encode(w, img)
+	encoder.Encode(w, img)
 }
 
 // Expression constants

@@ -143,7 +143,10 @@ other = "Resolution:"
 other = "Samples"
 
 [scale_label]
-other = "Upscale/antialiasing, 2x/4x is fine:"
+other = "Disable 2x supersampling:"
+
+[scale_label_small]
+other = "Can speed up rendering at high resolutions."
 
 [studio_output_description]
 other = "The image above is from studio.mii.nintendo.com."
@@ -161,8 +164,7 @@ other = "Click \"Mii input type\" to see how you can import a Mii. Then, click S
 other = "Type:"
 
 [unfinished_warning]
-other = "SUPER SUPER UNFINISHED. if there's something essential missing, PLEASE let me know but there's a chance I am already planning it but please let me know anyway"
-
+other = "Very unfinished. Notably, Mii body sizes do not change. Please let me know if you really want this feature or if you can help in any way."
 
 [option_pnid]
 other = "Pretendo Network ID"

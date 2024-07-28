@@ -175,7 +175,10 @@ form.addEventListener('submit', function(event) {
 
   // Proceed normally if no file is selected
   const formData = new FormData(form);
-  const params = new URLSearchParams([...formData.entries()]).toString();
+  const searchParams = new URLSearchParams([...formData.entries()]);
+  // TODO: FIX bgColor
+  searchParams.delete('bgColor');
+  const params = searchParams.toString();
   // more compatible? version taken from: https://stackoverflow.com/a/43000398
   // expand the elements from the .entries() iterator into an actual array
   /*const paramsParts = [...formData.entries()]
@@ -280,7 +283,7 @@ fileInput.addEventListener('input', function() {
 
     // this function will handle errors, showing and returning false
     // if there are no errors it should pass tho
-    if(!checkFFSDSizeAndCRCPass(data)) {
+    /*if(!checkFFSDSizeAndCRCPass(data)) {
       // remove file to invalidate the form
       //fileInput.value = '';
       const errorText = document.querySelector(errorTextQuery).textContent;
@@ -288,13 +291,16 @@ fileInput.addEventListener('input', function() {
       //fileInput.setCustomValidity('foobar');
       // do not mark success
       return;
-    }
+    }*/
+    // TODO TODO TODO TODO TODO  FIX FIX FIX VERIFY
     // assuming success
     fileDataInput.value = base64Data;
+    if(data.length != 96) return;
     // extract name and show loaded text
     fileLoaded.style.display = '';
-    fileLoaded.firstElementChild.textContent =
-                 extractMiiNameFromFFSD(data);
+    // TODO TODO TODO FIX FIX FIX
+      fileLoaded.firstElementChild.textContent =
+                    extractMiiNameFromFFSD(data);
   };
   reader.readAsDataURL(fileInput.files[0]);
   return;
@@ -587,6 +593,7 @@ randomButton.addEventListener('click', function () {
                 nnidInput.disabled = false;
                 submitButton.disabled = false;
                 randomButton.disabled = false;
+                nnidInput.focus();
             }
         });
 });

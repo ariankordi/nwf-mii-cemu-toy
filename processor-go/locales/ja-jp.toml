@@ -152,7 +152,10 @@ other = "解像度："
 other = "サンプル"
 
 [scale_label]
-other = "アップスケール/アンチエイリアス、2倍/4倍で十分です："
+other = "2倍スーパーサンプリングを無効化:"
+
+[scale_label_small]
+other = "高解像度でのレンダリングを高速化できます。"
 
 [studio_output_description]
 other = "上の画像はstudio.mii.nintendo.comからのものです。"

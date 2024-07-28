@@ -146,7 +146,10 @@ other = "Resolución:"
 other = "Muestras"
 
 [scale_label]
-other = "Escala/antialiasing, 2x/4x está bien:"
+other = "Desactivar supersampling 2x:"
+
+[scale_label_small]
+other = "Puede acelerar el renderizado a altas resoluciones."
 
 [studio_output_description]
 other = "La imagen de arriba es de studio.mii.nintendo.com."

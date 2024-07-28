@@ -146,7 +146,10 @@ other = "Résolution :"
 other = "Échantillons"
 
 [scale_label]
-other = "Mise à l'échelle/anti-aliasing, 2x/4x est bien :"
+other = "Désactiver le suréchantillonnage 2x :"
+
+[scale_label_small]
+other = "Peut accélérer le rendu à haute résolution."
 
 [studio_output_description]
 other = "L'image ci-dessus provient de studio.mii.nintendo.com."
