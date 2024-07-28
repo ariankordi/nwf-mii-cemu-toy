@@ -12,6 +12,8 @@ import (
 
 	"flag"
 	"net/http"
+	"net/url"
+
 	// for tls sni whitelist
 	"crypto/tls"
 
@@ -24,12 +26,14 @@ import (
 
 	//"slices" // for slices.Delete which did not even work
 
+	"github.com/hlts2/round-robin"
+
 	// gorm dialector type
 	// TODO:
 	// * do not require either database type
 	// ... or gorm in general if you don't even want it
-	"gorm.io/driver/sqlite"
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -104,12 +108,33 @@ func main() {
 	flag.StringVar(&nnidToMiiDataTable, "nnid-to-mii-map-table", "nnid_to_mii_data_map", "NNID to Mii mapping table if it's not the default.")
 
 	upstreamAddr := flag.String("upstream", "localhost:12346", "Upstream TCP server address")
+	upstreamAddrs := flag.String("upstreams", "", "Comma-separated list of upstream TCP server addresses. If you specify this, it will use round robin load balancing with all of the upstreams.")
 	flag.BoolVar(&useXForwardedFor, "use-x-forwarded-for", false, "Use X-Forwarded-For header for client IP")
 
 	flag.Parse()
 
-	upstreamTCP = *upstreamAddr
-	flag.Parse()
+	if *upstreamAddrs != "" {
+		urls := []*url.URL{}
+		for _, addr := range strings.Split(*upstreamAddrs, ",") {
+		u, err := url.Parse("tcp://" + addr)
+		if err != nil {
+			log.Fatalf("Failed to parse upstream address %s: %v", addr, err)
+		}
+		urls = append(urls, u)
+		}
+		var err error
+		rr, err = roundrobin.New(urls...)
+		if err != nil {
+		log.Fatalf("Failed to create round-robin balancer: %v", err)
+		}
+		log.Println("Using multiple upstreams:")
+		for _, u := range urls {
+		log.Printf("- %s\n", u.Host)
+		}
+	} else {
+		upstreamTCP = *upstreamAddr
+		log.Println("Using single upstream:", upstreamTCP)
+	}
 
 	// NOTE: you can change these to use any db if you want
 	nnasCacheDBConn = sqlite.Open(nnasCacheDBDSN)
@@ -129,7 +154,8 @@ func main() {
 
 
 	http.HandleFunc("/error_reporting", sseErrorHandler)
-	http.HandleFunc("/render.png", logRequest(http.HandlerFunc(renderImage)).ServeHTTP)
+	http.HandleFunc("/miis/image.png", logRequest(http.HandlerFunc(renderImage)).ServeHTTP)
+	http.HandleFunc("/render.png", miisImagePngRedirectHandler)
 
 	// add frontend
 	http.Handle("/assets/", http.StripPrefix("/assets/", gzipped.FileServer(gzipped.Dir("assets"))))
@@ -220,7 +246,19 @@ func main() {
 		err = http.ListenAndServe(port, nil)
 	}
 	// this will only be reached when either function returns
-	log.Fatal(err)
+	log.Fatalln(err)
+}
+
+// NOTE: redirect /render.png to /miis/image.png why did this ever use render.png
+func miisImagePngRedirectHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse the new endpoint URL
+	newURL, _ := url.Parse("/miis/image.png")
+
+	// Copy the query parameters from the original request
+	newURL.RawQuery = r.URL.RawQuery
+
+	// Perform the redirect
+	http.Redirect(w, r, newURL.String(), http.StatusFound)
 }
 
 // make http client that does not do keep alives

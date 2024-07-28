@@ -19,6 +19,7 @@ require (
 	codeberg.org/meta/gzipped/v2 v2.0.0-20231111234332-aa70c3194756 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
+	github.com/hlts2/round-robin v0.0.0-20230814122250-2a846cd188be // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/kevinpollet/nego v0.0.0-20211010160919-a65cd48cee43 // indirect

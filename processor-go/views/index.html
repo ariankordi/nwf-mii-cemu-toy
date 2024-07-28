@@ -42,11 +42,21 @@
     <meta property="og:locale:alternate" content="de_DE">
     <meta property="og:locale:alternate" content="pt_BR">
     <meta property="og:url" content="https://mii-unsecure.ariankordi.net/">
-    <meta property="og:image" content="https://mii-unsecure.ariankordi.net/assets/page-screenshot-2024-07-07.png">
+    <meta property="og:image" content="/assets/page-screenshot-2024-07-10-dark.png">
     <!-- TODO BELOW IS TO BE LOCALIZED -->
     <meta property="og:title" content="{{T "page_title" }}"/>
     <meta property="og:description" content="That's right, we will render your Miis with our bare f*cking hands.
+This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*ss Mii Studio API. NO. This runs on OUR MACHINES. On MY COMPUTER. On MY very own Microsoft Corporation Surface Laptop 4, Intel® Core™ i7-1185G7, 16 GB RAM, 256 GB SSD, Matte Black">
+    <meta name="description" content="That's right, we will render your Miis with our bare f*cking hands.
     This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*ss Mii Studio API. NO. This runs on OUR MACHINES. On MY COMPUTER. On MY very own Microsoft Corporation Surface Laptop 4, Intel® Core™ i7-1185G7, 16 GB RAM, 256 GB SSD, Matte Black">
+    <link rel="alternate" hreflang="x-default" href="/">
+    <link rel="alternate" hreflang="en-US" href="/?locale.lang=en-US">
+    <link rel="alternate" hreflang="en-GB" href="/?locale.lang=en-GB">
+    <link rel="alternate" hreflang="es-419" href="/?locale.lang=es-419">
+    <link rel="alternate" hreflang="ja-JP" href="/?locale.lang=ja-jp">
+    <link rel="alternate" hreflang="fr-FR" href="/?locale.lang=fr-fr">
+    <link rel="alternate" hreflang="de-DE" href="/?locale.lang=de-DE">
+    <link rel="alternate" hreflang="pt-BR" href="/?locale.lang=pt-BR">
 
 </head>
 
@@ -56,11 +66,15 @@
     {{if and (ne (T "html_lang") "en-US") (ne (T "html_lang") "en-GB")}}
     <h2 class="subtitle">Mii Renderer</h2>
     {{end}}
-    <form action="render.png" method="GET">
+    <form action="/miis/image.png" method="GET">
+        <input type="hidden" id="errorSessionID" name="errorSessionID">
+        <input type="hidden" id="errorRequestID" name="errorRequestID">
+
+
         <div style="color: plum">{{T "above_input_type_choose_text" }}</div>
         <label for="input_type">{{T "label_input_type" }}</label>
         <!-- only useful for backend when you are not using js bc js will disable the inputs -->
-        <select id="input_type" name="input_type">
+        <select id="input_type"><!-- name="input_type">-->
             <option value="nnid" selected>{{T "option_nnid" }}🕰</option>
             <!-- nnid above is default -->
             <option value="pnid">{{T "option_pnid" }}</option>
@@ -120,7 +134,7 @@
             <button id="random-nnid" type="button" data-action="/mii_data_random">{{T "button_random_nnid" }}</button>
             <div id="nnid-loaded" style="font-weight: bold; color: green; display: none;">{{T "qr_status_loaded" }}<span></span></div>
             <div id="nnid-last-modified" style="font-weight: bold; display: none;">{{T "last_modified" }}<span></span></div>
-            <h3 style="margin: 0;">{{T "miis_from_nnids_prior_notice" }}</h3>
+            <h3 style="margin: 0;">🕰 {{T "miis_from_nnids_prior_notice" }}</h3>
             <!--<details>
               <summary style="font-weight: bold;">
                 This will only show Miis from NNIDs
@@ -168,6 +182,7 @@
             <!-- I have read that b64(96 bytes) will be exactly
                 128 bytes but we are allowing more headroom -->
             <span>{{T "mii_data_field_description" }}</span>
+            <div style="font-size: 11px; line-height: 140%;"><b>NOTE as of July 8, PLEASE READ:</b> This is using a new renderer that does support <b>FFLiMiiDataCore, RFLCharData, nn::mii::CharInfo, and Mii Studio data/codes, all in hex or Base64.</b> However, I've rushed out this update, so it will pretend it only supports FFLStoreData for now. Sorry.<br>Please feel free to use the contact information at the bottom to ask me anything else. Thank you for using my site!</div>
             <div id="data-loaded" style="font-weight: bold; color: green; display: none;">{{T "qr_status_loaded" }}<span></span></div>
         </div>
         <!-- these errors are used for file and data thus is being placed here -->
@@ -179,7 +194,7 @@
         <div id="data-error-size-0" style="font-weight: bold; color: red; display: none;">{{T "data_error_size_0" }}</div>
 
         <div id="data-error-size-92" style="font-weight: bold; color: red; display: none;">
-            {{T "data_error_size_92_part1" }}<br>{{T "data_error_size_92_part2" }}</div>
+            {{T "data_ermiisImagePngRedirectHandlerror_size_92_part1" }}<br>{{T "data_error_size_92_part2" }}</div>
 
         <div id="data-error-size-88" style="font-weight: bold; color: red; display: block;">
             {{T "data_error_size_88_part1" }}<br>{{T "data_error_size_88_part2" }}<br>{{T "data_error_size_88_part3" }}<br>{{T "data_error_size_88_part4" }}<br><code>nn::mii::Database::Convert(CharInfo* pInfo,const Ver3StoreData&amp; ver3StoreData)</code></div>
@@ -197,10 +212,9 @@
         nn::mii::detail::CoreDataRaw - 48 bytes
           * size from method nn::mii::detail::CoreDataRaw::SetDefault
             - contains memset for 0x30 = size is 0x30/48
-        nn::mii::detail::StoreDataRaw - 70 bytes, i think
-          * size from method nn::mii::detail::StoreDataRaw::UpdateDeviceCrc
-            - writes 16 bits to 0x44 = size is 0x46/70
-            - but MiidataSdb kaitai struct accepts 68 too...
+        nn::mii::detail::StoreDataRaw - 68 bytes, i think
+          * size from method nn::mii::detail::StoreDataRaw::UpdateDeviceCrc -> nn::mii::detail::CalculateAndSetCrc16
+            - sets total size to 0x44 = size is 0x44/68
         -->
         <label for="type">{{T "type_label" }}</label>
         <select name="type" id="type">
@@ -236,21 +250,18 @@
         <label for="width">px</label>
         <br>
         <label for="scale">{{T "scale_label" }}</label>
-        <input type="number" name="scale" id="scale" min="1" max="8" value="2">
-        <span>x</span><br>
-        <div><s>
+        <input type="checkbox" name="scale" id="scale" value="1">
+        <div style="font-size: 10px; line-height: 150%;">{{T "scale_label_small" }}</div>
+        <div style="display: none;"><s>
             <label for="bgColor">{{T "background_color_label" }}</label>
             <input name="bgColor" id="bgColor" type="hidden" value="#00ff00">
             <label for="transparent-checkbox">{{T "transparent_checkbox_label" }}</label>
             <input id="transparent-checkbox" type="checkbox" checked disabled>
         </s>
         </div>
-        (as of july 8 background colors are not working sorry)
-
+        <!--(as of july 8 background colors are not working sorry)
         <br>
-
-        <input type="hidden" id="errorSessionID" name="errorSessionID">
-        <input type="hidden" id="errorRequestID" name="errorRequestID">
+        -->
 
         <input id="submit" type="submit" data-value="{{T "submit_button_text" }}">
     </form>
@@ -304,7 +315,7 @@
     <ul style="padding: 0; text-align: left">
         <li>{{T "beta_warning" }}</li>
         <li>{{T "unfinished_warning" }}</li>
-        <li>{{T "github_prefix" }} <a href="https://github.com/ariankordi/nwf-mii-cemu-toy">ariankordi/nwf-mii-cemu-toy</a>
+        <li>{{T "github_prefix" }} <a href="https://github.com/ariankordi/nwf-mii-cemu-toy/tree/ffl-renderer-proto-integrate">ariankordi/nwf-mii-cemu-toy</a>, <a href="https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype">ariankordi/FFL-Testing</a>
         <li>{{T "contact_info" }}</li>
     </ul>
 

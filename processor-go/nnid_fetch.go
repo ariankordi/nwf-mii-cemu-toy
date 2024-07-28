@@ -42,6 +42,14 @@ var apiBases = map[int]string{
 	1: "https://account.pretendo.cc/v1/api",
 	// Add additional APIs as needed
 }
+// strategy to normalize nnids
+type normalizationFunc func(string) string
+var normalizationFuncs = map[int]normalizationFunc {
+	// nintendo normalization
+	0: normalizeDashUnderscoreDot,
+	// pnid normalization
+	1: strings.ToLower,
+}
 
 type NNIDToPID struct {
 	// nnid is normalized in the database
@@ -78,7 +86,7 @@ func (NNIDToMiiDataMap) TableName() string {
 	return nnidToMiiDataTable
 }
 
-func normalizeNNID(nnid string) string {
+func normalizeDashUnderscoreDot(nnid string) string {
 	// Normalize NNID by removing '-', '_', '.', and converting to lowercase
 	// the NNAS server will match NNIDs regardless of any of these
 	// the original name is in the mii result
@@ -180,7 +188,15 @@ func nnasHTTPRequest(endpoint string, apiID int) ([]byte, error) {
 func fetchNNIDToPID(nnid string, apiID int) (uint64, error) {
 	var mapping NNIDToPID
 
-	normalizedNNID := normalizeNNID(nnid)
+	// Select the appropriate normalization function based on API ID
+	normalizeNNIDFunc, exists := normalizationFuncs[apiID]
+	if !exists {
+		err := fmt.Errorf("Normalization function not defined for API ID %d", apiID)
+		log.Println(err)
+		return 0, err
+	}
+
+	normalizedNNID := normalizeNNIDFunc(nnid)
 	if result := cdb.Where("nnid = ? AND api_id = ?", normalizedNNID, apiID).First(&mapping); result.Error == nil {
 		return mapping.PID, result.Error
 	}
@@ -323,7 +339,7 @@ func miiHandler(w http.ResponseWriter, r *http.Request) {
 	// base64 mii data will be stored in responsedata
 
 	if useNNIDToMiiMapForAPI0 && apiID == 0 {
-		nnid = normalizeNNID(nnid)
+		nnid = normalizeDashUnderscoreDot(nnid)
 		var miiData NNIDToMiiDataMap
 		result := mdb.Model(&miiData).Where("normalized_nnid = ?", nnid).First(&miiData)
 		if result.Error != nil {
