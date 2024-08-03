@@ -5,7 +5,7 @@ other = "TBD / NOT IMPLEMENTED: I CANNOT FIND A JS IMPLEMENTATION AT THE MOMENT.
 other = "Background color:"
 
 [beta_warning]
-other = "this is a barebones beta PoC do not expect anything of it. do not expect it to fold your laundry and be your personal onaho"
+other = "this is not fully complete, consider it a PoC. do not expect it to fold your laundry and kiss you at night"
 
 [beta_warning_title]
 other = "IF YOU SOMEHOW FOUND THIS"
@@ -164,7 +164,7 @@ other = "Click \"Mii input type\" to see how you can import a Mii. Then, click S
 other = "Type:"
 
 [unfinished_warning]
-other = "Very unfinished. Notably, Mii body sizes do not change. Please let me know if you really want this feature or if you can help in any way."
+other = "This service aims to mirror the functionality of the Mii Studio API. It isn't compatible with all options, such as the all_body view. However, if you run into a feature you want, or if something is not accurate, let me know as soon as possible and I will look into it."
 
 [option_pnid]
 other = "Pretendo Network ID"

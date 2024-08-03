@@ -5,7 +5,7 @@ other = "À DÉTERMINER / NON IMPLÉMENTÉ : JE NE TROUVE PAS D'IMPLÉMENTATION 
 other = "Couleur de fond :"
 
 [beta_warning]
-other = "ceci est une version beta très basique ne vous attendez à rien. ne vous attendez pas à ce qu'elle plie votre linge et soit votre onaho personnel"
+other = "ceci n'est pas complètement terminé, considérez-le comme une preuve de concept. ne vous attendez pas à ce qu'il plie votre linge et vous embrasse la nuit"
 
 [beta_warning_title]
 other = "SI VOUS AVEZ TROUVÉ CELA PAR HASARD"
@@ -167,8 +167,7 @@ other = "Cliquez sur \"Type d'entrée Mii\" pour voir comment vous pouvez import
 other = "Type :"
 
 [unfinished_warning]
-other = "EXTRÊMEMENT INACHEVÉ. si quelque chose d'essentiel manque, VEUILLEZ me le faire savoir mais il y a des chances que je prévoie déjà de l'inclure mais veuillez me le faire savoir quand même"
-
+other = "Ce service vise à refléter les fonctionnalités de l'API Mii Studio. Il n'est pas compatible avec toutes les options, comme la vue all_body. Cependant, si vous rencontrez une fonctionnalité que vous souhaitez ou si quelque chose n'est pas précis, faites-le moi savoir dès que possible et je m'en occuperai."
 
 [option_pnid]
 other = "Pretendo Network ID"

@@ -4,7 +4,7 @@ const widthSlider = document.getElementById('resolution-slider');
 const bgColor = document.getElementsByName('bgColor')[0];
 const transparentCheckbox = document.getElementById('transparent-checkbox');
 
-const bgDefault = '#00ff00'//bgColor.value;
+const bgDefault = '#ffffff'//bgColor.value;
 
 // Update the width slider when the resolution number is changed
 resolutionNumber.addEventListener('input', function() {
@@ -20,26 +20,29 @@ widthSlider.addEventListener('input', function() {
 transparentCheckbox.addEventListener('change', function() {
   if(this.checked) {
     bgColor.value = bgDefault;
-    this.disabled = true;
-  } else if(bgColor.value === bgDefault) {
+    //this.disabled = true;
+  }/* else if(bgColor.value === bgDefault) {
     // TODO: you may consider changing bg by one
     // so you can still have a green background
     this.checked = true;
     this.disabled = true;
-  }
+  }*/
 });
 
 // When the background color is changed to #00ff00, check the transparent-checkbox
 // Note: This also unchecks the checkbox if the color is changed to anything other than #00ff00
+
 bgColor.addEventListener('input', function() {
-  if(this.value.toLowerCase() === bgDefault) {
+  transparentCheckbox.checked = false;
+  /*if(this.value.toLowerCase() === bgDefault) {
     transparentCheckbox.checked = true;
     transparentCheckbox.disabled = true;
   } else {
     transparentCheckbox.checked = false;
     transparentCheckbox.disabled = false;
-  }
+  }*/
 });
+
 
 const scaleInput = document.getElementsByName('scale')[0];
 const realMax = 1080;
@@ -176,8 +179,8 @@ form.addEventListener('submit', function(event) {
   // Proceed normally if no file is selected
   const formData = new FormData(form);
   const searchParams = new URLSearchParams([...formData.entries()]);
-  // TODO: FIX bgColor
-  searchParams.delete('bgColor');
+  if(transparentCheckbox.checked)
+      searchParams.delete('bgColor');
   const params = searchParams.toString();
   // more compatible? version taken from: https://stackoverflow.com/a/43000398
   // expand the elements from the .entries() iterator into an actual array

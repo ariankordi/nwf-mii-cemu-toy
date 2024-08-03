@@ -629,7 +629,7 @@ func (this *Gen2Wiiu3dsMiitomo) MoleEnable() (v int, err error) {
 	if (this._f_moleEnable) {
 		return this.moleEnable, nil
 	}
-	this.moleEnable = int((this.Mole >> 15))
+	this.moleEnable = int(((this.Mole >> 0) & 1))
 	this._f_moleEnable = true
 	return this.moleEnable, nil
 }

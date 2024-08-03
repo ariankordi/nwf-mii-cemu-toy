@@ -5,7 +5,7 @@ other = "NÃO IMPLEMENTADO: NÃO CONSEGUI ENCONTRAR UMA IMPLEMENTAÇÃO EM JS NO
 other = "Cor de fundo:"
 
 [beta_warning]
-other = "isto é uma versão beta muito básica, não espere nada dela. não espere que ela dobre suas roupas ou seja seu gerador de miis como na Nintendo Network"
+other = "isto não está completamente finalizado, considere como uma prova de conceito. não espere que dobre suas roupas e te beije à noite"
 
 [beta_warning_title]
 other = "SE DE ALGUMA FORMA VOCÊ ENCONTROU ISSO:"
@@ -168,8 +168,7 @@ other = "Clique em \"Tipo de entrada Mii\" para ver como você pode importar um 
 other = "Tipo:"
 
 [unfinished_warning]
-other = "Ainda não está completo! Se houver algo essencial faltando, POR FAVOR me avise, mas há uma chance de eu já estar planejando isso, mas me avise de qualquer forma."
-
+other = "Este serviço tem como objetivo espelhar a funcionalidade da API Mii Studio. Não é compatível com todas as opções, como a visualização all_body. No entanto, se você encontrar uma funcionalidade desejada ou se algo não estiver preciso, por favor, me avise o mais rápido possível e eu irei verificar."
 
 [option_pnid]
 other = "Pretendo Network ID"

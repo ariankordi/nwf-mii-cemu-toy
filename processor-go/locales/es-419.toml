@@ -5,7 +5,7 @@ other = "TBD / NO IMPLEMENTADO: NO PUEDO ENCONTRAR UNA IMPLEMENTACIÓN EN JS EN 
 other = "Color de fondo:"
 
 [beta_warning]
-other = "esto es una versión beta muy básica, no esperes mucho de ella. no esperes que doble tu ropa ni que sea tu onaho personal"
+other = "esto no está completamente terminado, considérelo como una prueba de concepto. no esperes que doble tu ropa y te bese por la noche"
 
 [beta_warning_title]
 other = "SI DE ALGUNA MANERA ENCONTRASTE ESTO"
@@ -167,8 +167,7 @@ other = "Haz clic en \"Tipo de entrada de Mii\" para ver cómo puedes importar u
 other = "Tipo:"
 
 [unfinished_warning]
-other = "SUPER INACABADO. si falta algo esencial, POR FAVOR házmelo saber pero hay una posibilidad de que ya lo esté planeando pero por favor házmelo saber de todos modos"
-
+other = "Este servicio tiene como objetivo reflejar la funcionalidad de la API Mii Studio. No es compatible con todas las opciones, como la vista all_body. Sin embargo, si te encuentras con una función que deseas o si algo no es preciso, házmelo saber lo antes posible y lo revisaré."
 
 [option_pnid]
 other = "Pretendo Network ID"
