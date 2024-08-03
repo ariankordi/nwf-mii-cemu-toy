@@ -252,16 +252,12 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
         <label for="scale">{{T "scale_label" }}</label>
         <input type="checkbox" name="scale" id="scale" value="1">
         <div style="font-size: 10px; line-height: 150%;">{{T "scale_label_small" }}</div>
-        <div style="display: none;"><s>
+        <div>
             <label for="bgColor">{{T "background_color_label" }}</label>
-            <input name="bgColor" id="bgColor" type="hidden" value="#00ff00">
+            <input name="bgColor" id="bgColor" type="color" value="#ffffff">
             <label for="transparent-checkbox">{{T "transparent_checkbox_label" }}</label>
-            <input id="transparent-checkbox" type="checkbox" checked disabled>
-        </s>
+            <input id="transparent-checkbox" type="checkbox" checked>
         </div>
-        <!--(as of july 8 background colors are not working sorry)
-        <br>
-        -->
 
         <input id="submit" type="submit" data-value="{{T "submit_button_text" }}">
     </form>

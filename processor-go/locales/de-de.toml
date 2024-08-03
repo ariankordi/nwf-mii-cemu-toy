@@ -5,7 +5,7 @@ other = "NOCH NICHT IMPLEMENTIERT: ICH KANN DERZEIT KEINE JS-IMPLEMENTIERUNG FIN
 other = "Hintergrundfarbe:"
 
 [beta_warning]
-other = "dies ist eine minimalistische Beta-Vorabversion, erwarte nicht zu viel davon. Erwarte nicht, dass sie deine Wäsche faltet oder dein persönlicher Onaho wird"
+other = "dies ist nicht vollständig abgeschlossen, betrachten Sie es als Proof of Concept. Erwarte nicht, dass es deine Wäsche faltet und dich nachts küsst"
 
 [beta_warning_title]
 other = "WENN DU DAS IRGENDWIE GEFUNDEN HAST"
@@ -167,8 +167,7 @@ other = "Klicke auf \"Mii-Eingabetyp\", um zu sehen, wie du ein Mii importieren 
 other = "Typ:"
 
 [unfinished_warning]
-other = "SUPER SUPER UNFERTIG. Wenn etwas Wesentliches fehlt, BITTE lass es mich wissen, aber es besteht die Chance, dass ich es bereits plane, aber bitte lass es mich trotzdem wissen"
-
+other = "Dieser Dienst zielt darauf ab, die Funktionen der Mii Studio API widerzuspiegeln. Er ist nicht mit allen Optionen, wie der all_body Ansicht, kompatibel. Falls Sie auf eine gewünschte Funktion stoßen oder wenn etwas nicht genau ist, lassen Sie es mich bitte umgehend wissen, und ich werde mich darum kümmern."
 
 [option_pnid]
 other = "Pretendo Network ID"
