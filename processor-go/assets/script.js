@@ -66,7 +66,7 @@ function updateMaxResolution() {
 const sessionIDInput = document.getElementById('errorSessionID');
 // Set a unique request ID each time a request is sent
 const requestIDInput = document.getElementById('errorRequestID');
-sessionIDInput.value = 'sess-' + Math.random().toString(36).substr(2, 9); // Generate a random session ID once
+sessionIDInput.value = 'sess-' + Math.random().toString(36).substring(2, 9); // Generate a random session ID once
 
 const errorResponses = new Map(); // Temporarily store error messages
 
@@ -154,7 +154,7 @@ form.addEventListener('submit', function(event) {
   }
 
   // Generate a new request ID for each submission
-  requestIDInput.value = 'req-' + Math.random().toString(36).substr(2, 9);
+  requestIDInput.value = 'req-' + Math.random().toString(36).substring(2, 9);
 
   // Ensure SSE is connected when sending a request
   connectErrorReportingSSE();
@@ -200,7 +200,7 @@ form.addEventListener('submit', function(event) {
     // Create and append the <img> element
     const img = document.createElement('img');
     img.src = imageUrl;
-    img.onerror = function(e) {
+    img.onerror = function() {
       // Handle image loading error
       const errorLiOriginal = document.getElementsByClassName('load-error');
       // get last error li, the original
@@ -426,7 +426,7 @@ function checkFFSDSizeAndCRCPass(data) {
         fileErrorSizeMismatchElement.firstElementChild.textContent =
                             data.length; // Display the incorrect size
     }
-  	return false;
+    return false;
   }
 
   // crc16 verify
@@ -436,7 +436,7 @@ function checkFFSDSizeAndCRCPass(data) {
   const expectedCrc16 = crc16(data.slice(0, -2));
 
   if(expectedCrc16 !== dataCrc16u16) {
-  	// CHECKSUM FAILED
+    // CHECKSUM FAILED
     //console.log('AAAAAA CHECKSUM FAILED')
     fileErrorInvalidChecksum.style.display = '';
     return false;
@@ -496,107 +496,107 @@ let debounceTimeout;
 const ACCEPT_OCTET_STREAM = false;
 
 async function handleMiiDataFetch(apiUrl) {
-    const headers = ACCEPT_OCTET_STREAM ? { 'Accept': 'application/octet-stream' } : {};
-    return fetch(apiUrl, { headers })
-        .then(response => {
-            if(!response.ok) {
-                return response.text().then(text => { throw new Error(text); });
-            }
-            if(ACCEPT_OCTET_STREAM && response.headers.get('Content-Type') === 'application/octet-stream') {
-                return response.arrayBuffer().then(buffer => ({
-                    data: new Uint8Array(buffer),
-                    lastModified: response.headers.get('Last-Modified')
-                }));
-            }
-            return response.json().then(data => ({
-                ...data,
-                lastModified: data.images && data.images.last_modified
-            }));
-        })
-        .then(data => {
-            nnidLoaded.style.display = 'none';
-            nnidLastModified.style.display = 'none';
+  const headers = ACCEPT_OCTET_STREAM ? { 'Accept': 'application/octet-stream' } : {};
+  return fetch(apiUrl, { headers })
+    .then(async response => {
+        if(!response.ok) {
+          return response.text().then(text => { throw new Error(text); });
+        }
+        if(ACCEPT_OCTET_STREAM && response.headers.get('Content-Type') === 'application/octet-stream') {
+          return response.arrayBuffer().then(buffer => ({
+            data: new Uint8Array(buffer),
+            lastModified: response.headers.get('Last-Modified')
+          }));
+        }
+        return response.json().then(data => ({
+          ...data,
+          lastModified: data.images && data.images.last_modified
+        }));
+    })
+    .then(data => {
+      nnidLoaded.style.display = 'none';
+      nnidLastModified.style.display = 'none';
 
-            let decodedData;
-            if(data.data instanceof Uint8Array) {
-                decodedData = data.data;
-            } else {
-                if(!data.data) {
-                    throw new Error('No data attribute in response');
-                }
-                decodedData = Uint8Array.from(atob(data.data), c => c.charCodeAt(0));
-                if(data.user_id) {
-                    nnidInput.value = data.user_id;
-                }
-            }
+      let decodedData;
+      if(data.data instanceof Uint8Array) {
+          decodedData = data.data;
+      } else {
+        if(!data.data) {
+          throw new Error('No data attribute in response');
+        }
+        decodedData = Uint8Array.from(atob(data.data), c => c.charCodeAt(0));
+        if(data.user_id) {
+          nnidInput.value = data.user_id;
+        }
+      }
 
-            if(checkFFSDSizeAndCRCPass(decodedData)) {
-                nnidInput.setCustomValidity('');
+      if(checkFFSDSizeAndCRCPass(decodedData)) {
+        nnidInput.setCustomValidity('');
 
-                // Extract and show Mii name
-                nnidLoaded.style.display = '';
-                nnidLoaded.firstElementChild.textContent = extractMiiNameFromFFSD(decodedData);
+        // Extract and show Mii name
+        nnidLoaded.style.display = '';
+        nnidLoaded.firstElementChild.textContent = extractMiiNameFromFFSD(decodedData);
 
-                // Show last modified date if available
-                if(data.lastModified) {
-                    nnidLastModified.style.display = '';
-                    nnidLastModified.firstElementChild.textContent = new Date(data.lastModified).toLocaleString();
-                }
-            } else {
-                const errorText = document.querySelector('[id^="data-error-"]:not([style*="none"])').textContent;
-                nnidInput.setCustomValidity(errorText || 'Invalid data');
-            }
-        });
+        // Show last modified date if available
+        if(data.lastModified) {
+          nnidLastModified.style.display = '';
+          nnidLastModified.firstElementChild.textContent = new Date(data.lastModified).toLocaleString();
+        }
+      } else {
+        const errorText = document.querySelector('[id^="data-error-"]:not([style*="none"])').textContent;
+        nnidInput.setCustomValidity(errorText || 'Invalid data');
+      }
+  });
 }
 
 nnidInput.addEventListener('input', function () {
-    clearTimeout(debounceTimeout);
+  clearTimeout(debounceTimeout);
 
-    debounceTimeout = setTimeout(function () {
-        const nnidValue = nnidInput.value.trim();
-        const apiUrl = nnidInput.getAttribute('data-action') + nnidValue;
+  debounceTimeout = setTimeout(function () {
+    const nnidValue = nnidInput.value.trim();
+    const apiUrl = nnidInput.getAttribute('data-action') + nnidValue;
 
-        if(nnidValue.length > 0) {
-            handleMiiDataFetch(apiUrl)
-                .catch(error => {
-                    nnidInput.setCustomValidity(error.message);
-                    nnidInput.reportValidity();
-                })
-                .finally(() => {
-                    if(!formSubmitting) {
-                        nnidInput.disabled = false;
-                        submitButton.disabled = false;
-                        randomButton.disabled = false;
-                    }
-                });
-        } else {
-            nnidInput.setCustomValidity('');
+    if(nnidValue.length > 0) {
+      handleMiiDataFetch(apiUrl)
+        .catch(error => {
+            nnidInput.setCustomValidity(error.message);
             nnidInput.reportValidity();
-        }
-    }, 500); // 500ms debounce
+        })
+        .finally(() => {
+          if(!formSubmitting) {
+            nnidInput.disabled = false;
+            submitButton.disabled = false;
+            randomButton.disabled = false;
+          }
+        });
+    } else {
+      nnidInput.setCustomValidity('');
+      nnidInput.reportValidity();
+    }
+  }, 500); // 500ms debounce
 });
 
 randomButton.addEventListener('click', function () {
-    const apiUrl = randomButton.getAttribute('data-action');
-    nnidInput.disabled = true;
-    submitButton.disabled = true;
-    randomButton.disabled = true;
+  const apiUrl = randomButton.getAttribute('data-action');
+  nnidInput.disabled = true;
+  submitButton.disabled = true;
+  randomButton.disabled = true;
 
-    handleMiiDataFetch(apiUrl)
-        .catch(error => {
-            // Create and append the error message
-            const errorLiOriginal = document.getElementsByClassName('load-error');
-            const errorLi = errorLiOriginal[errorLiOriginal.length - 1].cloneNode(true);
-            errorLi.style.display = '';
-            errorLi.textContent = error.message;
-            resultList.insertBefore(errorLi, resultList.firstChild);
-        })
-        .finally(() => {
-            if(!formSubmitting) {
-                nnidInput.disabled = false;
-                submitButton.disabled = false;
-                randomButton.disabled = false;
-                nnidInput.focus();
-            }
-        });
+  handleMiiDataFetch(apiUrl)
+    .catch(error => {
+      // Create and append the error message
+      const errorLiOriginal = document.getElementsByClassName('load-error');
+      const errorLi = errorLiOriginal[errorLiOriginal.length - 1].cloneNode(true);
+      errorLi.style.display = '';
+      errorLi.textContent = error.message;
+      resultList.insertBefore(errorLi, resultList.firstChild);
+    })
+    .finally(() => {
+      if(!formSubmitting) {
+        nnidInput.disabled = false;
+        submitButton.disabled = false;
+        randomButton.disabled = false;
+        nnidInput.focus();
+      }
+    });
 });
