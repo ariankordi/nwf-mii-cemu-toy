@@ -1,7 +1,10 @@
 package main
 
 import (
+	"errors"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"strings"
 
@@ -26,12 +29,13 @@ import (
 
 	//"slices" // for slices.Delete which did not even work
 
-	"github.com/hlts2/round-robin"
+	roundrobin "github.com/hlts2/round-robin"
 
 	// gorm dialector type
 	// TODO:
 	// * do not require either database type
 	// ... or gorm in general if you don't even want it
+	"github.com/aarol/reload"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -78,12 +82,76 @@ func createLocaleFuncMap(r *http.Request) (template.FuncMap, error) {
 	return template.FuncMap{"T": Tfunc}, nil
 }
 
+const templatesDir = "views"
+// walk through and load templates
+
+// will be used later
+func placeholderT(key string) string {
+	return key
+}
+func assetURLWithTimestamp(assetPath string) (string, error) {
+	// Get the file stats
+	fileInfo, err := os.Stat(assetPath)
+	if err != nil {
+		// If the file doesn't exist then return nothing
+		if errors.Is(err, os.ErrNotExist) {
+			return "", nil
+		}
+		return "", err
+	}
+
+	// Extract the modification time
+	modTime := fileInfo.ModTime()
+
+	// Format the modification time as a timestamp (e.g., Unix timestamp)
+	timestamp := strconv.FormatInt(modTime.Unix(), 16)
+
+	// Append the timestamp as a query parameter
+	url := assetPath + "?" + timestamp
+	return url, nil
+}
+
+func loadTemplates(templatesDir string) {
+	// initialize the templates by parsing everything from the views directory recursively
+	var tmplFiles []string
+	err := filepath.Walk(templatesDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		// exclude non-html files
+		if !info.IsDir() && filepath.Ext(path) == ".html" {
+			// feel free to instead make this directly build the template
+			tmplFiles = append(tmplFiles, path)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal("could not add or find templates (they are stored in views, is this accessible?): ", err)
+	}
+
+	// parse/compile all templates
+	templates = template.Must(template.New("").Funcs(
+		// define a placeholder for the translation function T
+		template.FuncMap{
+			"T":     placeholderT,
+			"asset": assetURLWithTimestamp,
+		},
+		// note: it WILL be replaced later on by a funcmap
+	).ParseFiles(tmplFiles...))
+}
+
+const localesDir = "locales"
+
+var handler http.Handler = http.DefaultServeMux
+
 func main() {
 	var port, certFile, keyFile, hostnamesSniAllowArg string
+	var isDevelopment bool
 	flag.StringVar(&port, "port", ":8080", "http port to listen to, OR https if you specify cert and key")
 	flag.StringVar(&certFile, "cert", "", "TLS certificate file")
 	flag.StringVar(&keyFile, "key", "", "TLS key file")
 	flag.StringVar(&hostnamesSniAllowArg, "hostnames", "", "Allowlist of hostnames for TLS SNI")
+	flag.BoolVar(&isDevelopment, "live-reloading", false, "Live reload locales and HTML")
 
 	var (
 		// cache db connection string
@@ -113,23 +181,39 @@ func main() {
 
 	flag.Parse()
 
+	if isDevelopment {
+		// Call `New()` with a list of directories to recursively watch
+		reloader := reload.New("locales/", "views/")
+
+		// Optionally, define a callback to
+		// invalidate any caches
+		reloader.OnReload = func() {
+			loadLocaleFiles(localesDir)
+			loadTemplates(templatesDir)
+		}
+
+		// Use the Handle() method as a middleware
+		handler = reloader.Handle(handler)
+		log.Println("Live reloading enabled.")
+	}
+
 	if *upstreamAddrs != "" {
 		urls := []*url.URL{}
 		for _, addr := range strings.Split(*upstreamAddrs, ",") {
-		u, err := url.Parse("tcp://" + addr)
-		if err != nil {
-			log.Fatalf("Failed to parse upstream address %s: %v", addr, err)
-		}
-		urls = append(urls, u)
+			u, err := url.Parse("tcp://" + addr)
+			if err != nil {
+				log.Fatalf("Failed to parse upstream address %s: %v", addr, err)
+			}
+			urls = append(urls, u)
 		}
 		var err error
 		rr, err = roundrobin.New(urls...)
 		if err != nil {
-		log.Fatalf("Failed to create round-robin balancer: %v", err)
+			log.Fatalf("Failed to create round-robin balancer: %v", err)
 		}
 		log.Println("Using multiple upstreams:")
 		for _, u := range urls {
-		log.Printf("- %s\n", u.Host)
+			log.Printf("- %s\n", u.Host)
 		}
 	} else {
 		upstreamTCP = *upstreamAddr
@@ -161,7 +245,9 @@ func main() {
 	http.Handle("/assets/", http.StripPrefix("/assets/", gzipped.FileServer(gzipped.Dir("assets"))))
 
 	// Load locale files
-	loadLocaleFiles("locales")
+	loadLocaleFiles(localesDir)
+
+	loadTemplates(templatesDir)
 
 	// Pre-compile templates
 	/*var err error
@@ -171,48 +257,7 @@ func main() {
 	}*/
 
 	// index = /index.html
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/favicon.ico" {
-			http.ServeFile(w, r, "assets/favicon.ico")
-			return
-		}
-		// funny easter egg, shows an image of steve jobs
-		if r.URL.Path == "/jobs" {
-			w.Header().Set("Content-Type", "text/html")
-			http.ServeFile(w, r, "views/jobs.html")
-			return
-		}
-		if r.URL.Path != "/" {
-			// Use the 404 handler if the path is not exactly "/"
-			//http.NotFound(w, r)
-			w.Header().Set("Content-Type", "text/html")
-			w.WriteHeader(http.StatusNotFound)
-			// todo please find a more elegant way to do this
-			// TODO: seeing superfluous writeheader calls here.?
-			http.ServeFile(w, r, "views/404-scary.html") //"404.html")
-			return
-		}
-		// serve index
-		// gets the user's language from the request
-		funcMap, err := createLocaleFuncMap(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		//tmpl := templates.Lookup("index.html").Funcs(funcMap)
-		var tmpl *template.Template
-		tmpl, err = template.New("index.html").Funcs(funcMap).ParseFiles("views/index.html")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if err = tmpl.Execute(w, nil); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		//http.ServeFile(w, r, "index.html")
-	})
+	http.HandleFunc("/", endpointsHandler)
 	log.Println("now listening")
 	var err error
 	if certFile != "" && keyFile != "" {
@@ -239,14 +284,65 @@ func main() {
 		server := &http.Server{
 			Addr:      port,
 			TLSConfig: tlsConfig,
+			Handler:   handler,
 		}
 		err = server.ListenAndServeTLS(certFile, keyFile)
 	} else {
 		// no handler because we defined HandleFunc
-		err = http.ListenAndServe(port, nil)
+		err = http.ListenAndServe(port, handler)
 	}
 	// this will only be reached when either function returns
 	log.Fatalln(err)
+}
+
+// TODO REMOVE THIS
+var shaderTypeReleaseDate = time.Date(2024, 8, 12, 0, 0, 0, 0, time.UTC)
+var oneMonthLater = shaderTypeReleaseDate.AddDate(0, 1, 0)
+
+func endpointsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/favicon.ico" {
+		http.ServeFile(w, r, "assets/favicon.ico")
+		return
+	}
+	// funny easter egg, shows an image of steve jobs
+	if r.URL.Path == "/jobs" {
+		w.Header().Set("Content-Type", "text/html")
+		http.ServeFile(w, r, "views/jobs.html")
+		return
+	}
+	if r.URL.Path != "/" {
+		// Use the 404 handler if the path is not exactly "/"
+		//http.NotFound(w, r)
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusNotFound)
+		// todo please find a more elegant way to do this
+		// TODO: seeing superfluous writeheader calls here.?
+		http.ServeFile(w, r, "views/404-scary.html") //"404.html")
+		return
+	}
+	// serve index
+	// gets the user's language from the request
+	funcMap, err := createLocaleFuncMap(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var tmpl *template.Template
+	// look up the precompiled index.html
+	// replacing its function map with our one that has a locale
+	tmpl = templates.Lookup("index.html").Funcs(funcMap)
+
+	// TODO: REMOVE THIS
+	isNew := time.Now().Before(oneMonthLater)
+	data := map[string]bool{
+		"IsntAMonthFromShaderAndLightingTypeBeingNew": isNew,
+	}
+	if err = tmpl.Execute(w, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	//http.ServeFile(w, r, "index.html")
 }
 
 // NOTE: redirect /render.png to /miis/image.png why did this ever use render.png

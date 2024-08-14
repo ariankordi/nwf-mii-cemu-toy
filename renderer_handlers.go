@@ -154,9 +154,15 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 
 	// use original response writer
 	w := ow
-	errorSessionID := query.Get("errorSessionID")
-	errorRequestID := query.Get("errorRequestID")
-	if errorSessionID != "" && errorRequestID != "" {
+	errorSessionAndRequestID := query.Get("erri")
+	if errorSessionAndRequestID != "" {
+		parts := strings.Split(errorSessionAndRequestID, "-")
+		if len(parts) != 2 {
+			http.Error(w, "the combined error session and request id, called \"erri\", does not contain exactly one dash or has more than two parts", http.StatusBadRequest)
+			return
+		}
+		errorSessionID := parts[0]
+		errorRequestID := parts[1]
 		// ... unless error parameters are available
 		w = &errorResponseWriter{ResponseWriter: w, sessionID: errorSessionID, requestID: errorRequestID}
 	}
@@ -346,14 +352,14 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		http.Error(w, "width = resolution, int, no limit on this lmao,", http.StatusBadRequest)
 		return
 	}
-	if width > 4095 {
+	if width > 4096 {
 		http.Error(w, "ok bro i set the limit to 4K", http.StatusBadRequest)
 		return
 	}
 
 	// Parsing and validating texture resolution
 	texResolution, err := strconv.Atoi(texResolutionStr)
-	if err != nil {
+	if err != nil || texResolution < 2 {
 		http.Error(w, "texResolution is not a number", http.StatusBadRequest)
 		return
 	}

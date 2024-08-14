@@ -80,6 +80,10 @@ ul {
   font-size: 16px;
   width: 90%;
 }
+.green-border {
+  border: 2px solid green;
+  border-radius: 5px;
+}
 /* for pattern attribute */
 .long-field:required:invalid:not(:placeholder-shown) {
   background-color: lightpink;
@@ -92,6 +96,27 @@ ul {
   }
   .load-error {
     max-width: 40vw;
+  }
+}
+
+/* allows an element to span the entire width */
+.entire-width {
+  width: 96vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: calc(-48vw); /* Adjust based on the width */
+  margin-right: calc(-48vw); /* Adjust based on the width */
+}
+
+@media (width > 1000px) {
+  .entire-width {
+    width: 900px;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: calc(-450px); /* Adjust based on the width */
+    margin-right: calc(-450px); /* Adjust based on the width */
   }
 }
 

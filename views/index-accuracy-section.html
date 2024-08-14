@@ -1,0 +1,134 @@
+    <section id="accuracy-status">
+        <h2>Accuracy Status/Known Flaws</h2>
+        <p>Current goals are to perfectly reproduce Wii U Mii Maker/NNID renders, Mii Studio/Miitomo renders, and Switch icon renders.</p>
+        <ul style="padding: 0; text-align: left">
+            <li>
+            ❌ MIITOMO SHADER does NOT HAVE FUNCTIONING SPECULAR REFLECTION
+            <ul>
+                <li>Most obvious at the middle of the skin.</li>
+                <details>
+                    <summary>Reason completely unknown. Here's what I've tried...</summary>
+                    <ul>
+                    <li>The LUT shaders have both been modified, because they use preprocessor macros (????) in place of uniforms for things like modulate mode, light enable, etc. However, I've reviewed the changes many times and concluded nothing should be different.</li>
+                    <li>Although Miitomo uses a different MVP matrix, and the attribute positions are all multiplied by 0.1 for some reason, I tried both from Miitomo and still no change.</li>
+                    <li>All other vertex and fragment uniforms are exactly the same. I'm setting uEyePt as it should be in the view matrix but the originals didn't work either.</li>
+                    <li>I've proven in RenderDoc that the LUTs are the exact same. Miitomo binds them with GL_LUMINANCE but we are using GL_RED with the exact same swizzle.</li>
+                    <li>I've also matched the sampler options exactly, 1:1, with the same slots. However, Miitomo is binding the textures directly as samplers. Have not tried doing this exactly, or at least haven't been successful.</li>
+                    </ul>
+                </details>
+            </ul>
+            </li>
+            <li>
+            ❌ NO PANTS COLORS
+            <ul>
+                <li>Wii U Mii Maker draws the pants and torso separately but it's one model.</li>
+                <li>They are using the bone weights for this...</li>
+            </ul>
+            </li>
+            <li>
+            ❌ Body is not scaled using bone weights from skeleton
+            <ul>
+                <li>This is why the body's arms may look a little wonky and unnatural.</li>
+                <li>Need to use the skeleton from MiiBodyMiddle.bfres (MK8/Wii U Mii Maker)</li>
+                <ul>
+                    <li>So I need to find something that extracts these from the bfres. The <a href="https://github.com/nw4f/G3d">NW4F G3d decomp</a> has no documentation, only other thing I can find is Switch Toolbox which is in C#.</li>
+                </ul>
+            </ul>
+            </li>
+            <summary>
+            <li>
+            ⚠️Switch icon view isn't accurate to nn::mii::VariableIconBody
+            <ul>
+                <li>Should be being set by this function: <code>void nn::mii::VariableIconBody::StoreCameraMatrix (struct nn::util::FloatColumnMajor4x3*, struct nn::mii::VariableIconBodyWorldMatrix const&amp;)</code></li>
+            </ul>
+            </li>
+            <li>
+            ⚠️ Default portrait view isn't accurate to Wii U Mii Maker
+            <ul>
+                <li>Initialization is done here in ffl_app.rpx...</li>
+                <li>FFLUtility: <code>FUN_0210a9b4</code> (I think)</li>
+                <li>Wii U Mii Maker, US latest ver: <code>FUN_02086e9</code></li>
+                <li>Side note: I think this is very similar to the one Mii Studio is using, except it uses it for face AND face only. Comparison: <a href="https://web.archive.org/web/20170521213000im_/https://cdn-mii.accounts.nintendo.com/1.0.0/miis/8ed7ef7660b3b2cf/image/1dd84ae2a599e70f-ebcc0c4f725b6b02.png?type=face&expression=normal&width=512&instanceCount=1&instanceRotationMode=model">Mii Maker/NNID/cdn-mii 1.0.0 (all the same)</a> vs <a href="https://cdn-mii.accounts.nintendo.com/2.0.0/miis/8ed7ef7660b3b2cf/image/1dd84ae2a599e70f-ebcc0c4f725b6b02.png?type=face&expression=normal&width=512&instanceCount=1&instanceRotationMode=model">cdn-mii 2.0.0/Mii Studio</a></li>
+            </ul>
+            </li>
+            <li>
+            ⚠️ Need to find whole body camera view for Wii U Mii Maker and potentially Miitomo (Mii Studio)
+            <ul>
+                <li>Unfortunately it isn't as easy as grabbing the MVP uniforms from Cemu as they do some optimization to shuffle them</li>
+            </ul>
+            </li>
+            <details>
+                <summary>🚩 Missing a few parameters to be fully compatible with the Mii Studio API (read more...)</summary>
+                <ul>
+                    <li>characterXRotate, characterYRotate, characterZRotate</li>
+                    <ul>
+                        <li>Difference between this and camera rotation comes down to model matrix vs view matrix, the only noticeable difference I've seen is in lighting.</li>
+                        <li>Seems that most people use character rotation instead of camera rotation so, sigh, gotta figure this out...</li>
+                    </ul>
+                    <li>clothesColor</li>
+                    <ul><li>No reason I can't make this a hex color too. Also going to add "pantsColor" when that's a thing probably.</li></ul>
+                    <li>instanceCount, instanceRotationMode</li>
+                    <li>splitMode, splitDepthOffset(?)</li>
+                    <ul><li>Feel like splitDepthOffset doesn't do anything? It maaaay have done something on cdn-mii 1.0.0 though...??</li></ul>
+                    <li>lightXDirection, lightYDirection, lightZDirection, lightDirectionMode(?)</li>
+                    <ul>
+                        <li>I officially don't like the light direction parameters, I legitimately don't think anyone uses it right.</li>
+                        <li>Both mii-js AND pf2m.com/tools/mii at some point used to initialize it to zero...</li>
+                        <li>... while zero is not the default, so it just gives you a terrible result.</li>
+                        <li>There's also lightDirectionMode, which cdn-mii 2.0.0/Mii Studio completely ignore. We don't know what its options do and, while setting it to "none" (the sites above were also doing this so eh where's the blame supposed to go) is SUPPOSED to not make the light directions apply, well, they do.</li>
+                        <li class="small">Was light direction even a thing on cdn-mii 1.0.0...??? I feel like pf2m.com/tools/mii specifically said it wasn't.</li>
+                    </ul>
+                    <li>Also IMO all of the above are straightforward to implement except for light direction, since that's not the real light direction uniform being passed to the shader (it would have more intense effects).</li>
+                </ul>
+            </details>
+        </ul>
+
+        <details id="planned">
+            <summary>
+            <h3 style="display: inline;">Planned &amp; Unplanned: <span class="small">click to expand</span></h3>
+            </summary>
+            <ul style="padding: 0; text-align: left">
+            <li>❔Don't have the body model used in Mii Studio at the moment. May be the same as Miitomo.</li>
+            <li>❔Poses from the Wii U Mii Maker are planned as soon as skeletal animations work.</li>
+            <details>
+                <summary>❔Need to reverse the custom QR code format from Miitomo/Miitopia/Tomodachi Life.</summary>
+                <ul>
+                    <li>There's no reason this renderer can't support the custom Mii colors from Miitopia and Tomodachi Life, and it's proven that Miitomo is using some Switch format on 2.3.0 and later.</li>
+                    <li>When all of those games encode the QR codes, they put downgraded 3DS/Wii U data in the beginning so that it can still scan on all devices supporting those Mii QR codes.</li>
+                    <li>...However, all of those games are putting the game-specific data after that in the QR code, and I've taken a look, and it seems obfuscated or encrypted on TOP of the encryption Mii QR codes already have :\</li>
+                    <li>I haven't personally taken a deep dive into this - it's definitely encrypted, with some <abbr title="Cryptographic term - Number Used Only Once">nonce?</abbr> or constant key at the beginning.</li>
+                    <li>It looks like if you scan Miitomo codes in Tomodachi Life it will pick up on those extra details, leading me to believe that potentially all games use the same thing.</li>
+                    <li>Neither of these games have debug symbols <span class="small">(despite that Miitomo has symbols for AFL/nn::mii on Android)</span> though so it's not going to be extremely straightforward to find, you'd have to do some memory debugging.</li>
+                    <li><span class="small">Feel like if someone like <a href="https://github.com/jaames">jaames</a> or <a href="https://github.com/Kinnay">Kinnay</a> looked into this they'd be able to find it in a jiffy but, alas, we are just mere mortals 😔</span></li>
+                </ul>
+            </details>
+            <li>❔May want to look into why the face texture looks more, blurry? on our renders compared to theirs.</li>
+            <ul>
+                <li>Particularly at low resolutions like 96x96.</li>
+                <li>Feel like they may be using either different texture filtering or a different texture resolution.</li>
+            </ul>
+
+            <li>❔May look into doing a primitive shader. Potentially 3DS, Wii, maybe even both.</li>
+            <ul>
+                <li>May require making the meshes/textures look worse for authenticity.</li>
+                <ul><li>Artificially using the shader, or by importing from CFL_Res.dat, or both?</li></ul>
+                <li>Neither the 3DS nor Wii use traditional OpenGL-compatible shaders, though...</li>
+                <li>... however, emulators eventually translate both to GLSL, and N*ntendo made a TEV emulator on Wii U.</li>
+            </ul>
+
+            </ul>
+
+            <h3 style="display: inline;">Unplanned:</h3>
+            <ul style="padding: 0; text-align: left">
+            <li>Miitomo/Tomodachi Life clothing/headgear</li>
+            <li>Custom hairstyles or frankly custom anything</li>
+            <li>Miitopia makeup</li>
+            <li>BoTW/TOTK models... semi-Miis</li>
+            <li>Xbox Miis, Apple Miis, Samsung Miis, any other stupid ass bootleg Miis</li>
+            <ul>
+                <li>Never ask me for these 🤬</li>
+            </ul>
+            </ul>
+        </details>
+
+    </section>

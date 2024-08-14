@@ -2,13 +2,13 @@
 *.raw
 
 # binaries
-processor-go/processor-go
-processor-go/processor-go.exe
+processor-go
+processor-go.exe
 # dlv debug
 __debug_*
 # old versions
-#processor-go/*-2024-03*
-processor-go/OLD VERSIONS/
+#*-2024-03*
+OLD VERSIONS/
 
 # sqlite databases
 *.db
@@ -21,12 +21,12 @@ playground/*.h*
 playground/*.o
 
 # shh
-processor-go/assets/warioland3/
+assets/warioland3/
 # compressed assets
-processor-go/assets/*.br
-processor-go/assets/*.gz
-processor-go/assets/vendor-js/*.br
-processor-go/assets/vendor-js/*.gz
+assets/*.br
+assets/*.gz
+assets/vendor-js/*.br
+assets/vendor-js/*.gz
 
 # node_modules
 node_modules
