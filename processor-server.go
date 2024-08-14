@@ -62,8 +62,8 @@ func loadLocaleFiles(dir string) {
 // TODO: you may want to set this to the computer's language
 const defaultLang = "en-US"
 
-// createLocaleFuncMap creates a template.FuncMap with the localized translation function.
-func createLocaleFuncMap(r *http.Request) (template.FuncMap, error) {
+// createLocaleFunction creates a personalized localized translation function.
+func createLocaleFunction(r *http.Request) (i18n.TranslateFunc, error) {
 	query := r.URL.Query()
 	//cookieLang := r.Cookie("lang")
 	cookieLang := query.Get("locale.lang")
@@ -79,14 +79,15 @@ func createLocaleFuncMap(r *http.Request) (template.FuncMap, error) {
 	}
 
 	// map translation function to be used as "T" in template
-	return template.FuncMap{"T": Tfunc}, nil
+	//return template.FuncMap{"_": Tfunc}, nil
+	return Tfunc, nil
 }
 
 const templatesDir = "views"
 // walk through and load templates
 
 // will be used later
-func placeholderT(key string) string {
+func placeholderTranslate(key string) string {
 	return key
 }
 func assetURLWithTimestamp(assetPath string) (string, error) {
@@ -133,7 +134,7 @@ func loadTemplates(templatesDir string) {
 	templates = template.Must(template.New("").Funcs(
 		// define a placeholder for the translation function T
 		template.FuncMap{
-			"T":     placeholderT,
+			"_":     placeholderTranslate,
 			"asset": assetURLWithTimestamp,
 		},
 		// note: it WILL be replaced later on by a funcmap
@@ -307,7 +308,7 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 	// funny easter egg, shows an image of steve jobs
 	if r.URL.Path == "/jobs" {
 		w.Header().Set("Content-Type", "text/html")
-		http.ServeFile(w, r, "views/jobs.html")
+		http.ServeFile(w, r, "assets/jobs.html")
 		return
 	}
 	if r.URL.Path != "/" {
@@ -317,12 +318,12 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		// todo please find a more elegant way to do this
 		// TODO: seeing superfluous writeheader calls here.?
-		http.ServeFile(w, r, "views/404-scary.html") //"404.html")
+		http.ServeFile(w, r, "assets/404-scary.html") //"404.html")
 		return
 	}
 	// serve index
 	// gets the user's language from the request
-	funcMap, err := createLocaleFuncMap(r)
+	i18nFunc, err := createLocaleFunction(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -330,8 +331,10 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 
 	var tmpl *template.Template
 	// look up the precompiled index.html
-	// replacing its function map with our one that has a locale
-	tmpl = templates.Lookup("index.html").Funcs(funcMap)
+	// making a function map with the locale function
+	tmpl = templates.Lookup("index.html").Funcs(
+		template.FuncMap{"_": i18nFunc},
+	)
 
 	// TODO: REMOVE THIS
 	isNew := time.Now().Before(oneMonthLater)
