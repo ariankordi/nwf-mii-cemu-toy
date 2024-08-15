@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -20,9 +21,15 @@ import (
 	// for tls sni whitelist
 	"crypto/tls"
 
-	"html/template"
+	"github.com/CloudyKit/jet/v6"
+	"github.com/pelletier/go-toml/v2"
+	"golang.org/x/text/language"
 
-	"github.com/nicksnyder/go-i18n/i18n"
+	// html/template worked okay but
+	// jet doesn't exclude comments and
+	// is a lil bit more efficient
+
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 
 	// compresses static assets but not dynamic pages
 	"codeberg.org/meta/gzipped/v2"
@@ -41,29 +48,69 @@ import (
 	"gorm.io/gorm"
 )
 
-// Declare a variable to hold the pre-compiled templates.
-var templates *template.Template
+var (
+	translations              *i18n.Bundle
+	defaultLocalizer          *i18n.Localizer
 
-func loadLocaleFiles(dir string) {
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		log.Println("Error reading directory", dir, ":", err)
-		return
-	}
-	for _, f := range files {
-		// Construct the full path and load each file
-		filePath := filepath.Join(dir, f.Name())
-		if err := i18n.LoadTranslationFile(filePath); err != nil {
-			log.Println("Error loading file", filePath, ":", err)
+	languageStrings           []string
+	languageStringsUnderscore []string
+)
+
+func loadLocaleFiles(dir string) error {
+	// TODO: you may want to set this to the computer's language
+	bundle := i18n.NewBundle(language.AmericanEnglish)
+	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
 		}
+		if info.IsDir() || filepath.Ext(path) != ".toml" {
+			return nil
+		}
+		_, err = bundle.LoadMessageFile(path)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	translations = bundle
+	// return prematurely if language strings is populated already
+	if len(languageStrings) > 0 {
+		return nil
+	}
+	for _, value := range translations.LanguageTags() {
+		str := value.String()
+		languageStrings = append(languageStrings, str)
+		// Replace dashes with underscores
+		languageStringsUnderscore = append(languageStringsUnderscore, strings.ReplaceAll(str, "-", "_"))
+	}
+	return nil
+}
+
+func translateFunc(localizer *i18n.Localizer) func(string) string {
+	return func(id string/*, args ...interface{}*/) string {
+		/*var data map[string]interface{}
+		if len(args) > 0 {
+			data = make(map[string]interface{}, len(args))
+			for n, iface := range args {
+				data["v"+strconv.Itoa(n)] = iface
+			}
+		}*/
+		str, _, err := localizer.LocalizeWithTag(&i18n.LocalizeConfig{
+			MessageID:    id,
+			//TemplateData: data,
+		})
+		if str == "" && err != nil {
+			log.Println("translateFunc failed:", err)
+			return "[translateFunc failed: " + err.Error() + "]"
+		}
+		return str
 	}
 }
 
-// TODO: you may want to set this to the computer's language
-const defaultLang = "en-US"
-
 // createLocaleFunction creates a personalized localized translation function.
-func createLocaleFunction(r *http.Request) (i18n.TranslateFunc, error) {
+func createLocaleFunction(r *http.Request) (func(a jet.Arguments) reflect.Value, error) {
 	query := r.URL.Query()
 	//cookieLang := r.Cookie("lang")
 	cookieLang := query.Get("locale.lang")
@@ -72,15 +119,18 @@ func createLocaleFunction(r *http.Request) (i18n.TranslateFunc, error) {
 	ogLang := query.Get("fb_locale")
 	// Determine the language from the "Accept-Language" header.
 	acceptLang := r.Header.Get("Accept-Language")
-	Tfunc, err := i18n.Tfunc(ogLang, cookieLang, acceptLang, defaultLang)
-	// Default to English if there's an error
-	if err != nil {
-		return nil, err
-	}
+
+	localizer := i18n.NewLocalizer(translations, ogLang, cookieLang, acceptLang)
+
+	Tfunc := translateFunc(localizer)
 
 	// map translation function to be used as "T" in template
 	//return template.FuncMap{"_": Tfunc}, nil
-	return Tfunc, nil
+	return func(a jet.Arguments) reflect.Value {
+		strIn := a.Get(0).Interface().(string)
+		strOut := Tfunc(strIn)
+		return reflect.ValueOf(strOut)
+	}, nil
 }
 
 const templatesDir = "views"
@@ -90,15 +140,18 @@ const templatesDir = "views"
 func placeholderTranslate(key string) string {
 	return key
 }
-func assetURLWithTimestamp(assetPath string) (string, error) {
+func assetURLWithTimestamp(a jet.Arguments) reflect.Value {
+	assetPath := a.Get(0).String()
 	// Get the file stats
 	fileInfo, err := os.Stat(assetPath)
 	if err != nil {
 		// If the file doesn't exist then return nothing
 		if errors.Is(err, os.ErrNotExist) {
-			return "", nil
+			return reflect.ValueOf("")
 		}
-		return "", err
+		errStr := "error loading asset path: " + assetPath + " , error:" + err.Error()
+		log.Println(errStr)
+		return reflect.ValueOf(errStr)
 	}
 
 	// Extract the modification time
@@ -109,36 +162,23 @@ func assetURLWithTimestamp(assetPath string) (string, error) {
 
 	// Append the timestamp as a query parameter
 	url := assetPath + "?" + timestamp
-	return url, nil
+	return reflect.ValueOf(url)
 }
 
-func loadTemplates(templatesDir string) {
-	// initialize the templates by parsing everything from the views directory recursively
-	var tmplFiles []string
-	err := filepath.Walk(templatesDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		// exclude non-html files
-		if !info.IsDir() && filepath.Ext(path) == ".html" {
-			// feel free to instead make this directly build the template
-			tmplFiles = append(tmplFiles, path)
-		}
-		return nil
-	})
-	if err != nil {
-		log.Fatal("could not add or find templates (they are stored in views, is this accessible?): ", err)
-	}
+// jet templates are stored here
+var views *jet.Set
 
-	// parse/compile all templates
-	templates = template.Must(template.New("").Funcs(
-		// define a placeholder for the translation function T
-		template.FuncMap{
-			"_":     placeholderTranslate,
-			"asset": assetURLWithTimestamp,
-		},
-		// note: it WILL be replaced later on by a funcmap
-	).ParseFiles(tmplFiles...))
+// specify your own jet options to this like jet.InDevelopmentMode()
+func loadTemplates(templatesDir string, opts []jet.Option) {
+	// initialize jet loader that reads all templates in the dir
+	loader := jet.NewOSFileSystemLoader(templatesDir)
+	views = jet.NewSet(
+		loader,
+		opts...,
+	)
+
+	// add global function to append date to asset urls
+	views.AddGlobalFunc("asset", assetURLWithTimestamp)
 }
 
 const localesDir = "locales"
@@ -182,7 +222,9 @@ func main() {
 
 	flag.Parse()
 
+	jetOpts := []jet.Option{}
 	if isDevelopment {
+		jetOpts = append(jetOpts, jet.InDevelopmentMode())
 		// Call `New()` with a list of directories to recursively watch
 		reloader := reload.New("locales/", "views/")
 
@@ -190,7 +232,7 @@ func main() {
 		// invalidate any caches
 		reloader.OnReload = func() {
 			loadLocaleFiles(localesDir)
-			loadTemplates(templatesDir)
+			//loadTemplates(templatesDir, jetOpts)
 		}
 
 		// Use the Handle() method as a middleware
@@ -246,9 +288,11 @@ func main() {
 	http.Handle("/assets/", http.StripPrefix("/assets/", gzipped.FileServer(gzipped.Dir("assets"))))
 
 	// Load locale files
-	loadLocaleFiles(localesDir)
+	if err := loadLocaleFiles(localesDir); err != nil {
+		log.Fatalln("failed to load locale files:", err)
+	}
 
-	loadTemplates(templatesDir)
+	loadTemplates(templatesDir, jetOpts)
 
 	// Pre-compile templates
 	/*var err error
@@ -329,21 +373,27 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var tmpl *template.Template
+	var tmpl *jet.Template
 	// look up the precompiled index.html
-	// making a function map with the locale function
-	tmpl = templates.Lookup("index.html").Funcs(
-		template.FuncMap{"_": i18nFunc},
-	)
+	tmpl, err = views.GetTemplate("index.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	// TODO: REMOVE THIS
 	isNew := time.Now().Before(oneMonthLater)
-	data := map[string]bool{
+	data := map[string]interface{}{
 		"IsntAMonthFromShaderAndLightingTypeBeingNew": isNew,
+		"LanguageStrings": languageStrings,
+		"languageStringsUnderscore": languageStringsUnderscore,
 	}
-	if err = tmpl.Execute(w, data); err != nil {
+	// functions need to be in vars i think
+	vars := jet.VarMap{}
+	vars.SetFunc("T", i18nFunc)
+
+	if err = tmpl.Execute(w, vars, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
 	//http.ServeFile(w, r, "index.html")
 }

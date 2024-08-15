@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="{{_ "html_lang" }}">
+<html lang="{{T("html_lang")}}">
 
 <head>
-    <title>{{_ "page_title" }}</title>
-    <link rel="stylesheet" href="{{asset "assets/style.css" }}">
+    <title>{{T("page_title")}}</title>
+    <link rel="stylesheet" href="{{asset("assets/style.css")}}">
     <meta name="viewport" content="width=device-width,initial-scale=1">
 
     <!-- I THINK THIS DESCRIPTION SHOULD BE THE SAME AS ONE ON THE PAGE?
@@ -33,29 +33,22 @@
     Nintendo Account ID, 3DS Account, Wii U Account">
     -->
 
+    <!-- NOTE: default locale -->
     <meta property="og:locale" content="en_US">
-    <!-- NOTE ALL SUPPORTED LOCALES GO HERE -->
-    <meta property="og:locale:alternate" content="en_GB">
-    <meta property="og:locale:alternate" content="es_419">
-    <meta property="og:locale:alternate" content="ja_JP">
-    <meta property="og:locale:alternate" content="fr_FR">
-    <meta property="og:locale:alternate" content="de_DE">
-    <meta property="og:locale:alternate" content="pt_BR">
+    {{range _, lang := .languageStringsUnderscore}}
+    <meta property="og:locale:alternate" content="{{lang}}">
+    {{end}}
     <meta property="og:url" content="https://mii-unsecure.ariankordi.net/">
     <meta property="og:image" content="/assets/page-screenshot-2024-07-10-dark.png">
     <!-- TODO BELOW IS TO BE LOCALIZED -->
-    <meta property="og:title" content="{{_ "page_title" }}"/>
+    <meta property="og:title" content="{{T("page_title")}}"/>
 
     <meta name="og:description" content="That's right, we will render your Miis with our bare f*cking hands.
     This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*ss Mii Studio API. NO. This runs on MY COMPUTER. On MY very own Microsoft Corporation Surface Laptop 4, Intel® Core™ i7-1185G7, rasterized on the Intel Iris® Xᵉ Graphics™. And you know what? It can run on yours too, since it's entirely open source.">
     <link rel="alternate" hreflang="x-default" href="/">
-    <link rel="alternate" hreflang="en-US" href="/?locale.lang=en-US">
-    <link rel="alternate" hreflang="en-GB" href="/?locale.lang=en-GB">
-    <link rel="alternate" hreflang="es-419" href="/?locale.lang=es-419">
-    <link rel="alternate" hreflang="ja-JP" href="/?locale.lang=ja-jp">
-    <link rel="alternate" hreflang="fr-FR" href="/?locale.lang=fr-fr">
-    <link rel="alternate" hreflang="de-DE" href="/?locale.lang=de-DE">
-    <link rel="alternate" hreflang="pt-BR" href="/?locale.lang=pt-BR">
+    {{range _, lang := .LanguageStrings}}
+    <link rel="alternate" hreflang="{{lang}}" href="/?locale.lang={{lang}}">
+    {{end}}
 
     <!-- add error handling js before anything else is loaded
          also have somewhat tried to make it backwards compatible -->
@@ -84,9 +77,9 @@
 </head>
 
 <body>
-    <h1>{{_ "heading_main" }}</h1>
+    <h1>{{T("heading_main")}}</h1>
     <!-- test if current language is not english -->
-    {{if and (ne (_ "html_lang") "en-US") (ne (_ "html_lang") "en-GB")}}
+    {{if (T("html_lang")) != "en-US" && (T("html_lang")) != "en-GB"}}
     <h2 class="subtitle">Mii Renderer</h2>
     {{end}}
 
@@ -100,16 +93,16 @@
     <form action="/miis/image.png" method="GET">
         <input type="hidden" id="errorSessionAndRequestID" name="erri">
 
-        <div style="color: plum">{{_ "above_input_type_choose_text" }}</div>
-        <label for="input_type">{{_ "label_input_type" }}</label>
+        <div style="color: plum">{{T("above_input_type_choose_text")}}</div>
+        <label for="input_type">{{T("label_input_type")}}</label>
         <!-- only useful for backend when you are not using js bc js will disable the inputs -->
         <select id="input_type"><!-- name="input_type">-->
-            <option value="nnid">{{_ "option_nnid" }}🕰</option>
+            <option value="nnid">{{T("option_nnid")}}🕰</option>
             <!-- nnid above is default -->
-            <option value="pnid">{{_ "option_pnid" }}</option>
+            <option value="pnid">{{T("option_pnid")}}</option>
             <option value="data" selected>Mii file or data</option>
-            <option value="qrcode">{{_ "option_qrcode" }}</option>
-            <!--<option value="amiibo">{{_ "option_amiibo" }}</option>
+            <option value="qrcode">{{T("option_qrcode")}}</option>
+            <!--<option value="amiibo">{{T("option_amiibo")}}</option>
             -->
         </select>
         <br>
@@ -131,58 +124,6 @@
 
             <details>
                 <summary>Should support 3DS/Wii U, Wii, Switch, and Mii Studio. Click for more details.</summary>
-
-        <!--<ul style="text-align: left;">
-            <li>Wii U/3DS
-                <ul>
-                    <li>(CFL/FFL) StoreData / nn::mii::Ver3StoreData, 96 bytes
-                        <ul>
-                            <li>.cfsd, .ffsd</li>
-                        </ul>
-                    </li>
-                    <li>FFLiMiiDataOfficial, 92 bytes
-                        <ul>
-                            <li>.3dsmii, .cfcd</li>
-                        </ul>
-                    </li>
-                    <li>FFLiMiiDataCore, 72 bytes</li>
-                    <li>Miitomo &lt; 2.3.0 uses all of the above as well.</li>
-                </ul>
-            </li>
-            <li>Wii
-                <ul>
-                    <li>RFLCharData, 74 bytes
-                        <ul>
-                            <li>.rcd, .miigx, .mii, .mae</li>
-                        </ul>
-                    </li>
-                    <li>RFLStoreData, 76 bytes
-                        <ul>
-                            <li>.rsd</li>
-                            <li>also inside of Mario Kart Wii replays</li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
-            <li>Switch
-                <ul>
-                    <li>nn::mii::CharInfo, 88 bytes
-                        <ul>
-                            <li>.charinfo, .ufsd</li>
-                        </ul>
-                    </li>
-                    <li>NOT SUPPORTED: CoreData, StoreData</li>
-                </ul>
-            </li>
-            <li>Mii Studio
-                <ul>
-                    <li>Encoded format, 47? 48? characters</li>
-                    <li>Decoded format, 46 bytes "MNMS"</li>
-                </ul>
-            </li>
-            <li>Not supported: DS (Same as Wii, but little endian)</li>
-        </ul>
-        -->
 
             <ul style="padding: 0; text-align: left; font-size: 13px; line-height: 150%;">
                 <li>3DS/Wii U
@@ -216,43 +157,39 @@
                 </li>
             </ul>
 
-            <div style="font-size: 11px; line-height: 140%;"><b>NOTE as of July 8</b>, this site is not verifying or even reading CRC16 values in: FFLStoreData, RFLStoreData... LOL.......</div>
-
-
-
             </details>
         </div>
         <div id="qrcode-group">
-            <button id="start-camera" type="button">{{_ "button_open_camera" }}</button>
-            <button id="stop-camera" type="button" style="display: none;">{{_ "button_close_camera" }}</button>
+            <button id="start-camera" type="button">{{T("button_open_camera")}}</button>
+            <button id="stop-camera" type="button" style="display: none;">{{T("button_close_camera")}}</button>
             <br>
             <div id="qr-camera-group" style="display: none">
-                <label for="cam-list">{{_ "label_select_camera" }}</label>
+                <label for="cam-list">{{T("label_select_camera")}}</label>
                 <select id="cam-list">
-                    <option value="environment" selected>{{_ "option_back_camera" }}</option>
-                    <option value="user">{{_ "option_front_camera" }}</option>
+                    <option value="environment" selected>{{T("option_back_camera")}}</option>
+                    <option value="user">{{T("option_front_camera")}}</option>
                 </select>
                 <video id="qr-video" style="max-width: 100%"></video>
             </div>
-            {{_ "file_photo_selection_prompt" }}
+            {{T("file_photo_selection_prompt")}}
             <input type="file" id="qr-file" accept="image/*">
 
             <!-- QR code statuses -->
-            <div id="qr-status-ready" style="font-weight: bold;">{{_ "status_ready" }}</div>
-            <div id="qr-status-scanning" style="font-weight: bold; color: blue; display: none;">{{_ "qr_status_scanning" }}</div>
-            <div id="qr-status-waiting" style="font-weight: bold; color: orange; display: none;">{{_ "qr_status_waiting" }}</div>
-            <div id="qr-status-loaded" style="font-weight: bold; color: green; display: none;">{{_ "qr_status_loaded" }}<span></span></div>
-            <div id="qr-status-no-qr" style="font-weight: bold; color: red; display: none;">{{_ "qr_status_no_qr" }}</div>
-            <div id="qr-status-error" style="font-weight: bold; color: red; display: none;">{{_ "qr_status_error" }}<span></span></div>
-            <div id="qr-status-no-mii" style="font-weight: bold; color: red; display: none;">{{_ "qr_status_no_mii" }}<span class="small"></span></div>
-            <div id="qr-status-no-camera" style="font-weight: bold; color: red; display: none;">{{_ "qr_status_no_camera" }}</div>
+            <div id="qr-status-ready" style="font-weight: bold;">{{T("status_ready")}}</div>
+            <div id="qr-status-scanning" style="font-weight: bold; color: blue; display: none;">{{T("qr_status_scanning")}}</div>
+            <div id="qr-status-waiting" style="font-weight: bold; color: orange; display: none;">{{T("qr_status_waiting")}}</div>
+            <div id="qr-status-loaded" style="font-weight: bold; color: green; display: none;">{{T("qr_status_loaded")}}<span></span></div>
+            <div id="qr-status-no-qr" style="font-weight: bold; color: red; display: none;">{{T("qr_status_no_qr")}}</div>
+            <div id="qr-status-error" style="font-weight: bold; color: red; display: none;">{{T("qr_status_error")}}<span></span></div>
+            <div id="qr-status-no-mii" style="font-weight: bold; color: red; display: none;">{{T("qr_status_no_mii")}}<span class="small"></span></div>
+            <div id="qr-status-no-camera" style="font-weight: bold; color: red; display: none;">{{T("qr_status_no_camera")}}</div>
 
 
             <input type="hidden" name="data" id="qrcode">
         </div>
         <div id="nnid-group">
             <!-- you may want to add labels to differentiate in the case of no js -->
-            <input id="nnid" name="nnid" class="long-field" type="text" placeholder="{{_ "nnid_placeholder" }}" value="JasmineChlora"
+            <input id="nnid" name="nnid" class="long-field" type="text" placeholder="{{T("nnid_placeholder")}}" value="JasmineChlora"
                 maxlength="16" pattern="^[0-9a-zA-Z\-_.]+$" required
                 data-action="/mii_data/">
             <!-- tbd you should add or check minlength
@@ -261,13 +198,13 @@
             <br>
             <!-- TODO THIS SHOULD PROBABLY SEND A RANDOM NUMBER? with JS -->
             <!--<input type="checkbox" id="force_refresh" name="force_refresh" value="1">
-            <label for="force_refresh">{{_ "force_refresh_label" }}</label>
-            <br><span class="small">{{_ "force_refresh_description" }}</span>
+            <label for="force_refresh">{{T("force_refresh_label")}}</label>
+            <br><span class="small">{{T("force_refresh_description")}}</span>
             -->
-            <button id="random-nnid" type="button" data-action="/mii_data_random">{{_ "button_random_nnid" }}</button>
-            <div id="nnid-loaded" style="font-weight: bold; color: green; display: none;">{{_ "qr_status_loaded" }}<span></span></div>
-            <div id="nnid-last-modified" style="font-weight: bold; display: none;">{{_ "last_modified" }}<span></span></div>
-            <h3 style="margin: 0;">🕰 {{_ "miis_from_nnids_prior_notice" }}</h3>
+            <button id="random-nnid" type="button" data-action="/mii_data_random">{{T("button_random_nnid")}}</button>
+            <div id="nnid-loaded" style="font-weight: bold; color: green; display: none;">{{T("qr_status_loaded")}}<span></span></div>
+            <div id="nnid-last-modified" style="font-weight: bold; display: none;">{{T("last_modified")}}<span></span></div>
+            <h3 style="margin: 0;">🕰 {{T("miis_from_nnids_prior_notice")}}</h3>
             <!--<details>
               <summary style="font-weight: bold;">
                 This will only show Miis from NNIDs
@@ -289,7 +226,7 @@
         <div id="pnid-group">
             <!-- you may want to add labels to differentiate in the case of no js -->
             <input id="pnid" name="nnid" class="long-field" type="text"
-                placeholder="{{_ "input_pnid_placeholder" }}"
+                placeholder="{{T("input_pnid_placeholder")}}"
                 maxlength="16" pattern="^[0-9a-zA-Z\-_.]+$" required>
             <!-- DIFFERENTIATES between NNID and PNID request -->
             <!-- TODO: disabled for now because this interferes when js is not there to disable it by default
@@ -301,9 +238,9 @@
             <br>
             <!-- TODO THIS SHOULD PROBABLY SEND A RANDOM NUMBER? with JS -->
             <input type="checkbox" id="force_refresh_pnid" name="force_refresh" value="1">
-            <label for="force_refresh_pnid">{{_ "label_force_refresh_pnid" }}</label>
-            <br><span class="small">{{_ "force_refresh_description" }}</span>
-            <br><span>{{_ "pretendo_network_description" }}
+            <label for="force_refresh_pnid">{{T("label_force_refresh_pnid")}}</label>
+            <br><span class="small">{{T("force_refresh_description")}}</span>
+            <br><span>{{T("pretendo_network_description")}}
               <a target="_blank" href="https://pretendo.network/">pretendo.network</a>
             </span>
         </div>
@@ -311,10 +248,10 @@
         <div id="data-error-size-mismatch" style="font-weight: bold; color: red; display: none;">
             We don't recognize the type of this Mii data. Check the supported types list. Size: <span></span></div>
         <div id="data-error-invalid-checksum" style="font-weight: bold; color: red; display: none;">
-            {{_ "data_error_invalid_checksum" }}</div>
+            {{T("data_error_invalid_checksum")}}</div>
         <span id="crc16-checksum-failed-text" style="display: none;"> (CRC16 CHECKSUM FAILED)</span>
 
-        <div id="data-error-size-0" style="font-weight: bold; color: red; display: none;">{{_ "data_error_size_0" }}</div>
+        <div id="data-error-size-0" style="font-weight: bold; color: red; display: none;">{{T("data_error_size_0")}}</div>
 
         <label for="type">View type:</label>
         <select name="type" id="type">
@@ -324,37 +261,37 @@
             <option value="variableiconbody">Switch portrait (!)</option>
             <!--<option value="all_body">Body</option>-->
         </select><br>
-        <label for="expression">{{_ "expression_label" }}</label>
+        <label for="expression">{{T("expression_label")}}</label>
         <select name="expression" id="expression">
-            <option value="normal">{{_ "expression_normal" }}</option>
-            <option value="smile">{{_ "expression_smile" }}</option>
-            <option value="anger">{{_ "expression_anger" }}</option>
-            <option value="sorrow">{{_ "expression_sorrow" }}</option>
-            <option value="surprise">{{_ "expression_surprise" }}</option>
-            <option value="blink">{{_ "expression_blink" }}</option>
-            <option value="normal_open_mouth">{{_ "expression_normal_open_mouth" }}</option>
-            <option value="smile_open_mouth">{{_ "expression_smile_open_mouth" }}</option>
-            <option value="anger_open_mouth">{{_ "expression_anger_open_mouth" }}</option>
-            <option value="surprise_open_mouth">{{_ "expression_surprise_open_mouth" }}</option>
-            <option value="sorrow_open_mouth">{{_ "expression_sorrow_open_mouth" }}</option>
-            <option value="blink_open_mouth">{{_ "expression_blink_open_mouth" }}</option>
-            <option value="wink_left">{{_ "expression_wink_left" }}</option>
-            <option value="wink_right">{{_ "expression_wink_right" }}</option>
-            <option value="wink_left_open_mouth">{{_ "expression_wink_left_open_mouth" }}</option>
-            <option value="wink_right_open_mouth">{{_ "expression_wink_right_open_mouth" }}</option>
-            <option value="like_wink_left">{{_ "expression_like_wink_left" }}</option>
-            <option value="like_wink_right">{{_ "expression_like_wink_right" }}</option>
-            <option value="frustrated">{{_ "expression_frustrated" }}</option>
+            <option value="normal">{{T("expression_normal")}}</option>
+            <option value="smile">{{T("expression_smile")}}</option>
+            <option value="anger">{{T("expression_anger")}}</option>
+            <option value="sorrow">{{T("expression_sorrow")}}</option>
+            <option value="surprise">{{T("expression_surprise")}}</option>
+            <option value="blink">{{T("expression_blink")}}</option>
+            <option value="normal_open_mouth">{{T("expression_normal_open_mouth")}}</option>
+            <option value="smile_open_mouth">{{T("expression_smile_open_mouth")}}</option>
+            <option value="anger_open_mouth">{{T("expression_anger_open_mouth")}}</option>
+            <option value="surprise_open_mouth">{{T("expression_surprise_open_mouth")}}</option>
+            <option value="sorrow_open_mouth">{{T("expression_sorrow_open_mouth")}}</option>
+            <option value="blink_open_mouth">{{T("expression_blink_open_mouth")}}</option>
+            <option value="wink_left">{{T("expression_wink_left")}}</option>
+            <option value="wink_right">{{T("expression_wink_right")}}</option>
+            <option value="wink_left_open_mouth">{{T("expression_wink_left_open_mouth")}}</option>
+            <option value="wink_right_open_mouth">{{T("expression_wink_right_open_mouth")}}</option>
+            <option value="like_wink_left">{{T("expression_like_wink_left")}}</option>
+            <option value="like_wink_right">{{T("expression_like_wink_right")}}</option>
+            <option value="frustrated">{{T("expression_frustrated")}}</option>
         </select><br>
-        <label for="resolution-slider">{{_ "resolution_slider_label" }}</label>
+        <label for="resolution-slider">{{T("resolution_slider_label")}}</label>
         <input id="resolution-slider" type="range" min="96" max="1080" step="16" value="270">
         <input class="short-number" name="width" id="width" type="number" step="2" value="270">
         <label for="width">px</label>
         <br>
         <div>
-            <label for="bgColor">{{_ "background_color_label" }}</label>
+            <label for="bgColor">{{T("background_color_label")}}</label>
             <input name="bgColor" id="bgColor" type="color" value="#ffffff">
-            <label for="transparent-checkbox">{{_ "transparent_checkbox_label" }}</label>
+            <label for="transparent-checkbox">{{T("transparent_checkbox_label")}}</label>
             <input id="transparent-checkbox" type="checkbox" checked>
         </div>
 
@@ -411,9 +348,9 @@
 
             <div style="font-size: 13px;">
 
-            <label for="scale">{{_ "scale_label" }}</label>
+            <label for="scale">{{T("scale_label")}}</label>
             <input type="checkbox" name="scale" id="scale" value="1">
-            <div style="font-size: 10px; line-height: 150%; margin-bottom: 5px;">{{_ "scale_label_small" }} Note that scaling is done on the CPU and not GPU at the moment due to trouble I've had with alpha bleeding.</div>
+            <div style="font-size: 10px; line-height: 150%; margin-bottom: 5px;">{{T("scale_label_small")}} Note that scaling is done on the CPU and not GPU at the moment due to trouble I've had with alpha bleeding.</div>
 
 
             <label for="resourceType">Resource type:</label>
@@ -456,16 +393,16 @@
         <div id="view-type-all-body-inaccurate" style="font-weight: bold; color: red; display: none;">There isn't much point to the whole body view because it's a guessed view, and the body itself isn't scaled correctly and the pants aren't colored separately. It's mostly provided as a tech demo.
         <br><div class="small">It's also square only for now because of the way everything is written AND I don't even know the Mii Studio all_body view hhhhhhh</div></div>
 
-        <input id="submit" type="submit" data-value="{{_ "submit_button_text" }}">
+        <input id="submit" type="submit" data-value="{{T("submit_button_text")}}">
     </form>
     <hr>
-    <h3>{{_ "outputs_section_heading" }}</h3>
+    <h3>{{T("outputs_section_heading")}}</h3>
     <ul id="results" class="results entire-width">
         <li id="tutorial">
-            <div style="color: plum">{{_ "tutorial_message" }}</div>
+            <div style="color: plum">{{T("tutorial_message")}}</div>
         </li>
         <li class="load-error" style="display: none">
-            {{_ "load_error_message" }}
+            {{T("load_error_message")}}
             <br>
         </li>
     </ul>
@@ -488,7 +425,7 @@
                 </div>
 
                 <img style="width: 45%;" src="assets/jasmine-sample-270-switch-variableiconbody-no-aa.png" alt="Our render, Jasmine, Switch">
-                <img style="width: 45%;" src="assets/jasmine 270-miivariableiconbodyexample.png">
+                <img style="width: 45%;" src="assets/jasmine-variableiconbodyexample-270.png">
                 <div>Left: <span style="color: hotpink;">our render</span>, right: <span style="color: indianred;">Switch nn:mii::VariableIconBody render.</span>
                     <div class="small">(Used in the MiiEdit and amiibo applets, but not for user icons.)</div>
                 </div>
@@ -502,16 +439,16 @@
             </details>
         </li>
     </ul>
-    <script src="{{asset "assets/script.js"}}"></script>
+    <script src="{{asset("assets/script.js")}}"></script>
     <!--<script src="https://cdn.jsdelivr.net/gh/criteo-forks/qr-scanner/qr-scanner.umd.min.js"></script>-->
     <!-- async because it's not needed to RENDER the page
     ... but will be needed laaateerrrr.... -->
-    <script async src="{{asset "assets/mii-qr-handler.js"}}"></script>
+    <script async src="{{asset("assets/mii-qr-handler.js")}}"></script>
     <!-- NOTE: mii-qr-handler actually does depend on qr-scanner AND sjcl both to work -->
-    <script async src="{{asset "assets/vendor-js/gh-criteo-forks-qr-scanner-qr-scanner.umd.min.js"}}"></script>
+    <script async src="{{asset("assets/vendor-js/gh-criteo-forks-qr-scanner-qr-scanner.umd.min.js")}}"></script>
     <!-- TODO: this sjcl (manually crafted) bundle could be smaller if it contained less deps -->
     <!-- NOTE: both jses took manually from jsdelivr -->
-    <script async src="{{asset "assets/vendor-js/sjcl-108-min-plus-codecBytes.js"}}"></script>
+    <script async src="{{asset("assets/vendor-js/sjcl-108-min-plus-codecBytes.js")}}"></script>
 
     <!-- just a joke and should not inhibit loading
     of any other scripts ples -->
@@ -576,7 +513,7 @@
         </ul>
     </section>
 
-    {{template "index-accuracy-section.html" .}}
+   <h1> template "index-accuracy-section.html" .</h1>
 
     <h2>Credits</h2>
     <section id="credits">
@@ -602,30 +539,29 @@
             </ul>
         </li>
         <li><a href="https://github.com/jaames">jaames</a> for the original <a href="https://gist.github.com/jaames/96ce8daa11b61b758b6b0227b55f9f78">Mii QR code decryption Python script</a>.</li>
-        <li>Brazilian translation courtesy of <a href="https://github.com/GabIsAwesome">GabIsAwesome</a>.</li>
+        <li>Brazilian Portuguese translation courtesy of <a href="https://github.com/GabIsAwesome">GabIsAwesome</a>.</li>
     </ul>
     </section>
 
     <br><br>
     <hr>
-    <h3 style="display: inline;">🌎 {{_ "change_language" }}</h3>
+    <h3 style="display: inline;">🌎 {{T("change_language")}}</h3>
 
     <form method="GET">
         <select id="language" name="locale.lang">
-            <!-- Conditionally set selected based on {{_ "html_lang" }} -->
-            <option value="en-US" {{if eq (_ "html_lang") "en-US" }}selected{{end}}>English (US)</option>
-            <option value="en-GB" {{if eq (_ "html_lang") "en-GB" }}selected{{end}}>English (UK)</option>
-            <option value="es-419" {{if eq (_ "html_lang") "es-419" }}selected{{end}}>Español (LATAM)</option>
-            <option value="pt-BR" {{if eq (_ "html_lang") "pt-BR" }}selected{{end}}>Português (Brasil)</option>
-            <option value="fr-FR" {{if eq (_ "html_lang") "fr-FR" }}selected{{end}}>Français</option>
-            <option value="de-DE" {{if eq (_ "html_lang") "de-DE" }}selected{{end}}>Deutsch</option>
-            <option value="ja-JP" {{if eq (_ "html_lang") "ja-JP" }}selected{{end}}>日本語 🥺</option>
-            <!-- Add more languages as needed, following the same pattern -->
+            <!-- Conditionally set selected based on T("html_lang") -->
+            <option value="en-US" {{if T("html_lang") == "en-US"}}selected{{end}}>English (US)</option>
+            <option value="en-GB" {{if T("html_lang") == "en-GB"}}selected{{end}}>English (UK)</option>
+            <option value="es-419" {{if T("html_lang") == "es-419"}}selected{{end}}>Español (LATAM)</option>
+            <option value="pt-BR" {{if T("html_lang") == "pt-BR"}}selected{{end}}>Português (Brasil)</option>
+            <option value="fr-FR" {{if T("html_lang") == "fr-FR"}}selected{{end}}>Français</option>
+            <option value="de-DE" {{if T("html_lang") == "de-DE"}}selected{{end}}>Deutsch</option>
+            <option value="ja-JP" {{if T("html_lang") == "ja-JP"}}selected{{end}}>日本語 🥺</option>
         </select>
         <input type="submit">
     </form>
 
-    <meta name="arianhandler-html-path" content="{{asset "assets/warioland3/complicated.html"}}">
+    <meta name="arianhandler-html-path" content="{{asset("assets/warioland3/complicated.html")}}">
 
     <!-- padding after language select form -->
     <br>
