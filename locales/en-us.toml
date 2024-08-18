@@ -1,23 +1,18 @@
-[amiibo_instruction]
-other = "TBD / NOT IMPLEMENTED: I CANNOT FIND A JS IMPLEMENTATION AT THE MOMENT. I WILL MAKE ONE AT SOME POINT. TBD TBD TODO TODO THIS ALSO NEEDS DETAILED DIRECTIONS AND AN EXPLANATION..."
-
 [background_color_label]
 other = "Background color:"
-
-[beta_warning]
-other = "this is not fully complete, consider it a PoC. do not expect it to fold your laundry and kiss you at night"
-
-[beta_warning_title]
-other = "IF YOU SOMEHOW FOUND THIS"
 
 [button_open_amiibo_dump]
 other = "Open amiibo dump"
 
 [contact_info]
+# proper: discord, iMessage
 other = "for comments, questions, concerns, help, etc. PLEASE don't hesitate to contact me on discord!: \".arian.\" or email (you can also iMessage this): ariankordi@ariankordi.net. i barely have any new messages per day so I welcome any new people, we can discuss anything even if it doesn't have to do with the site. :)"
 
 [data_placeholder]
-other = "Base64 Mii data, like from account.nintendo.net, 96 bytes"
+# proper: hex, base64
+other = "Enter your Mii data in hex or Base64 here."
+
+# Expressions
 
 [expression_anger]
 other = "Anger"
@@ -79,16 +74,17 @@ other = "Wink (right eye open)"
 [expression_wink_right_open_mouth]
 other = "Wink (right eye and mouth open)"
 
-[file_input_label]
-other = "(96 byte CFL/FFLStoreData Mii binary format)"
+# End expression
 
 [force_refresh_description]
 other = "This option will refresh your Mii if we keep showing you an old version. It will not solve any other problems."
 
 [force_refresh_label]
+# proper: NNID
 other = "Force refresh NNID without cache"
 
 [github_prefix]
+# proper: GitHub
 other = "The code (or at least the backend) is available on GitHub. Feel free to check it out:"
 
 [heading_main]
@@ -104,34 +100,31 @@ other = "en-US"
 other = "Image below failed to load!! (You probably want to open the image in a new tab to see what went wrong)"
 
 [nnid_placeholder]
+# proper: Nintendo Network ID, Wii U, 3DS
 other = "Nintendo Network ID created on a Wii U or 3DS."
 
 [option_amiibo]
-other = "Amiibo data (TBD)"
+# proper: amiibo
+other = "amiibo Data"
 
 [option_face]
-other = "Face"
+other = "Portrait"
 
 [option_face_only]
-other = "Face Only"
-
-[option_file]
-other = "Mii FFSD/CFSD File"
+other = "Head only"
 
 [option_nnid]
+# proper
 other = "Nintendo Network ID"
 
 [our_output_description]
-other = "The image above is rendered by this site!"
+other = "The icons above are rendered completely by us!"
 
 [outputs_section_heading]
 other = "Outputs"
 
 [page_title]
 other = "Mii Renderer (REAL)"
-
-[qrcode_instruction]
-other = "THIS IS NOT IMPLEMENTED AND WILL NOT WORK. IT WILL NOT DO ANYTHING. DO NOT TRY IT BECAUSE IT WILL DO NOTHING. SEGGS. P*RN. AAAAAAAAAA"
 
 [resolution_label]
 other = "Resolution:"
@@ -140,16 +133,17 @@ other = "Resolution:"
 other = "Resolution:"
 
 [samples_section_heading]
-other = "Samples"
+other = "Samples & Comparisons"
+
+[compare_with_official_renders_heading]
+other = "Compare with official renders:"
 
 [scale_label]
 other = "Disable 2x supersampling:"
 
 [scale_label_small]
-other = "Can speed up rendering at high resolutions."
-
-[studio_output_description]
-other = "The image above is from studio.mii.nintendo.com."
+# NOTE
+other = "Can speed up rendering at high resolutions. Note that scaling is done on the CPU and not GPU at the moment due to trouble I've had with alpha bleeding."
 
 [submit_button_text]
 other = "Rendering..."
@@ -161,16 +155,13 @@ other = "Transparent?"
 other = "Click \"Mii input type\" to see how you can import a Mii. Then, click Submit to begin."
 
 [type_label]
-other = "Type:"
-
-[unfinished_warning]
-other = "This service aims to mirror the functionality of the Mii Studio API. It isn't compatible with all options, such as the all_body view. However, if you run into a feature you want, or if something is not accurate, let me know as soon as possible and I will look into it."
+other = "View type:"
 
 [option_pnid]
 other = "Pretendo Network ID"
 
 [option_data]
-other = "Base64 Mii data"
+other = "Mii file or data"
 
 [option_qrcode]
 other = "Scan Mii QR Code"
@@ -236,7 +227,7 @@ other = "You can also select a file or photo:"
 other = "Choose NNID, PNID, QR Code, or data:"
 
 [data_error_size_mismatch]
-other = "This data is not 96 bytes long. Are you sure it is FFLStoreData? Size: "
+other = "We don't recognize the type of this Mii data. Check the supported types list. Size: "
 
 [data_error_invalid_checksum]
 other = "This data has an invalid CRC16 checksum."
@@ -282,3 +273,136 @@ other = "Random NNID"
 
 [last_modified]
 other = "Last Modified: "
+
+[error_container_title]
+other = "😭 JavaScript Error!! 😭"
+
+[crc16_failed]
+other = " (CRC16 CHECKSUM FAILED)"
+
+[file_input_label]
+other = "Select a supported Mii binary file:"
+
+[loaded_mii_file]
+other = "Loaded Mii file: "
+
+[enter_data_in_hex_or_base64]
+other = "Or, enter data in hex or Base64:"
+
+[loaded_mii_data]
+other = "Loaded Mii data: "
+
+[click_on_label_to_select_field]
+other = "(Click on a label to select that field)"
+
+[support_summary]
+other = "Should support 3DS/Wii U, Wii, Switch, and Mii Studio. Click for more details."
+
+[option_all_body]
+other = "Whole body"
+
+[option_variableiconbody]
+other = "Switch portrait"
+
+[shader_lighting_type_label]
+other = "Shader/lighting type:"
+
+[option_wii_u_miiverse]
+other = "Wii U/Miiverse"
+
+[option_miitomo_mii_studio]
+other = "Miitomo/Mii Studio (!)"
+
+[shader_type_new]
+other = "(NEW!)"
+
+[advanced_options]
+other = "Advanced options"
+
+[resource_type_label]
+other = "Resource type:"
+
+[resource_type_note]
+other = "You should always use high, but official renders all use middle in case you want to match them, or you're running this renderer on a terrible machine."
+
+[disable_lighting_label]
+other = "Disable lighting:"
+
+[disable_lighting_note]
+other = "Only useful if you want to make a Mii Stamp (you can also write a shader for it)"
+
+[texture_resolution_label]
+other = "Texture resolution:"
+
+[texture_resolution_note]
+# proper: XluMask
+other = "Resolution of the face texture / XluMask. Disable to use default."
+
+[disable_crc16_label]
+# proper: StoreData, CRC16
+other = "Disable StoreData CRC16 verification:"
+
+[disable_crc16_note]
+# proper: CRC16
+other = "Skips verifying the CRC16 checksum if your data has one."
+[disable_crc16_note_bold]
+other = " Note that as of August 2024, this is client-side only for now."
+
+[disable_charinfo_verify_label]
+# proper: CharInfo
+other = "Disable CharInfo verification:"
+
+[disable_charinfo_verify_note]
+other = "Allows you to use any kind of data as Mii data. May still not work."
+[disable_charinfo_verify_note_bold]
+other = " Note that as of August 2024, this is client-side only for now."
+
+[camera_x_rotation_label]
+other = "Camera X rotation:"
+[camera_y_rotation_label]
+other = "Camera Y rotation:"
+[camera_z_rotation_label]
+other = "Camera Z rotation:"
+
+
+[miitomo_shader_inaccurate_note_pre_link]
+other = "Please note that that this "
+[miitomo_shader_inaccurate_note_link]
+other = "doesn't use the Mii Studio body model"
+[miitomo_shader_inaccurate_note_post_link]
+other = " at the moment so it will look very off from those renders."
+
+[view_type_all_body_inaccurate_note]
+other = "There isn't much point to the whole body view because it's a guessed view, and the body itself isn't scaled correctly and the pants aren't colored separately. It's mostly provided as a tech demo."
+[view_type_all_body_inaccurate_note_small]
+other = "It's also square only for now because of the way everything is written AND I don't even know the Mii Studio all_body view hhhhhhh"
+
+# comparison section
+
+[label_left]
+other = "Left: "
+[label_right]
+other = "Right: "
+[label_our_render_lower]
+other = "our render."
+
+[under_our_render_small]
+other = "(Wii U + middle resource + no AA / Switch + no AA / Miitomo)"
+
+[under_studio_render_small]
+# proper: domain name, cdn-mii, Miitomol
+other = "(AKA studio.mii.nintendo.com/cdn-mii 2.0.0, same look/shader/erroneously big glasses as Miitomo)"
+[studio_render_right_side_note]
+other = "Mii Studio site/API."
+
+[under_switch_render_small]
+# proper: MiiEdit, amiibo
+other = "(Used in the MiiEdit and amiibo applets, but not for user icons.)"
+[switch_render_right_side_note]
+other = "Switch nn:mii::VariableIconBody render."
+
+[under_mii_maker_render_small]
+# proper: NNID, Miiverse, cdn-mii
+other = "(Same as: NNID server, Miiverse, cdn-mii 1.0.0)"
+[mii_maker_right_side_note]
+other = "Wii U Mii Maker app."

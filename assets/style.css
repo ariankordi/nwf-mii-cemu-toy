@@ -42,6 +42,17 @@ body {
 .small {
   font-size: 12px;
 }
+
+.smaller {
+  font-size: 10px;
+  line-height: 150%;
+}
+
+.left-aligned-ul {
+  padding: 0;
+  text-align: left;
+}
+
 /* only intended to show in other langs */
 .subtitle {
   margin: -10px -10px 10px;
