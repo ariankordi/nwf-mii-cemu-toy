@@ -41,7 +41,7 @@
     <meta property="og:url" content="https://mii-unsecure.ariankordi.net/">
     <meta property="og:image" content="/assets/page-screenshot-2024-07-10-dark.png">
     <!-- TODO BELOW IS TO BE LOCALIZED -->
-    <meta property="og:title" content="{{T("page_title")}}"/>
+    <meta property="og:title" content="{{T("page_title")}}">
 
     <meta name="og:description" content="That's right, we will render your Miis with our bare f*cking hands.
     This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*ss Mii Studio API. NO. This runs on MY COMPUTER. On MY very own Microsoft Corporation Surface Laptop 4, Intel® Core™ i7-1185G7, rasterized on the Intel Iris® Xᵉ Graphics™. And you know what? It can run on yours too, since it's entirely open source.">
@@ -84,7 +84,7 @@
     {{end}}
 
     <div id="error-container" style="display: none;">
-        <h1 style="color: red;">😭 JavaScript Error!! 😭</h1>
+        <h1 style="color: red;">{{T("error_container_title")}}</h1>
         <div id="error-message" style="color: red;"></div>
         <pre id="error-stacktrace" style="display: none;"></pre>
         <pre id="error-at" style="display: none;">At <span></span></pre>
@@ -100,30 +100,30 @@
             <option value="nnid">{{T("option_nnid")}}🕰</option>
             <!-- nnid above is default -->
             <option value="pnid">{{T("option_pnid")}}</option>
-            <option value="data" selected>Mii file or data</option>
+            <option value="data" selected>{{T("option_data")}}</option>
             <option value="qrcode">{{T("option_qrcode")}}</option>
             <!--<option value="amiibo">{{T("option_amiibo")}}</option>
             -->
         </select>
         <br>
         <div id="data-group">
-            <label class="small" for="file"><b>Select a supported Mii binary file:</b></label><br>
+            <label class="small" for="file"><b>{{T("file_input_label")}}</b></label><br>
             <input class="long-field green-border" type="file" name="file" id="file">
             <input type="hidden" name="data" id="file-data">
 
-            <span id="file-loaded" style="font-weight: bold; color: green; display: none;">Loaded Mii file: <span></span></span>
+            <span id="file-loaded" style="font-weight: bold; color: green; display: none;">{{T("loaded_mii_file")}}<span></span></span>
 
-            <br><label class="small" for="data"><b>Or, enter data in hex or Base64:</label></b><br>
+            <br><label class="small" for="data"><b>{{T("enter_data_in_hex_or_base64")}}</b></label><br>
             <input class="long-field green-border" id="data" type="text" name="data"
-                placeholder="Enter your Mii data in hex or Base64 here."
+                placeholder="{{T("data_placeholder")}}"
                 value="AwBgMIJUICvpzY4vnWYVrXy7ikd01AAAWR1KAGEAcwBtAGkAbgBlAAAAAAAAABw3EhB7ASFuQxwNZMcYAAgegg0AMEGzW4JtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAML0">
-            <div id="data-loaded" style="font-weight: bold; color: green; display: none;">Loaded Mii data: <span></span></div>
+            <div id="data-loaded" style="font-weight: bold; color: green; display: none;">{{T("loaded_mii_data")}}<span></span></div>
 
-            <span class="small">(Click on a label to select that field)</span>
+            <span class="small">{{T("click_on_label_to_select_field")}}</span>
 
 
             <details>
-                <summary>Should support 3DS/Wii U, Wii, Switch, and Mii Studio. Click for more details.</summary>
+                <summary>{{T("support_summary")}}</summary>
 
             <ul style="padding: 0; text-align: left; font-size: 13px; line-height: 150%;">
                 <li>3DS/Wii U
@@ -246,20 +246,19 @@
         </div>
         <!-- these errors are used for file and data thus is being placed here -->
         <div id="data-error-size-mismatch" style="font-weight: bold; color: red; display: none;">
-            We don't recognize the type of this Mii data. Check the supported types list. Size: <span></span></div>
+            {{T("data_error_size_mismatch")}}<span></span></div>
         <div id="data-error-invalid-checksum" style="font-weight: bold; color: red; display: none;">
             {{T("data_error_invalid_checksum")}}</div>
-        <span id="crc16-checksum-failed-text" style="display: none;"> (CRC16 CHECKSUM FAILED)</span>
+        <span id="crc16-checksum-failed-text" style="display: none;">{{T("crc16_failed")}}</span>
 
         <div id="data-error-size-0" style="font-weight: bold; color: red; display: none;">{{T("data_error_size_0")}}</div>
 
-        <label for="type">View type:</label>
+        <label for="type">{{T("type_label")}}</label>
         <select name="type" id="type">
-            <option value="face">Portrait</option>
-            <option value="face_only">Head only</option>
-            <option value="all_body">Whole body (!!)</option>
-            <option value="variableiconbody">Switch portrait (!)</option>
-            <!--<option value="all_body">Body</option>-->
+            <option value="face">{{T("option_face")}}</option>
+            <option value="face_only">{{T("option_face_only")}}</option>
+            <option value="all_body">{{T("option_all_body")}} (!!)</option>
+            <option value="variableiconbody">{{T("option_variableiconbody")}} (!)</option>
         </select><br>
         <label for="expression">{{T("expression_label")}}</label>
         <select name="expression" id="expression">
@@ -297,13 +296,13 @@
 
         <label for="shaderType">
             {{if .IsntAMonthFromShaderAndLightingTypeBeingNew}}
-                <span style="color: gold;">(NEW!)</span>
+                <span style="color: gold;">{{T("shader_type_new")}}</span>
             {{end}}
-            Shader/lighting type:</label>
+            {{T("shader_lighting_type_label")}}</label>
         <select name="shaderType" id="shaderType">
-            <option value="0">Wii U/Miiverse</option>
+            <option value="0">{{T("option_wii_u_miiverse")}}</option>
             <option value="1">Switch</option>
-            <option value="2">Miitomo/Mii Studio (!)</option>
+            <option value="2">{{T("option_miitomo_mii_studio")}}</option>
             <!--<option value="3">3DS</option>-->
         </select><br>
 
@@ -331,67 +330,66 @@
 <br>
 -->
 
-        <label for="cameraXRotate">Camera X rotation:</label>
+        <label for="cameraXRotate">{{T("camera_x_rotation_label")}}</label>
         <input id="cameraXRotate-slider" type="range" min="0" max="360" value="0">
         <input class="short-number" name="cameraXRotate" id="cameraXRotate" type="number" value="0">
         <br>
-        <label for="cameraYRotate">Camera Y rotation:</label>
+        <label for="cameraYRotate">{{T("camera_y_rotation_label")}}</label>
         <input id="cameraYRotate-slider" type="range" min="0" max="360" value="0">
         <input class="short-number" name="cameraYRotate" id="cameraYRotate" type="number" value="0">
         <br>
-        <label for="cameraZRotate">Camera Z rotation:</label>
+        <label for="cameraZRotate">{{T("camera_z_rotation_label")}}</label>
         <input id="cameraZRotate-slider" type="range" min="0" max="360" value="0">
         <input class="short-number" name="cameraZRotate" id="cameraZRotate" type="number" value="0">
 
         <details>
-            <summary>Advanced options</summary>
+            <summary>{{T("advanced_options")}}</summary>
 
             <div style="font-size: 13px;">
 
             <label for="scale">{{T("scale_label")}}</label>
             <input type="checkbox" name="scale" id="scale" value="1">
-            <div style="font-size: 10px; line-height: 150%; margin-bottom: 5px;">{{T("scale_label_small")}} Note that scaling is done on the CPU and not GPU at the moment due to trouble I've had with alpha bleeding.</div>
+            <div class="smaller" style="margin-bottom: 5px;">{{T("scale_label_small")}}</div>
 
-
-            <label for="resourceType">Resource type:</label>
+            <label for="resourceType">{{T("resource_type_label")}}</label>
             <select name="resourceType" id="resourceType">
                 <option value="0">FFL_RESOURCE_TYPE_MIDDLE</option>
                 <option value="1" selected>FFL_RESOURCE_TYPE_HIGH</option>
             </select><br>
-            <div style="font-size: 10px; line-height: 150%;">You should always use high, but official renders all use middle in case you want to match them, or you're running this renderer on a terrible machine.</div>
+            <div class="smaller">{{T("resource_type_note")}}</div>
 
-            <label for="lightEnable">Disable lighting:</label>
+            <label for="lightEnable">{{T("disable_lighting_label")}}</label>
             <input type="checkbox" name="lightEnable" id="lightEnable" value="0">
-            <div style="font-size: 10px; line-height: 150%;">Only useful if you want to make a Mii Stamp (you can also write a shader for it)</div>
+            <div class="smaller">{{T("disable_lighting_note")}}</div>
 
             <!--
             <label for="mipmapEnable">Enable mipmapping:</label>
             <input type="checkbox" name="mipmapEnable" id="mipmapEnable" value="0">
-            <div style="font-size: 10px; line-height: 150%;">I don't actually know what this does.</div>
+            <div class="smaller">I don't actually know what this does.</div>
             -->
 
-            <label for="texResolution">Texture resolution:</label>
+            <label for="texResolution">{{T("texture_resolution_label")}}</label>
             <input id="texResolutionEnable" type="checkbox">
             <input class="short-number" name="texResolution" id="texResolution" type="number" step="2" value="270" disabled>
             <label for="texResolution">px</label>
-            <div style="font-size: 10px; line-height: 150%;">Resolution of the face texture / XluMask. Disable to use default.</div>
+            <div class="smaller">{{T("texture_resolution_note")}}</div>
 
-            <label for="verifyCRC16">Disable StoreData CRC16 verification:</label>
-            <input type="checkbox" name-disabled="verifyCRC16" id="verifyCRC16" value="0">
-            <div style="font-size: 10px; line-height: 150%;">Skips verifying the CRC16 checksum if your data has one. <b>Note that as of August 2024, this is client-side only for now.</b></div>
+            <label for="verifyCRC16">{{T("disable_crc16_label")}}</label>
+            <input type="checkbox" data-name-disabled="verifyCRC16" id="verifyCRC16" value="0">
+            <div class="smaller">{{T("disable_crc16_note")}}<b>{{T("disable_crc16_note_bold")}}</b></div>
 
-            <label for="verifyCharInfo">Disable CharInfo verification:</label>
+            <label for="verifyCharInfo">{{T("disable_charinfo_verify_label")}}</label>
             <input type="checkbox" name="verifyCharInfo" id="verifyCharInfo" value="0">
 
-            <div style="font-size: 10px; line-height: 150%;">Allows you to use literally anything as Mii data. May still not work. <b>NOTE as of August 2024: this doesn't show you the verification reason from the server just yet, all I have is an overly long-winded response, sorry for that.</b></div>
+            <div class="smaller">{{T("disable_charinfo_verify_note")}}<b>{{T("disable_charinfo_verify_note_bold")}}</b></div>
 
             </div>
 
         </details>
 
-        <div id="shader-type-2-inaccurate" style="font-weight: bold; color: red; display: none;">Please note that the Miitomo shader is <a href="#accuracy-status">inaccurate at the moment (specular not working)</a>, and it is not using the Miitomo body model either.</div>
-        <div id="view-type-all-body-inaccurate" style="font-weight: bold; color: red; display: none;">There isn't much point to the whole body view because it's a guessed view, and the body itself isn't scaled correctly and the pants aren't colored separately. It's mostly provided as a tech demo.
-        <br><div class="small">It's also square only for now because of the way everything is written AND I don't even know the Mii Studio all_body view hhhhhhh</div></div>
+        <div id="shader-type-2-inaccurate" style="font-weight: bold; color: red; display: none;">{{T("miitomo_shader_inaccurate_note_pre_link")}}<a href="#accuracy-status">{{T("miitomo_shader_inaccurate_note_link")}}</a>{{T("miitomo_shader_inaccurate_note_post_link")}}</div>
+        <div id="view-type-all-body-inaccurate" style="font-weight: bold; color: red; display: none;">{{T("view_type_all_body_inaccurate_note")}}
+        <br><div class="small">{{T("view_type_all_body_inaccurate_note_small")}}</div></div>
 
         <input id="submit" type="submit" data-value="{{T("submit_button_text")}}">
     </form>
@@ -407,34 +405,34 @@
         </li>
     </ul>
     <hr>
-    <h3>Samples &amp; Comparisons</h3>
+    <h3>{{T("samples_section_heading")}}</h3>
     <ul id="samples" class="results entire-width">
         <li>
-            <img style="width: 30%;" src="assets/jasmine-sample-270-wiiu-no-aa.png" alt="Our render, Jasmine, Wii U">
-            <img style="width: 30%;" src="assets/jasmine-sample-270-switch-variableiconbody-no-aa.png" alt="Our render, Jasmine, Switch">
-            <img style="width: 30%;" src="assets/jasmine-sample-270-miitomo-flawed.png" alt="Our render, Jasmine, Miitomo">
-            <div style="color: hotpink;">The icons above are rendered completely by us!
-                <div class="small">(Wii U + middle resource + no AA / Switch + no AA / Miitomo)</div>
+            <img style="width: 30%;" src="assets/jasmine-sample-270-wiiu-no-aa.png" alt="Jasmine">
+            <img style="width: 30%;" src="assets/jasmine-sample-270-switch-variableiconbody-no-aa.png" alt="Jasmine">
+            <img style="width: 30%;" src="assets/jasmine-sample-270-miitomo.png" alt="Jasmine">
+            <div style="color: hotpink;">{{T("our_output_description")}}
+                <div class="small">{{T("under_our_render_small")}}</div>
             </div>
             <details>
-                <summary><b>Compare with official renders:</b></summary>
-                <img style="width: 45%;" src="assets/jasmine-sample-270-wiiu-no-aa.png" alt="Our render, Jasmine, Wii U">
-                <img style="width: 45%;" src="assets/jasmine-mii-maker-270.png">
-                <div>Left: <span style="color: hotpink;">our render</span>, right: <span style="color: indianred;">Wii U Mii Maker app.</span>
-                    <div class="small">(Same as: NNID server, Miiverse, cdn-mii 1.0.0)</div>
+                <summary><b>{{T("compare_with_official_renders_heading")}}</b></summary>
+                <img style="width: 45%;" src="assets/jasmine-sample-270-wiiu-no-aa.png" alt="Jasmine">
+                <img style="width: 45%;" src="assets/jasmine-mii-maker-270.png" alt="Jasmine">
+                <div>{{T("label_left")}}<span style="color: hotpink;">{{T("label_our_render_lower")}}</span> {{T("label_right")}}<span style="color: indianred;">{{T("mii_maker_right_side_note")}}</span>
+                    <div class="small">{{T("under_mii_maker_render_small")}}</div>
                 </div>
 
-                <img style="width: 45%;" src="assets/jasmine-sample-270-switch-variableiconbody-no-aa.png" alt="Our render, Jasmine, Switch">
-                <img style="width: 45%;" src="assets/jasmine-variableiconbodyexample-270.png">
-                <div>Left: <span style="color: hotpink;">our render</span>, right: <span style="color: indianred;">Switch nn:mii::VariableIconBody render.</span>
-                    <div class="small">(Used in the MiiEdit and amiibo applets, but not for user icons.)</div>
+                <img style="width: 45%;" src="assets/jasmine-sample-270-switch-variableiconbody-no-aa.png" alt="Jasmine">
+                <img style="width: 45%;" src="assets/jasmine-variableiconbodyexample-270.png" alt="Jasmine">
+                <div>{{T("label_left")}}<span style="color: hotpink;">{{T("label_our_render_lower")}}</span> {{T("label_right")}}<span style="color: indianred;">{{T("switch_render_right_side_note")}}</span>
+                    <div class="small">{{T("under_switch_render_small")}}</div>
                 </div>
 
-                <img style="width: 45%;" src="assets/jasmine-sample-270-miitomo-flawed.png" alt="Our render, Jasmine, Miitomo">
+                <img style="width: 45%;" src="assets/jasmine-sample-270-miitomo.png" alt="Jasmine">
                 <img style="width: 45%;" src="assets/jasmine-studio-270.png"
-                    not-src="https://studio.mii.nintendo.com/miis/image.png?data=000d142a303f434b717a7b84939ba6b2bbbec5cbc9d0dee6fd0109090f16746f757c77737e747c696b767d747b828d&type=face&expression=normal&width=270">
-                <div>Left: <span style="color: hotpink;">our render</span>, right: <span style="color: indianred;">Mii Studio site/API.</span>
-                    <div class="small">(AKA studio.mii.nintendo.com/cdn-mii 2.0.0, same look/shader/erroneously big glasses as Miitomo)</div>
+                    data-not-src="https://studio.mii.nintendo.com/miis/image.png?data=000d142a303f434b717a7b84939ba6b2bbbec5cbc9d0dee6fd0109090f16746f757c77737e747c696b767d747b828d&type=face&expression=normal&width=270" alt="Jasmine">
+                <div>{{T("label_left")}}<span style="color: hotpink;">{{T("label_our_render_lower")}}</span> {{T("label_right")}}<span style="color: indianred;">{{T("studio_render_right_side_note")}}</span>
+                    <div class="small">{{T("under_studio_render_small")}}</div>
                 </div>
             </details>
         </li>
@@ -465,25 +463,25 @@
     <hr>
 
     <h2>Welcome to my site!</h2>
-    <ul style="padding: 0; text-align: left">
+    <ul class="left-aligned-ul">
         <li>You just found a Mii renderer powered by N*ntendo's official FFL library, decompiled by <a href="https://github.com/aboood40091">AboodXD</a>.</li>
         <li>See it on GitHub: <a href="https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype">ariankordi/FFL-Testing (renderer-server-prototype branch)</a></li>
         <li>It has new shaders, support for all* Mii data types, new Switch colors and glasses, and it is completely self-hosted. If you have a Mii-centric service, you can host it on your own server!</li>
-        <ul>
-            <li style="font-size: 11px">* Exceptions: DS (just Wii but endian-flipped), Switch CoreData and StoreData (for now), any unofficial format, game-specific formats or any other one I'm not aware of.</li>
+        <li><ul>
+            <li class="smaller">* Exceptions: DS (just Wii but endian-flipped), Switch CoreData and StoreData (for now), any unofficial format, game-specific formats or any other one I'm not aware of.</li>
             <li>See the GitHub linked above for more details.</li>
-        </ul>
+        </ul></li>
 
         <li>
             <details style="display: inline;">
             <summary>Interested? Click to read more...</summary>
             <ul>
                 <li>This website is running on the code linked above. I've tried to make the API compatible with Mii Studio.</li>
-                <ul>
+                <li><ul>
                     <li>This means that it should work as a drop-in replacement wherever you use the Mii Studio API. If it doesn't work as that for you, please <a href="#contact">contact me</a>.</li>
                     <li>Feel free to use it however you seek fit, though, for the love of all that is holy, <b>do NOT rely on the site being up!!!</b></li>
                 <li>Also, you may omit unnecessary parameters. The <code>erri</code> parameter is not needed at all.</li>
-                </ul>
+                </ul></li>
                 <li>Thanks to our dear AboodXD, the official Mii renderer on Wii U, FFL (Cafe Face Library) has been decompiled and ported to OpenGL 3.3.</li>
                 <li><a href="https://github.com/ariankordi/FFL-Testing">FFL-Testing</a> is the program he made to demo it: all it does is spin Mii heads in a window. My fork linked previously contains build instructions, as well as ports of the libraries involved to more systems.</li>
                 <li>The Wii U shader has been decompiled as FFLShader.vert/frag, and the uniforms needed to use it are in src/Shader.cpp. Feel free to use it for any other projects.</li>
@@ -496,42 +494,39 @@
     </ul>
 
     <h2>Contact Me</h2>
-    <section id="contact">
-        <ul style="padding: 0; text-align: left">
+    <div id="contact">
+        <ul class="left-aligned-ul">
             <li>This project/site is maintained by just me, Arian Kordi - yes, that one...</li>
+            <li><ul>
+            <li class="smaller">If you're going to contact me, don't ask me about the site that rhymes with "Clone Worst", alright?</li>
+            </ul></li>
+            <li>For comments, questions, concerns, help with this or any other Mii topic, etc... PLEASE don't hesitate to contact me!
             <ul>
-            <li style="font-size: 11px; line-height: 140%">If you're going to contact me, don't ask me about the site that rhymes with "Clone Worst", alright?</li>
-            </ul>
-            <li>For comments, questions, concerns, help with this or any other Mii topic, etc... PLEASE don't hesitate to contact me!</li>
-            <b>
-            <ul>
-                <li>Discord: ".arian"</li>
-                <li>Email: ariankordi@ariankordi.net</li>
-            </ul>
-            </b>
+                <li><b>Discord: ".arian"</b></li>
+                <li><b>Email: ariankordi@ariankordi.net</b></li>
+            </ul></li>
             <li>I welcome any new people, I'm open to discuss anything even if it doesn't have to do with the project :)</li>
         </ul>
-    </section>
+    </div>
 
-   <h1> template "index-accuracy-section.html" .</h1>
+    {{ include "index-accuracy-section.html" }}
 
     <h2>Credits</h2>
     <section id="credits">
-    <ul style="padding: 0; text-align: left">
+    <ul class="left-aligned-ul">
         <li>Renderer backend made by me: <a href="https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype">ariankordi/FFL-Testing (renderer-server-prototype branch)</a></li>
         <li>FFL Mii rendering library decompiled and reverse engineered by <a href="https://github.com/aboood40091">AboodXD</a>: <a href="https://github.com/aboood40091/ffl/tree/nsmbu-win-port">aboood40091/ffl</a></li>
         <li>Conversion tables to Ver3 and other nn::mii/Switch structs, reversed by Genwald: <a href="https://github.com/Genwald/MiiPort/blob/4ee38bbb8aa68a2365e9c48d59d7709f760f9b5d/include/convert_mii.h#L8">MiiPort > convert_mii.h</a>, <a href="https://github.com/Genwald/MiiPort/blob/4ee38bbb8aa68a2365e9c48d59d7709f760f9b5d/include/mii_ext.h">mii_ext.h</a></li>
     </ul>
     <h4>For client-side site:</h4>
-    <ul style="padding: 0; text-align: left">
+    <ul class="left-aligned-ul">
         <li>
             mii2studio authors: <a href="https://github.com/bennyman123abc">bendevnull</a>, <a href="https://github.com/HEYimHeroic">HEYimHeroic</a>, <a href="https://github.com/larsenv">Larsenv</a>, <a href="https://github.com/matthe815">Matthe815</a>
-        </li>
         <ul>
             <li>For all Mii Kaitai structs used in the client-side JS.</li>
             <li>Larsenv told me he made the structs, but I'll credit everyone anyway.</li>
             <li>I modified <a href="https://github.com/ariankordi/mii2studio/blob/master/gen2_wiiu_3ds_miitomo.ksy">gen2_wiiu_3ds_miitomo.ksy</a> to fix accuracy.</li>
-        </ul>
+        </ul></li>
         <li><a href="https://github.com/kazuki-4ys">kazuki-4ys</a>:
             <ul>
                 <li><a href="https://github.com/kazuki-4ys/kazuki-4ys.github.io/blob/148dc339974f8b7515bfdc1395ec1fc9becb68ab/web_apps/MiiInfoEditorCTR/mii.js#L103">MiiInfoEditorCTR > mii.js > miiEncode()</a></li>
@@ -561,7 +556,7 @@
         <input type="submit">
     </form>
 
-    <meta name="arianhandler-html-path" content="{{asset("assets/warioland3/complicated.html")}}">
+    <meta itemprop="arianhandler-html-path" content="{{asset("assets/warioland3/complicated.html")}}">
 
     <!-- padding after language select form -->
     <br>

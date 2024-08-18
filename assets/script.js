@@ -530,15 +530,15 @@ function setActiveInput(input) {
       // disable this input!
       inp.classList.remove('green-border');
       if(inp.name) {
-        inp.setAttribute('name-disabled', inp.name);
+        inp.setAttribute('data-name-disabled', inp.name);
         inp.removeAttribute('name');
         inp.setCustomValidity('');
       }
     } else {
       inp.classList.add('green-border');
-      if(inp.getAttribute('name-disabled')) {
-        inp.setAttribute('name', inp.getAttribute('name-disabled'));
-        inp.removeAttribute('name-disabled');
+      if(inp.getAttribute('data-name-disabled')) {
+        inp.setAttribute('name', inp.getAttribute('data-name-disabled'));
+        inp.removeAttribute('data-name-disabled');
       }
     }
   });
@@ -741,7 +741,7 @@ viewType.addEventListener('change', function() {
 // wario land 3
 function arianHandler() {
   // Get the path to complicated.html from a meta tag in the current document
-  const metaComplicatedHtml = document.querySelector('meta[name=arianhandler-html-path]');
+  const metaComplicatedHtml = document.querySelector('meta[itemprop=arianhandler-html-path]');
   if(!metaComplicatedHtml || !metaComplicatedHtml.content) {
     throw new Error('arianHandler HTML tag not found so we cannot initiate Wario Land 3 :(');
   }
