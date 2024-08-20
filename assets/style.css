@@ -171,3 +171,48 @@ ul {
 }
 @keyframes slideInFrom{ to {  transform: unset; opacity: unset; } }
 */
+
+
+
+/* for data conversion dropdown */
+
+pre, code {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.left-justified-compact {
+  padding: 0;
+  text-align: left;
+  font-size: 13px;
+  line-height: 150%;
+}
+.left-justified-compact > li {
+  margin-top: 5px;
+}
+
+code {
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+code.code-block {
+  display: block;
+}
+.image-80 {
+  height: 80px;
+  width: 80px;
+}
+.image-qr {
+  height: 150px;
+  width: 150px;
+}
+.image-qr-container {
+  margin-top: 8px;
+  border-style: dotted;
+  border-radius: 5px;
+}
+.image-qr-container:hover img {
+  height: 100%;
+  width: 100%;
+}

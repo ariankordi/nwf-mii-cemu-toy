@@ -102,8 +102,7 @@
             <option value="pnid">{{T("option_pnid")}}</option>
             <option value="data" selected>{{T("option_data")}}</option>
             <option value="qrcode">{{T("option_qrcode")}}</option>
-            <!--<option value="amiibo">{{T("option_amiibo")}}</option>
-            -->
+            <option value="nfp">{{T("option_amiibo")}}</option>
         </select>
         <br>
         <div id="data-group">
@@ -143,10 +142,10 @@
                 </li>
                 <li>Switch
                     <ul>
-                        <li>nn::mii::CharInfo</li>
+                        <li>nn::mii::CharInfo, nn::mii::CoreData, nn::mii::StoreData</li>
                         <li>88 bytes: .charinfo, .ufsd</li>
-                        <li><b>NOT SUPPORTED</b>:
-                        CoreData (48 bytes), StoreData (68 bytes)</li>
+                        <li>48 bytes: CoreData/.nfcd</li>
+                        <li>68 bytes: StoreData/.nfsd</li>
                     </ul>
                 </li>
                 <li>Mii Studio
@@ -244,6 +243,30 @@
               <a target="_blank" href="https://pretendo.network/">pretendo.network</a>
             </span>
         </div>
+        <div id="nfp-group">
+            <label class="small" for="nfp-file"><b>Provide a 540/532 byte file of a preferably encrypted amiibo containing a Mii.</b></label><br>
+            <input class="long-field" type="file" name="nfp-file" id="nfp-file">
+            <input type="hidden" name="data" id="nfp-file-data">
+
+            <span id="nfp-data-loaded" style="font-weight: bold; color: green; display: none;">Loaded amiibo Mii:<span></span></span>
+            <div id="nfp-figure-loaded" style="font-weight: bold; color: green; display: none;">Loaded amiibo Figure:<span></span></div>
+
+            <details>
+                <summary>Click here to reveal my tutorial on how to extract your own amiibo to a file.</summary>
+
+            <ul style="padding: 0; text-align: left; font-size: 13px; line-height: 150%;">
+                <li>TBD TBD AAAAAAAAAAAAA
+                    <ul>
+                        <li><b>THIS IS A PLACEHOLDER, BUT</b></li>
+                        <li>download an amiibo scanning app, <a target="_blank" href="https://apps.apple.com/us/app/amiiboss/id1579972834">AmiiBoss</a> works fine for me on iphone</li>
+                        <li>scan a figure then hit "Share" on it</li>
+                        <li>export it to a file and give us the file</li>
+                    </ul>
+                </li>
+            </ul>
+
+            </details>
+        </div>
         <!-- these errors are used for file and data thus is being placed here -->
         <div id="data-error-size-mismatch" style="font-weight: bold; color: red; display: none;">
             {{T("data_error_size_mismatch")}}<span></span></div>
@@ -252,6 +275,8 @@
         <span id="crc16-checksum-failed-text" style="display: none;">{{T("crc16_failed")}}</span>
 
         <div id="data-error-size-0" style="font-weight: bold; color: red; display: none;">{{T("data_error_size_0")}}</div>
+        <div id="data-error-size-540" style="font-weight: bold; color: red; display: none;">This data is 540 bytes long, and may be an amiibo file. We can decrypt amiibo now, choose the "amiibo Data" option and try again.</div>
+        <div id="data-error-size-532" style="font-weight: bold; color: red; display: none;">This data is 532 bytes long, and may be an amiibo file, potentially decrypted. Choose the "amiibo Data" option and try again. If this still doesn't work, please let me know.</div>
 
         <label for="type">{{T("type_label")}}</label>
         <select name="type" id="type">
@@ -387,7 +412,8 @@
 
         </details>
 
-        <div id="shader-type-2-inaccurate" style="font-weight: bold; color: red; display: none;">{{T("miitomo_shader_inaccurate_note_pre_link")}}<a href="#accuracy-status">{{T("miitomo_shader_inaccurate_note_link")}}</a>{{T("miitomo_shader_inaccurate_note_post_link")}}</div>
+        <div id="shader-type-2-inaccurate" style="font-weight: bold; color: red; display: none;">{{T("miitomo_shader_inaccurate_note_pre_link")}}<a href="#accuracy-status">{{T("miitomo_shader_inaccurate_note_link")}}</a>{{T("miitomo_shader_inaccurate_note_post_link")}}
+        <br><div class="small">{{T("miitomo_shader_inaccurate_note_small")}}</div></div>
         <div id="view-type-all-body-inaccurate" style="font-weight: bold; color: red; display: none;">{{T("view_type_all_body_inaccurate_note")}}
         <br><div class="small">{{T("view_type_all_body_inaccurate_note_small")}}</div></div>
 
@@ -395,7 +421,59 @@
     </form>
     <hr>
     <h3>{{T("outputs_section_heading")}}</h3>
-    <ul id="results" class="results entire-width">
+    <ul id="results" class="results">
+
+        <li id="result-template" style="display: none;">
+            <div class="image-template entire-width">
+                <!-- js appends the image element in here -->
+            </div>
+            <button onclick="handleCopyButtonAndUpdateCounter(event)">
+                <span class="text-copy">Copy image URL</span>
+                <span class="text-counter" style="display: none;">Copied <span>0</span>x</span>
+            </button>
+            <details ontoggle="handleConvertDetailsToggle(event)">
+            <summary>Convert <span></span></summary>
+            <div>
+                <div style="margin: 5px;">Current data type:<br><code class="input-type">Unknown</code></div>
+                <!--
+                <label for>Convert to: </label><select>
+                <option>Default</option>
+                <option></option>
+                </select>
+                -->
+                <ul class="left-justified-compact">
+                <li style="margin: 5px;">
+                    Studio Render
+                    <button onclick="handleCopyButtonAndUpdateCounter(event)">
+                    <span class="text-copy">Copy URL</span>
+                    <span class="text-counter" style="display: none;">Copied <span>0</span>x</span>
+                    </button>
+                    <img class="image-80" data-src="https://studio.mii.nintendo.com/miis/image.png?type=face&width=96&data=">
+                </li>
+                <li>Studio Code: <code class="studio-code code-block"></code></li>
+                <li>
+                    <button class="download-studio-data" onclick="handleDownloadDataFileButton(event)" data-filename="Mii.mnms">
+                    Download .mnms
+                    </button>
+                    &lt;-- for <a target="_blank" href="https://heyimheroic.github.io/MiiStudioMiiLoader/">Mii Studio Mii Loader</a></li>
+                <li>
+                    <button class="download-switch-charinfo" onclick="handleDownloadDataFileButton(event)" data-filename="Mii.charinfo">
+                    Download .charinfo
+                    </button>
+                    <ul>
+                    <li>Try this on <a target="_blank" href="https://miiinstructions.sticksweb.site">Switch Mii to Instructions, created by</a> <a target="_blank" href="https://github.com/sticks-stuff">stick</a></li>
+                    </ul>
+                </li>
+                <li>Base64 3DS/Wii U StoreData (copying force-enabled): <code class="ver3storedata code-block"></code></li>
+                <li style="margin: 5px;" class="image-qr-container">Mii QR Code (hover to enlarge):<div style="text-align: center;"><img class="image-qr"></div>
+                </li>
+                </ul>
+            </div>
+            </details>
+        </li>
+
+
+
         <li id="tutorial">
             <div style="color: plum">{{T("tutorial_message")}}</div>
         </li>
@@ -441,12 +519,32 @@
     <!--<script src="https://cdn.jsdelivr.net/gh/criteo-forks/qr-scanner/qr-scanner.umd.min.js"></script>-->
     <!-- async because it's not needed to RENDER the page
     ... but will be needed laaateerrrr.... -->
-    <script async src="{{asset("assets/mii-qr-handler.js")}}"></script>
-    <!-- NOTE: mii-qr-handler actually does depend on qr-scanner AND sjcl both to work -->
+    <script async src="{{asset("assets/qr-scan-handler.js")}}"></script>
+    <!-- NOTE: qr-scan-handler actually does depend on qr-scanner AND sjcl both to work -->
     <script async src="{{asset("assets/vendor-js/gh-criteo-forks-qr-scanner-qr-scanner.umd.min.js")}}"></script>
     <!-- TODO: this sjcl (manually crafted) bundle could be smaller if it contained less deps -->
     <!-- NOTE: both jses took manually from jsdelivr -->
     <script async src="{{asset("assets/vendor-js/sjcl-108-min-plus-codecBytes.js")}}"></script>
+
+
+    <!-- scripts for data conversion -->
+    <!-- kaitai runtime -->
+    <script async src="{{asset("assets/vendor-js/KaitaiStream.min.js")}}"></script>
+    <!-- scripts -->
+    <script async src="{{asset("assets/data-conversion.js")}}"></script>
+    <!-- kaitai structs begin -->
+    <script async src="{{asset("assets/kaitai-structs/js/Gen2Wiiu3dsMiitomo.js")}}"></script>
+    <script async src="{{asset("assets/kaitai-structs/js/Gen3Studio.js")}}"></script>
+    <script async src="{{asset("assets/kaitai-structs/js/Gen1Wii.js")}}"></script>
+    <script async src="{{asset("assets/kaitai-structs/js/Gen3Switch.js")}}"></script>
+    <script async src="{{asset("assets/kaitai-structs/js/Gen2Wiiu3dsMiitomoNfpstoredataextention.js")}}"></script>
+    <script async src="{{asset("assets/kaitai-structs/js/Gen3Switchgame.js")}}"></script>
+    <!-- qr code encoder for data conversion -->
+    <script async src="{{asset("assets/vendor-js/qr.min.js")}}"></script>
+
+    <!-- NOTE: this maboii script below
+    contains the library AND handler for now -->
+    <script async src="{{asset("assets/vendor-js/maboii-from-ts-browser-port.js")}}"></script>
 
     <!-- just a joke and should not inhibit loading
     of any other scripts ples -->
@@ -466,8 +564,8 @@
     <ul class="left-aligned-ul">
         <li>You just found a Mii renderer powered by N*ntendo's official FFL library, decompiled by <a href="https://github.com/aboood40091">AboodXD</a>.</li>
         <li>See it on GitHub: <a href="https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype">ariankordi/FFL-Testing (renderer-server-prototype branch)</a></li>
-        <li>It has new shaders, support for all* Mii data types, new Switch colors and glasses, and it is completely self-hosted. If you have a Mii-centric service, you can host it on your own server!</li>
-        <li><ul>
+        <li>It has new shaders, support for all* Mii data types, new Switch colors and glasses, and it is completely self-hosted. If you have a Mii-centric service, you can host it on your own server!
+        <ul>
             <li class="smaller">* Exceptions: DS (just Wii but endian-flipped), Switch CoreData and StoreData (for now), any unofficial format, game-specific formats or any other one I'm not aware of.</li>
             <li>See the GitHub linked above for more details.</li>
         </ul></li>
@@ -476,8 +574,8 @@
             <details style="display: inline;">
             <summary>Interested? Click to read more...</summary>
             <ul>
-                <li>This website is running on the code linked above. I've tried to make the API compatible with Mii Studio.</li>
-                <li><ul>
+                <li>This website is running on the code linked above. I've tried to make the API compatible with Mii Studio.
+                <ul>
                     <li>This means that it should work as a drop-in replacement wherever you use the Mii Studio API. If it doesn't work as that for you, please <a href="#contact">contact me</a>.</li>
                     <li>Feel free to use it however you seek fit, though, for the love of all that is holy, <b>do NOT rely on the site being up!!!</b></li>
                 <li>Also, you may omit unnecessary parameters. The <code>erri</code> parameter is not needed at all.</li>
@@ -496,8 +594,8 @@
     <h2>Contact Me</h2>
     <div id="contact">
         <ul class="left-aligned-ul">
-            <li>This project/site is maintained by just me, Arian Kordi - yes, that one...</li>
-            <li><ul>
+            <li>This project/site is maintained by just me, Arian Kordi - yes, that one...
+            <ul>
             <li class="smaller">If you're going to contact me, don't ask me about the site that rhymes with "Clone Worst", alright?</li>
             </ul></li>
             <li>For comments, questions, concerns, help with this or any other Mii topic, etc... PLEASE don't hesitate to contact me!
@@ -534,6 +632,16 @@
             </ul>
         </li>
         <li><a href="https://github.com/jaames">jaames</a> for the original <a href="https://gist.github.com/jaames/96ce8daa11b61b758b6b0227b55f9f78">Mii QR code decryption Python script</a>.</li>
+        <li>All other non-Mii-specific code should be referenced in the HTML, but here they are anyway:
+        <ul>
+            <li class="small">
+                <a href="https://github.com/Entrivax/maboii.js"><b>maboii.js</b> (provides amiibo decryption)</a>,
+                <a href="https://github.com/bitwiseshiftleft/sjcl">SJCL (Stanford JS Crypto Library)</a>,
+                <a href="https://github.com/kaitai-io/kaitai_struct_javascript_runtime">Kaitai JS Runtime</a>,
+                <a href="https://github.com/criteo-forks/qr-scanner/tree/952ce7e4414ea18fbf658b7eae3adcf838becd39">qr-scanner (criteo-forks branch)</a>,
+                <a href="https://github.com/educastellano/qr.js">qr.js (encoder)</a>
+            </li>
+        </ul></li>
         <li>Brazilian Portuguese translation courtesy of <a href="https://github.com/GabIsAwesome">GabIsAwesome</a>.</li>
     </ul>
     </section>

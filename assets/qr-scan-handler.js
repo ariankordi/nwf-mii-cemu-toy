@@ -2,9 +2,9 @@
 // NOTE: this includes NO VERIFICATION!!!! Check the CRC16.
 // Using AES-CTR within SJCL: lightweight and fast JS crypto
 function decryptAesCcm(encryptedData) {
-	// if the length is smaller than the standard mii qr code size
-	if(encryptedData.length < 112) {
-  	throw new Error('Mii QR codes should be 112 or more bytes long, yours is: ' + encryptedData.length);
+  // if the length is smaller than the standard mii qr code size
+  if(encryptedData.length < 112) {
+    throw new Error('Mii QR codes should be 112 or more bytes long, yours is: ' + encryptedData.length);
   }
   // Extract nonce and encrypted content
   const nonce = encryptedData.slice(0, 8);
