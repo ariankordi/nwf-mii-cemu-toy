@@ -70,13 +70,21 @@ var viewTypes = map[string]int {
 	"variableiconbody": 3,
 }
 
-// isBase64 checks if a string is a valid base64 encoded string
-func isBase64(s string) bool {
-	if len(s)%4 != 0 {
-		return false
+// decodeBase64 decodes a Base64 string, handling both standard and URL-safe Base64.
+func decodeBase64(s string) ([]byte, error) {
+	// Normalize URL-safe Base64 by replacing '-' with '+' and '_' with '/'
+	s = strings.ReplaceAll(s, "-", "+")
+	s = strings.ReplaceAll(s, "_", "/")
+
+	// Add padding if necessary
+	switch len(s) % 4 {
+	case 2:
+		s += "=="
+	case 3:
+		s += "="
 	}
-	_, err := base64.StdEncoding.DecodeString(s)
-	return err == nil
+
+	return base64.StdEncoding.DecodeString(s)
 }
 
 // isHex checks if a string is a valid hexadecimal encoded string
@@ -275,11 +283,8 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		data = strings.ReplaceAll(data, " ", "")
 		if isHex(data) {
 			storeData, err = hex.DecodeString(data)
-		} else if isBase64(data) {
-			storeData, err = base64.StdEncoding.DecodeString(data)
 		} else {
-			http.Error(w, "we tried decoding data as base64 and hex and failed at both", http.StatusBadRequest)
-			return
+			storeData, err = decodeBase64(data)
 		}
 		if err != nil {
 			http.Error(w, fmt.Sprintf("failed to decode data: %v", err), http.StatusBadRequest)
@@ -294,14 +299,19 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 			return
 		}
 	*/
+	// 46: size of studio data raw
+	// 96: length of FFLStoreData
 	if len(storeData) < 46 || len(storeData) > 96 {
-		http.Error(w, "data length should be between 46-96 bytes (TODO: ACCOMODATE nn::mii::detail::CoreDataRaw)", http.StatusBadRequest)
+		http.Error(w, "data length should be between 46-96 bytes", http.StatusBadRequest)
 		return
 	}
 
 	// parse background color
-	// NOTE: MAY NOT BE NRGBA, MAY JUST BE RGBA
 	var bgColor color.NRGBA
+	// set default background color
+	// NOTE: DEFAULT BACKGROUND COLOR IS NOT ALL ZEROES!!!!
+	// IT IS TRANSPARENT WHITE. NOT USING THAT MAKES GLASSES TINTS WRONG
+	bgColor = color.NRGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0x0}
 	// taken from nwf-mii-cemu-toy miiPostHandler
 	bgColorParam := query.Get("bgColor")
 	// only process bgColor if it  exists
@@ -313,10 +323,6 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 			http.Error(w, "bgColor format is wrong: "+err.Error(), http.StatusBadRequest)
 			return
 		}
-	}
-	// HACK, HACK, TODO TODO REMOVE: force green to transparent
-	if bgColor.R == 0 && bgColor.G == 0xFF && bgColor.B == 0 {
-		bgColor.A = 0
 	}
 
 	viewTypeStr := query.Get("type")
@@ -391,15 +397,32 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			cameraRotateVec3i[0] = int32(x)
 		}
+	} else if charXPos := query.Get("characterXRotate"); charXPos != "" {
+		x, err := strconv.Atoi(charXPos)
+		if err == nil {
+			cameraRotateVec3i[0] = int32(x)
+		}
 	}
+
 	if camYPos := query.Get("cameraYRotate"); camYPos != "" {
 		y, err := strconv.Atoi(camYPos)
 		if err == nil {
 			cameraRotateVec3i[1] = int32(y)
 		}
+	} else if charYPos := query.Get("characterYRotate"); charYPos != "" {
+		y, err := strconv.Atoi(charYPos)
+		if err == nil {
+			cameraRotateVec3i[1] = int32(y)
+		}
 	}
+
 	if camZPos := query.Get("cameraZRotate"); camZPos != "" {
 		z, err := strconv.Atoi(camZPos)
+		if err == nil {
+			cameraRotateVec3i[2] = int32(z)
+		}
+	} else if charZPos := query.Get("characterZRotate"); charZPos != "" {
+		z, err := strconv.Atoi(charZPos)
 		if err == nil {
 			cameraRotateVec3i[2] = int32(z)
 		}

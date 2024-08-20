@@ -1,3 +1,26 @@
+// handle unhandled promise rejections as well as errors
+window.addEventListener('unhandledrejection', function(event) {
+  var errorContainer = document.getElementById('error-container');
+  var errorMessage = document.getElementById('error-message');
+  var errorStacktrace = document.getElementById('error-stacktrace');
+  var errorAt = document.getElementById('error-at');
+  errorMessage.textContent = event.reason.message || 'Unhandled Promise Rejection';
+
+  // show stack trace if it has one
+  if(event.reason && event.reason.stack) {
+    errorStacktrace.textContent = event.reason.stack;
+    errorStacktrace.style.display = '';
+  } else {
+    // if no stack trace, hide the stack trace section
+    errorStacktrace.style.display = 'none';
+  }
+
+  // hide the line number section since it's not applicable
+  errorAt.style.display = 'none';
+  // un-hide the error container
+  errorContainer.style.display = '';
+});
+
 // Select elements based on their names and ids
 const resolutionNumber = document.getElementsByName('width')[0];
 const widthSlider = document.getElementById('resolution-slider');
@@ -130,6 +153,8 @@ updateMaxResolution();
 const form = document.forms[0];
 const resultList = document.getElementById('results');
 
+const resultTemplate = document.getElementById('result-template');
+
 const submitButton = document.getElementById('submit');
 
 let formSubmitting = false;
@@ -198,7 +223,9 @@ form.addEventListener('submit', function(event) {
   const formData = new FormData(form);
   const searchParams = new URLSearchParams([...formData.entries()]);
   if(transparentCheckbox.checked)
-      searchParams.delete('bgColor');
+    searchParams.delete('bgColor');
+  const data = formData.get('data')
+  console.log('DATA INPUT:', data);
   const params = searchParams.toString();
   // more compatible? version taken from: https://stackoverflow.com/a/43000398
   // expand the elements from the .entries() iterator into an actual array
@@ -247,9 +274,39 @@ form.addEventListener('submit', function(event) {
 
       img.className += ' fade-in'; // Add the fade-in class
       // Insert the new <li> at the top of the list
-      const li = document.createElement('li');
+      /*const li = document.createElement('li');
       li.appendChild(img); // Append the <img> to the <li>
-      resultList.insertBefore(li, resultList.firstChild);
+      */
+
+      // clone the template so that we can put the result text in it
+      const resultTemplateClone = resultTemplate.cloneNode(true);
+      // remove the id so that it does not conflict
+      resultTemplateClone.removeAttribute('id');
+      // this SHOULD be the first span in summary
+      // NOTE: this line is most likely to error out
+      /*const nameInResult = resultTemplateClone.getElementsByTagName('summary')[0].firstElementChild;
+      nameInResult.textContent = name;
+      */
+      // define data as data-data attribute in details
+      const detailsInResult = resultTemplateClone.getElementsByTagName('details')[0];
+      if(data) {
+        // only if it isn't falsey of course
+        detailsInResult.setAttribute('data-data', data);
+        fillNameInDetailsFromDataString(resultTemplateClone, data);
+      } else {
+        console.warn('why is data falsey here????');
+        // hide it for now
+        // TODO TODO TODO TODO NNID DATA
+        detailsInResult.style.display = 'none';
+      }
+      const resultImageContainer = resultTemplateClone.getElementsByClassName('image-template')[0];
+      resultImageContainer.appendChild(img); // Append the <img> to the <li>
+
+      // finally, reveal and prepend it
+      resultTemplateClone.style.display = '';
+
+      resultList.insertBefore(resultTemplateClone, resultList.firstChild);
+
       // remove on successful load
       const tutorial = document.getElementById('tutorial');
       if(tutorial) tutorial.parentElement.removeChild(tutorial);
@@ -279,14 +336,14 @@ const supportedTypes = [
     name: 'RFLCharData',
     sizes: [74],
     offsetName: 0x2,
-    nameFormat: 'utf-16be'
+    isNameU16BE: true
   },
   {
     name: 'RFLStoreData',
     sizes: [76],
     offsetCRC16: 74,
     offsetName: 0x2,
-    nameFormat: 'utf-16be'
+    isNameU16BE: true
   },
   {
     name: 'nn::mii::CharInfo',
@@ -296,7 +353,7 @@ const supportedTypes = [
   {
     name: 'nn::mii::CoreData',
     sizes: [48, 68],
-    offsetName: 0x1C, // TODO: NOT CONFIRMED
+    offsetName: 0x1C,
   },
   // TODO: DON'T KNOW THE CRC, DON'T HAVE SAMPLES EITHER
   /*{
@@ -306,10 +363,10 @@ const supportedTypes = [
   },*/
   /*
         <!-- switch mii store data types:
-        nn::mii::detail::CoreDataRaw - 48 bytes
+        nn::mii::CoreData - 48 bytes
           * size from method nn::mii::detail::CoreDataRaw::SetDefault
             - contains memset for 0x30 = size is 0x30/48
-        nn::mii::detail::StoreDataRaw - 68 bytes, i think
+        nn::mii::StoreData - 68 bytes, i think
           * size from method nn::mii::detail::StoreDataRaw::UpdateDeviceCrc -> nn::mii::detail::CalculateAndSetCrc16
             - sets total size to 0x44 = size is 0x44/68
         -->
@@ -365,36 +422,55 @@ function extractNameFromSupportedType(data, type) {
 
 const crc16ChecksumFailedText = document.getElementById('crc16-checksum-failed-text');
 
+function extractUTF16Text(data, startOffset, isBigEndian, nameLength) {
+  // Default to 10 characters (20 bytes) if nameLength is not provided
+  const length = nameLength !== undefined ? nameLength * 2 : 20;
+  let endPosition = startOffset;
+
+  // Determine the byte order based on the isBigEndian flag
+  // NOTE: TextDecoder only works on newish browsers
+  // despite the rest of this script using pre-ES6 syntax
+  // TODO: TEST ON OLDER BROWSERS!!!!!!!!!!
+  const decoder = new TextDecoder(isBigEndian ? 'utf-16be' : 'utf-16le');
+
+  // Find the position of the null terminator (0x00 0x00)
+  while (endPosition < startOffset + length) {
+    if (data[endPosition] === 0x00 && data[endPosition + 1] === 0x00) {
+      break;
+    }
+    endPosition += 2; // Move in 2-byte increments (UTF-16)
+  }
+
+  // Extract and decode the name bytes
+  const nameBytes = data.slice(startOffset, endPosition);
+  return decoder.decode(nameBytes);
+}
+
+function getNameFromSupportedType(data, type) {
+  if (!type)
+    return false;
+
+  if (!type.offsetName)
+    return null;
+    // specifically return null for no offset name
+    // so that the next function uses the type name instead
+
+  // Use the new extractUTF16Text function to get the name string
+  const nameString = extractUTF16Text(data, type.offsetName, type.isNameU16BE, type.nameLength);
+
+  return nameString;
+}
+
 function displayNameFromSupportedType(data, nameElement, type, crc16NotPassed) {
   if(!type)
     return false;
 
-  let nameString;
-  if(!type.offsetName) {
-    nameString = type.name; // Return the type name if no offset is provided
-  } else {
-    // Extract UTF-16 LE Mii name starting at the specified offset
-    const startOffset = type.offsetName;
-    const nameLength = 0x14;
-    let endPosition = startOffset;
-    // Find the position of the null terminator (0x00 0x00)
-    while(endPosition < startOffset + nameLength) {
-      if(data[endPosition] === 0x00 && data[endPosition + 1] === 0x00) {
-        break;
-      }
-      endPosition += 2; // Move in 2-byte increments (UTF-16 LE)
-    }
+  const nameString = getNameFromSupportedType(data, type);
 
-    const textFormat = type.nameFormat === undefined ? 'utf-16le' : type.nameFormat;
-
-    // NOTE: TextDecoder only works on newish browsers
-    // despite the rest of this script using pre-ES6 syntax
-    // TODO: TEST ON OLDER BROWSERS!!!!!!!!!!
-    const nameBytes = data.slice(startOffset, endPosition);
-    nameString = new TextDecoder(textFormat).decode(nameBytes);
-  }
-
-  nameElement.firstElementChild.textContent = nameString;
+  // Handle the case where there's no offsetName
+  nameElement.firstElementChild.textContent =
+    // use the type name if the name is null (type has no name offset)
+    nameString !== null ? nameString : type.name;
 
   nameElement.style.display = '';
   if(crc16NotPassed) {
@@ -407,6 +483,7 @@ function displayNameFromSupportedType(data, nameElement, type, crc16NotPassed) {
     // color that means no crc16 supported
     nameElement.style.color = 'olivedrab'
 }
+
 
 // file type input
 const fileInput = document.getElementById('file');
@@ -431,7 +508,7 @@ fileInput.addEventListener('input', function() {
     // When file is read, replace/add the 'data' parameter with the file content in Base64
     const base64Data = e.target.result.split(',')[1]; // Remove the 'data:;base64,' part
     // decode so we can verify it and read the mii name
-    const data = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+    const data = base64ToUint8Array(base64Data);
 
     const type = findSupportedTypeBySize(data.length);
 
@@ -462,7 +539,27 @@ const dataInput = document.getElementById('data');
 
 const stripSpaces = str => str.replace(/\s+/g, '');
 const hexToUint8Array = hex => new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-const base64ToUint8Array = base64 => Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+const base64ToUint8Array = base64 => {
+  // Replace URL-safe Base64 characters
+  const normalizedBase64 = base64.replace(/-/g, '+').replace(/_/g, '/');
+  // Add padding if necessary
+  const paddedBase64 = normalizedBase64.padEnd(normalizedBase64.length + (4 - (normalizedBase64.length % 4)) % 4, '=');
+  return Uint8Array.from(atob(paddedBase64), c => c.charCodeAt(0));
+};
+const uint8ArrayToBase64 = data => btoa(String.fromCharCode.apply(null, data));
+
+const parseHexOrB64TextStringToUint8Array = text => {
+  let inputData;
+  // decode it to a uint8array whether it's hex or base64
+  const textData = stripSpaces(text);
+  // check if it's base 16 exclusively, otherwise assume base64
+  if (/^[0-9a-fA-F]+$/.test(textData))
+    inputData = hexToUint8Array(textData);
+  else
+    inputData = base64ToUint8Array(textData);
+
+  return inputData;
+};
 
 // same but for base64 mii data
 dataInput.addEventListener('input', function() {
@@ -473,16 +570,31 @@ dataInput.addEventListener('input', function() {
   if(dataInput.validity.patternMismatch) {
     return;
   }
+
+  // if a url that resembles a studio url with data
+  // is passed in then literally parse it and remove the rest
+  try {
+    if(dataInput.value.includes('data=')) {
+      const url = new URL(dataInput.value);
+      const dataParam = url.searchParams.get('data');
+      if(dataParam
+        // NOTE: make sure it is as long
+        // as studio url data, encoded (only.)
+        && dataParam.length === 94
+      )
+        // set the input value to that directly, removing everything else
+        dataInput.value = dataParam;
+    }
+  } catch(error) {
+      console.warn('error while trying to strip what we thought was a studio url bc it had "data=" in it:', error);
+  }
+
+
   // TODO TRY AND CATCH THIS BLOCK
   // decode so we can verify it and read the mii name
   let data;
   try {
-    const textData = stripSpaces(dataInput.value);
-    if(/^[0-9a-fA-F]+$/.test(textData)) {
-      data = hexToUint8Array(textData);
-    } else {
-      data = base64ToUint8Array(textData);
-    }
+    data = parseHexOrB64TextStringToUint8Array(dataInput.value);
   } catch(error) {
     dataInput.setCustomValidity('We tried to decode as hex and Base64 and failed at both: ' + error);
     return;
@@ -550,6 +662,27 @@ function setActiveInput(input) {
     fileInput.value = '';
 
   //hideAllErrors();
+}
+
+function fillNameInDetailsFromDataString(parent, dataString) {
+  const firstSummaryInParent = parent.getElementsByTagName('summary')[0];
+  const nameFieldElement = firstSummaryInParent.firstElementChild;
+  // assuming the top are defined   all well and good and yes.
+
+  const data = parseHexOrB64TextStringToUint8Array(dataString);
+  const type = findSupportedTypeBySize(data.length);
+  // asssuuumiiinggg it will always be supported
+  const nameString = getNameFromSupportedType(data, type);
+
+  nameFieldElement.textContent =
+    nameString !== null ? nameString : type.name;
+
+  // if name string is falsey (null) then STOP HERE!
+  // bc it will set it to a string "null"
+  if(!nameString) return;
+  // set data-name to be objective name which can be blank
+  const firstDetailsInParent = parent.getElementsByTagName('details')[0];
+  firstDetailsInParent.setAttribute('data-name', nameString);
 }
 
 // Event listener for file input
@@ -817,7 +950,7 @@ async function handleMiiDataFetch(apiUrl) {
         if(!data.data) {
           throw new Error('No data attribute in response');
         }
-        decodedData = Uint8Array.from(atob(data.data), c => c.charCodeAt(0));
+        decodedData = base64ToUint8Array(data.data);
         if(data.user_id) {
           nnidInput.value = data.user_id;
         }

@@ -161,7 +161,7 @@ other = "View type:"
 other = "Pretendo Network ID"
 
 [option_data]
-other = "Mii file or data"
+other = "Mii data/file/Studio Code"
 
 [option_qrcode]
 other = "Scan Mii QR Code"
@@ -287,7 +287,7 @@ other = "Select a supported Mii binary file:"
 other = "Loaded Mii file: "
 
 [enter_data_in_hex_or_base64]
-other = "Or, enter data in hex or Base64:"
+other = "Or, enter data in hex, Base64, or a Mii Studio URL:"
 
 [loaded_mii_data]
 other = "Loaded Mii data: "
@@ -355,7 +355,7 @@ other = "Disable CharInfo verification:"
 [disable_charinfo_verify_note]
 other = "Allows you to use any kind of data as Mii data. May still not work."
 [disable_charinfo_verify_note_bold]
-other = " Note that as of August 2024, this is client-side only for now."
+other = " NOTE as of August 2024: this doesn't show you the verification reason from the server just yet, all I have is an overly long-winded response, sorry for that."
 
 [camera_x_rotation_label]
 other = "Camera X rotation:"
@@ -368,9 +368,13 @@ other = "Camera Z rotation:"
 [miitomo_shader_inaccurate_note_pre_link]
 other = "Please note that that this "
 [miitomo_shader_inaccurate_note_link]
+# proper: Mii Studio
 other = "doesn't use the Mii Studio body model"
 [miitomo_shader_inaccurate_note_post_link]
-other = " at the moment so it will look very off from those renders."
+other = " at the moment so it will look off from those renders."
+[miitomo_shader_inaccurate_note_small]
+# proper: Switch
+other = "To be fair the Switch option doesn't use the Switch body model either but the difference is smaller there."
 
 [view_type_all_body_inaccurate_note]
 other = "There isn't much point to the whole body view because it's a guessed view, and the body itself isn't scaled correctly and the pants aren't colored separately. It's mostly provided as a tech demo."
