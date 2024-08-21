@@ -224,8 +224,13 @@ form.addEventListener('submit', function(event) {
   const searchParams = new URLSearchParams([...formData.entries()]);
   if(transparentCheckbox.checked)
     searchParams.delete('bgColor');
-  const data = formData.get('data')
-  console.log('DATA INPUT:', data);
+  // data-REAL overrides the data for conversion
+  const dataForConversion = formData.get('data-REAL');
+  if(dataForConversion)
+    // delete it so it is not sent to the server, only used for js
+    searchParams.delete('data-REAL');
+  let data = !dataForConversion ? formData.get('data') : dataForConversion
+  console.log('data input:', data);
   const params = searchParams.toString();
   // more compatible? version taken from: https://stackoverflow.com/a/43000398
   // expand the elements from the .entries() iterator into an actual array
@@ -328,7 +333,7 @@ const supportedTypes = [
   },
   {
     name: 'FFLStoreData',
-    sizes: [96],
+    sizes: [96, 104], // 104 = 96 + nfpstoredataextention length
     offsetCRC16: 94,
     offsetName: 0x1A,
   },
@@ -711,7 +716,7 @@ document.querySelector('label[for="data"]').addEventListener('click', function()
 
 
 
-const inputTypeSelect = document.getElementById('input_type');
+const inputTypeSelect = document.getElementById('input-type');
 
 function updateVisibility() {
   hideAllErrors();
@@ -740,12 +745,46 @@ function updateVisibility() {
   });
 }
 
+// Function to get a cookie by name
+function getCookie(name) {
+  let cookieArr = document.cookie.split(";");
+  for(let i = 0; i < cookieArr.length; i++) {
+    let cookiePair = cookieArr[i].split("=");
+    if(name == cookiePair[0].trim()) {
+        return decodeURIComponent(cookiePair[1]);
+    }
+  }
+  return null;
+}
+// Function to set a cookie
+function setCookie(name, value, days) {
+  let expires = "";
+  if(days) {
+    let date = new Date();
+    date.setTime(date.getTime() + (days*24*60*60*1000));
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/";
+}
+
+// when this script is loaded...
+const selectElement = document.getElementById('input-type');
+// Check if a value is already stored in localStorage
+const storedValue = getCookie('selectedInputType');//localStorage.getItem('selectedInputType');
+// set value to that (before updating the form)
+if (storedValue)
+    inputTypeSelect.value = storedValue;
 
 // Initially call the function to set the correct state based on the preselected option
 updateVisibility();
 
 // Add an event listener to the select element to update visibility upon change
-inputTypeSelect.addEventListener('change', updateVisibility);
+inputTypeSelect.addEventListener('change', function() {
+  setCookie('selectedInputType', this.value, 7); // Cookie will last for 7 days
+  //localStorage.setItem('selectedInputType', this.value);
+  // before updating visibility
+  updateVisibility();
+});
 
 // connect the error reporting sse channel when you first open the page
 connectErrorReportingSSE();
@@ -925,19 +964,19 @@ async function handleMiiDataFetch(apiUrl) {
   const headers = ACCEPT_OCTET_STREAM ? { 'Accept': 'application/octet-stream' } : {};
   return fetch(apiUrl, { headers })
     .then(async response => {
-        if(!response.ok) {
-          return response.text().then(text => { throw new Error(text); });
-        }
-        if(ACCEPT_OCTET_STREAM && response.headers.get('Content-Type') === 'application/octet-stream') {
-          return response.arrayBuffer().then(buffer => ({
-            data: new Uint8Array(buffer),
-            lastModified: response.headers.get('Last-Modified')
-          }));
-        }
-        return response.json().then(data => ({
-          ...data,
-          lastModified: data.images && data.images.last_modified
+      if(!response.ok) {
+        return response.text().then(text => { throw new Error(text); });
+      }
+      if(ACCEPT_OCTET_STREAM && response.headers.get('Content-Type') === 'application/octet-stream') {
+        return response.arrayBuffer().then(buffer => ({
+          data: new Uint8Array(buffer),
+          lastModified: response.headers.get('Last-Modified')
         }));
+      }
+      return response.json().then(data => ({
+        ...data,
+        lastModified: data.images && data.images.last_modified
+      }));
     })
     .then(data => {
       nnidLoaded.style.display = 'none';

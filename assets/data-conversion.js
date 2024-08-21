@@ -32,7 +32,7 @@ window.supportedFormats = [{
   },
   {
     className: 'Gen2Wiiu3dsMiitomo',
-    sizes: [96, 92, 74],
+    sizes: [96, 92, 72],
     technicalName: 'CFL/FFL/AFL/Ver3 (3DS/Wii U) StoreData',
     version: 3,
     encodeFunction: 'encodeVer3StoreData',

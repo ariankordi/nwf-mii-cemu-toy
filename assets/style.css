@@ -20,10 +20,11 @@ for both light and dark */
 
 @font-face {
   font-family: nintendo_NTLG;
-  src: url(nintendo_NTLG.woff2);
+  src: url(/assets/nintendo_NTLG.woff2);
+  font-display: swap;
 }
 
-body {
+html, select {
   /*font-family: sans-serif;
 */
   font-family:
@@ -35,7 +36,8 @@ body {
       Helvetica,
       Arial,
       sans-serif;
-
+}
+body {
   line-height: 180%;
   text-align: center;
 }
@@ -96,9 +98,10 @@ ul {
   border-radius: 5px;
 }
 /* for pattern attribute */
-.long-field:required:invalid:not(:placeholder-shown) {
+/*.long-field:required:invalid:not(:placeholder-shown) {
   background-color: lightpink;
-}
+}*/
+
 /* desktop (mobile is default) */
 @media (width > 40em) {
   body {
@@ -209,10 +212,18 @@ code.code-block {
 }
 .image-qr-container {
   margin-top: 8px;
+  padding: 5px;
   border-style: dotted;
   border-radius: 5px;
 }
 .image-qr-container:hover img {
   height: 100%;
   width: 100%;
+}
+/* add spacing so these do not clash */
+input[type=range] {
+  margin: 10px;
+}
+input[type=color] {
+  margin: 5px;
 }

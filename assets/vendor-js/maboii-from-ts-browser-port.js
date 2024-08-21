@@ -338,6 +338,10 @@ function ensureMaboiiKeysLoaded() {
     keys = maboii.loadMasterKeys([...keyBuffer]);
 }
 
+// using hardcoded offsets here rather
+// than parsing the structure properly (kaitai struct?)
+// NOTE: i think what we need is actually defined in yuzu here:
+// nfp_types.h, EncryptedAmiiboFile and NTAG215File (decrypted)
 const NFP_STOREDATA_OFFSET = 0x4C;
 const NFP_STOREDATA_SIZE = 0x60;
 const NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET = 0xBC;
@@ -454,9 +458,11 @@ document.querySelector('input').addEventListener('change', event => {
 // file type input
 const nfpFileInput = document.getElementById('nfp-file');
 const nfpFileDataInput = document.getElementById('nfp-file-data');
+const nfpFileDataInputWithExt = document.getElementById('nfp-file-data-with-ext');
 // separate fields holding name and figure name
 const nfpDataLoaded = document.getElementById('nfp-data-loaded');
 const nfpFigureLoaded = document.getElementById('nfp-figure-loaded');
+const nfpError = document.getElementById('nfp-error');
 
 // assuming errorTextQuery is already defined (copying fileInput handler here)
 
@@ -467,9 +473,11 @@ nfpFileInput.addEventListener('input', function() {
   }
   nfpDataLoaded.style.display = 'none';
   nfpFigureLoaded.style.display = 'none';
+  nfpError.style.display = 'none';
   nfpFileDataInput.value = '';
+  nfpFileDataInputWithExt.value = '';
   // clear validity
-  nfpFileDataInput.setCustomValidity('');
+  nfpFileInput.setCustomValidity('');
   const reader = new FileReader();
 
   // NOTE: THIS. is what actually gets called back
@@ -478,32 +486,8 @@ nfpFileInput.addEventListener('input', function() {
     // figure name is utf-16be
     const unpackedU8 = new Uint8Array(unpacked);
     const figureName = extractUTF16Text(unpackedU8, NFP_NAME_OFFSET, true);
-    nfpFigureLoaded.firstElementChild.textContent = figureName;
-    nfpFigureLoaded.style.display = '';
 
     const storeData = unpackedU8.slice(NFP_STOREDATA_OFFSET, NFP_STOREDATA_OFFSET+NFP_STOREDATA_SIZE);
-
-    // TODO: stub
-    const type = findSupportedTypeBySize(storeData.length);
-
-    // this function will handle errors, showing and returning false
-    // if there are no errors it should pass tho
-    const checkResult = checkSupportedTypeBySize(storeData, type, globalVerifyCRC16);
-    if(!checkResult) {
-      // remove file to invalidate the form
-      const errorText = document.querySelector(errorTextQuery).textContent;
-      if(errorText) nfpFileInput.setCustomValidity(errorText);
-      // do not mark success
-      return;
-    }
-    // assuming success
-    nfpFileDataInput.value = uint8ArrayToBase64(storeData);
-    // extract name and show loaded text
-    displayNameFromSupportedType(storeData, nfpDataLoaded, type, (checkResult === 2));
-
-
-    return;
-
 
     // TODO: SUPPORT DECRYPTED AMIIBO? (DETECT BY CRC16?)
     // TODO: VERIFY NfpStoreDataExtentionRaw::IsValid
@@ -519,6 +503,31 @@ nfpFileInput.addEventListener('input', function() {
     // here I'm going to use the fact that the
     // beginning of app data seems to be blank on Switch
 
+    // TODO: stub
+    const type = findSupportedTypeBySize(storeData.length);
+    // NOTE: all of the below just serves to check storedata crc16
+    // as well as display name. that is fiiinee for that but
+    // not for either displaying or conversion
+
+    // this function will handle errors, showing and returning false
+    // if there are no errors it should pass tho
+    const checkResult = checkSupportedTypeBySize(storeData, type, globalVerifyCRC16);
+    if(!checkResult) {
+      // remove file to invalidate the form
+      const errorText = document.querySelector(errorTextQuery).textContent;
+      if(errorText) nfpFileInput.setCustomValidity(errorText);
+      // do not mark success
+      return;
+    }
+    // only show figure name after crc16 was successful
+    nfpFigureLoaded.firstElementChild.textContent = figureName;
+    nfpFigureLoaded.style.display = '';
+    // extract name and show loaded text
+    displayNameFromSupportedType(storeData, nfpDataLoaded, type, (checkResult === 2));
+
+    // NOW apply store data extension
+    let storeDataWithExtension = storeData;
+
     const afterStoreDataExtensionWithinAppDataShouldBeZero = unpacked.slice(NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET+NFP_NFPSTOREDATAEXTENTIONRAW_SIZE,
     NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET+NFP_NFPSTOREDATAEXTENTIONRAW_SIZE+0x14);
 
@@ -532,21 +541,36 @@ nfpFileInput.addEventListener('input', function() {
     // This is the country code, which I found is zero from my Switch.
     && unpacked[NFP_COUNTRY_CODE_OFFSET] === 0;
 
-    console.log('storedata:', storeData)
+    //console.log('storedata:', storeData)
     if(useStoreDataExtension) {
       const storeDataExtension = unpacked.slice(NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET, NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET+NFP_NFPSTOREDATAEXTENTIONRAW_SIZE);
-      // nn::mii::detail::NFPStoreDataExtentionRaw (sic)
+      //console.log('nfpstoredataextention (this data uses it):', storeDataExtension)
+      // nn::mii::detail::NfpStoreDataExtentionRaw (sic)
       // this struct should also be defined in Citra or Yuzu, forgot which at this point
-      studioMii.faceColor = storeDataExtension[0];
-      studioMii.hairColor = storeDataExtension[1];
-      studioMii.eyeColor = storeDataExtension[2];
-      studioMii.eyebrowColor = storeDataExtension[3];
-      studioMii.mouthColor = storeDataExtension[4];
-      studioMii.facialHairColor = storeDataExtension[5];
-      studioMii.glassesColor = storeDataExtension[6];
-      studioMii.glassesType = storeDataExtension[7];
-      console.log('nfpstoredataextention (this data uses it):', storeDataExtension)
-    }
+
+      // make new buffer for it,
+      storeDataWithExtension = new Uint8Array(
+        storeData.length + NFP_NFPSTOREDATAEXTENTIONRAW_SIZE);
+      storeDataWithExtension.set(storeData, 0);
+      storeDataWithExtension.set(storeDataExtension, storeData.length);
+
+      // convert to stuuuuuudioooooo
+
+      // run the function to convert the data from the image to raw studio data
+      // NOTE: assuming function and studioFormat const are already defined
+      const studioData = convertDataToType(storeDataWithExtension, studioFormat);
+      // "studio code" = raw studio data in hex
+      // NOTE: three dots are only required if it is a uint8array which
+      // it is only one if the input data is studio data directly
+      const studioCode = [...studioData].map(byteToHex).join('');
+
+      nfpFileDataInput.value = studioCode;
+      // set real value that will be read by conversion
+      nfpFileDataInputWithExt.value = uint8ArrayToBase64(storeDataWithExtension);
+    } else
+      // if there is no storedata extension then just set to storedata
+      nfpFileDataInput.value = uint8ArrayToBase64(storeData);
+    // should be done
   };
 
   const unpackCallback = function(originalBuffer) {
@@ -572,11 +596,28 @@ nfpFileInput.addEventListener('input', function() {
     }
   }
 
+  //nfpFileInput.setCustomValidity('');
+
   reader.onload = function(e) {
     const arrayBuffer = reader.result;
     ensureMaboiiKeysLoaded(); // load keys if needed
+    // wrap THIS FUNCTION!!! to catch any decrypt errors
     maboii.unpack(keys, [...new Uint8Array(arrayBuffer)])
-            .then(unpackCallback(arrayBuffer));
+            .then(unpackCallback(arrayBuffer))
+            // this should catch decryption errors
+            .catch(error => {
+              nfpError.firstElementChild.textContent = error.message;
+              nfpError.style.display = '';
+              // Create and append the error message
+              /*nfpFileInput.setCustomValidity(error.message);
+              nfpFileInput.reportValidity();
+              /*const errorLiOriginal = document.getElementsByClassName('load-error');
+              const errorLi = errorLiOriginal[errorLiOriginal.length - 1].cloneNode(true);
+              errorLi.style.display = '';
+              errorLi.textContent = error.message;
+              resultList.insertBefore(errorLi, resultList.firstChild);
+              */
+            })
   };
   // the original base64 is not needed so this will
   // just be read directly as an arraybuffer
