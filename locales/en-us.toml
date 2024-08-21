@@ -111,14 +111,16 @@ other = "amiibo Data"
 other = "Portrait"
 
 [option_face_only]
-other = "Head only"
+other = "Head Only"
+[option_fflmakeicon]
+other = "Head Only Alt"
 
 [option_nnid]
 # proper
 other = "Nintendo Network ID"
 
 [our_output_description]
-other = "The icons above are rendered completely by us!"
+other = "The icons above are rendered completely by this site!"
 
 [outputs_section_heading]
 other = "Outputs"
@@ -168,9 +170,13 @@ other = "Scan Mii QR Code"
 
 [button_open_camera]
 other = "Open camera"
+[open_camera_label]
+other = "Open the camera to begin:"
 
 [button_close_camera]
 other = "Close camera"
+[close_camera_label]
+other = "Close the camera to stop:"
 
 [label_select_camera]
 other = "Select camera: "
@@ -299,10 +305,10 @@ other = "(Click on a label to select that field)"
 other = "Should support 3DS/Wii U, Wii, Switch, and Mii Studio. Click for more details."
 
 [option_all_body]
-other = "Whole body"
+other = "Whole Body"
 
 [option_variableiconbody]
-other = "Switch portrait"
+other = "Switch Portrait"
 
 [shader_lighting_type_label]
 other = "Shader/lighting type:"
@@ -315,6 +321,15 @@ other = "Miitomo/Mii Studio (!)"
 
 [shader_type_new]
 other = "(NEW!)"
+
+[nfp_data_loaded_label]
+other = "Loaded amiibo Mii: "
+[nfp_figure_loaded_label]
+other = "Figure Name: "
+[nfp_error_label]
+other = "Cannot read your file: "
+[nfp_file_label]
+other = "Provide a 540/532 byte file of a preferably encrypted amiibo containing a Mii. This supports Switch Miis!"
 
 [advanced_options]
 other = "Advanced options"

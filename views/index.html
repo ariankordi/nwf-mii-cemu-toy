@@ -3,15 +3,18 @@
 
 <head>
     <title>{{T("page_title")}}</title>
-    <link rel="stylesheet" href="{{asset("assets/style.css")}}">
+    <link rel="stylesheet" href="/{{asset("assets/style.css")}}">
+    <!-- preload this huge font -->
+    <link rel="preload" href="/assets/nintendo_NTLG.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <meta name="viewport" content="width=device-width,initial-scale=1">
 
     <!-- I THINK THIS DESCRIPTION SHOULD BE THE SAME AS ONE ON THE PAGE?
+    -->
+    <!-- TODO CHANGE THIS, I WROTE THIS AND IT IS OUTDATED -->
     <meta name="description" content="This site renders Mii images
     in Wii U style, with many expressions to choose from.
     It accepts Mii data from your old NNID (Wii U/3DS account),
-    a Mii QR Code, or even your Pretendo Network ID.">
-    -->
+    a Mii QR Code, or even a Pretendo Network ID.">
     <meta name="keywords" content="
     Mii, Mii Renderer, Mii QR, Mii Image,
     Mii Data, Mii Base64, Mii Hex,
@@ -44,10 +47,10 @@
     <meta property="og:title" content="{{T("page_title")}}">
 
     <meta name="og:description" content="That's right, we will render your Miis with our bare f*cking hands.
-    This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*ss Mii Studio API. NO. This runs on MY COMPUTER. On MY very own Microsoft Corporation Surface Laptop 4, Intel® Core™ i7-1185G7, rasterized on the Intel Iris® Xᵉ Graphics™. And you know what? It can run on yours too, since it's entirely open source.">
-    <link rel="alternate" hreflang="x-default" href="/">
+    This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*ss Mii Studio API. NO. This runs on MY COMPUTER. On MY very own Intel® Core™ i7-1185G7 Intel Iris® Xᵉ Graphics™. And guess what? It can run on yours too, since the renderer is entirely open source.">
+    <link rel="alternate" hreflang="x-default" href="https://mii-unsecure.ariankordi.net/">
     {{range _, lang := .LanguageStrings}}
-    <link rel="alternate" hreflang="{{lang}}" href="/?locale.lang={{lang}}">
+    <link rel="alternate" hreflang="{{lang}}" href="https://mii-unsecure.ariankordi.net/?locale.lang={{lang}}">
     {{end}}
 
     <!-- add error handling js before anything else is loaded
@@ -93,21 +96,33 @@
     <form action="/miis/image.png" method="GET">
         <input type="hidden" id="errorSessionAndRequestID" name="erri">
 
-        <div style="color: plum">{{T("above_input_type_choose_text")}}</div>
-        <label for="input_type">{{T("label_input_type")}}</label>
+        <div style="color: plum;">{{T("above_input_type_choose_text")}}</div>
+        <label for="input-type">{{T("label_input_type")}}</label>
         <!-- only useful for backend when you are not using js bc js will disable the inputs -->
-        <select id="input_type"><!-- name="input_type">-->
-            <option value="nnid">{{T("option_nnid")}}🕰</option>
+        <select id="input-type"><!-- name="input-type">-->
+            <option value="nnid"
+                {{if .GroupEnabled == "nnid"}}selected{{end}}
+                >{{T("option_nnid")}}🕰</option>
             <!-- nnid above is default -->
-            <option value="pnid">{{T("option_pnid")}}</option>
-            <option value="data" selected>{{T("option_data")}}</option>
-            <option value="qrcode">{{T("option_qrcode")}}</option>
-            <option value="nfp">{{T("option_amiibo")}}</option>
+            <option value="pnid"
+                {{if .GroupEnabled == "pnid"}}selected{{end}}
+                >{{T("option_pnid")}}</option>
+            <option value="data"
+                {{if .GroupEnabled == "data"}}selected{{end}}
+                >{{T("option_data")}}</option>
+            <option value="qrcode"
+                {{if .GroupEnabled == "qrcode"}}selected{{end}}
+                >{{T("option_qrcode")}}</option>
+            <option value="nfp"
+                {{if .GroupEnabled == "nfp"}}selected{{end}}
+                >{{T("option_amiibo")}}</option>
         </select>
         <br>
-        <div id="data-group">
+        <!-- NOTE: even though the html is setting style for groups... -->
+        <!-- the js is STILL RESPONSIBLE for DISABLING THE FORM ELEMENTS -->
+        <div id="data-group" {{if .GroupEnabled != "data"}}style="display: none;" {{end}}>
             <label class="small" for="file"><b>{{T("file_input_label")}}</b></label><br>
-            <input class="long-field green-border" type="file" name="file" id="file">
+            <input class="long-field" type="file" name="file" id="file">
             <input type="hidden" name="data" id="file-data">
 
             <span id="file-loaded" style="font-weight: bold; color: green; display: none;">{{T("loaded_mii_file")}}<span></span></span>
@@ -138,6 +153,7 @@
                         <li>RFLCharData, RFLStoreData</li>
                         <li>74 bytes: .rcd, .miigx, .mii, .mae</li>
                         <li>76 bytes: .rsd</li>
+                        <li>DS data is the same structure as RFLCharData but all fields are little endian - it is not supported.</li>
                     </ul>
                 </li>
                 <li>Switch
@@ -152,13 +168,17 @@
                     <ul>
                         <li>Encoded/URL format: 47 characters</li>
                         <li>46 bytes: .mnms (decoded format)</li>
+                        <li>Doesn't support hex data from a .txt file (just paste the hex in the data field and it should work there)</li>
                     </ul>
                 </li>
             </ul>
 
             </details>
         </div>
-        <div id="qrcode-group">
+        <div id="qrcode-group" {{if .GroupEnabled != "qrcode"}}style="display: none;" {{end}}>
+            <label class="small" id="start-camera-label" for="start-camera"><b>{{T("open_camera_label")}}</b></label>
+            <label class="small" id="stop-camera-label" for="stop-camera" style="display: none;"><b>{{T("close_camera_label")}}</b></label>
+            <br>
             <button id="start-camera" type="button">{{T("button_open_camera")}}</button>
             <button id="stop-camera" type="button" style="display: none;">{{T("button_close_camera")}}</button>
             <br>
@@ -170,7 +190,7 @@
                 </select>
                 <video id="qr-video" style="max-width: 100%"></video>
             </div>
-            {{T("file_photo_selection_prompt")}}
+            <span class="small"><b>{{T("file_photo_selection_prompt")}}</b></span>
             <input type="file" id="qr-file" accept="image/*">
 
             <!-- QR code statuses -->
@@ -186,7 +206,7 @@
 
             <input type="hidden" name="data" id="qrcode">
         </div>
-        <div id="nnid-group">
+        <div id="nnid-group" {{if .GroupEnabled != "nnid"}}style="display: none;" {{end}}>
             <!-- you may want to add labels to differentiate in the case of no js -->
             <input id="nnid" name="nnid" class="long-field" type="text" placeholder="{{T("nnid_placeholder")}}" value="JasmineChlora"
                 maxlength="16" pattern="^[0-9a-zA-Z\-_.]+$" required
@@ -222,7 +242,7 @@
               show you deleted NNIDs.</p>
             </details>-->
         </div>
-        <div id="pnid-group">
+        <div id="pnid-group" {{if .GroupEnabled != "pnid"}}style="display: none;" {{end}}>
             <!-- you may want to add labels to differentiate in the case of no js -->
             <input id="pnid" name="nnid" class="long-field" type="text"
                 placeholder="{{T("input_pnid_placeholder")}}"
@@ -243,13 +263,17 @@
               <a target="_blank" href="https://pretendo.network/">pretendo.network</a>
             </span>
         </div>
-        <div id="nfp-group">
-            <label class="small" for="nfp-file"><b>Provide a 540/532 byte file of a preferably encrypted amiibo containing a Mii.</b></label><br>
-            <input class="long-field" type="file" name="nfp-file" id="nfp-file">
+        <div id="nfp-group" {{if .GroupEnabled != "nfp"}}style="display: none;" {{end}}>
+            <label class="small" for="nfp-file"><b>{{T("nfp_file_label")}}</b></label><br>
+            <input class="long-field" type="file" name="nfp-file" id="nfp-file" required>
             <input type="hidden" name="data" id="nfp-file-data">
+            <!-- while data is put in the url, data-REAL is used by the conversion routine -->
+            <input type="hidden" name="data-REAL" id="nfp-file-data-with-ext">
 
-            <span id="nfp-data-loaded" style="font-weight: bold; color: green; display: none;">Loaded amiibo Mii:<span></span></span>
-            <div id="nfp-figure-loaded" style="font-weight: bold; color: green; display: none;">Loaded amiibo Figure:<span></span></div>
+            <span id="nfp-data-loaded" style="font-weight: bold; color: green; display: none;">{{T("nfp_data_loaded_label")}}<span></span></span>
+            <div id="nfp-figure-loaded" style="font-weight: bold; color: green; display: none;">{{T("nfp_figure_loaded_label")}}<span></span></div>
+
+            <div id="nfp-error" style="font-weight: bold; color: red; display: none;">{{T("nfp_error_label")}}<span></span></div>
 
             <details>
                 <summary>Click here to reveal my tutorial on how to extract your own amiibo to a file.</summary>
@@ -261,6 +285,8 @@
                         <li>download an amiibo scanning app, <a target="_blank" href="https://apps.apple.com/us/app/amiiboss/id1579972834">AmiiBoss</a> works fine for me on iphone</li>
                         <li>scan a figure then hit "Share" on it</li>
                         <li>export it to a file and give us the file</li>
+                        <li>if it does not work or appears corrupted then <a href="#contact">PLEASE PLEASE let me know</a>, tell me which app you used
+                        <ul><li class="small">(not ur fault i just want to support everything)</li></ul></li>
                     </ul>
                 </li>
             </ul>
@@ -282,9 +308,40 @@
         <select name="type" id="type">
             <option value="face">{{T("option_face")}}</option>
             <option value="face_only">{{T("option_face_only")}}</option>
+            <option value="fflmakeicon">{{T("option_fflmakeicon")}}</option>
             <option value="all_body">{{T("option_all_body")}} (!!)</option>
             <option value="variableiconbody">{{T("option_variableiconbody")}} (!)</option>
         </select><br>
+        <details>
+            <summary>Read an explanation of the view types here.</summary>
+                <ul class="left-aligned-ul">
+                    <li><b>Portrait: </b>This is what the API calls "face". Shows a Mii head and its body.
+                        <ul>
+                            <li>Aims to mirror the Mii Maker/NNID/cdn-mii 1.0.0 icon view for now, which should be close to Mii Studio.</li>
+                        </ul>
+                    </li>
+                    <li><b>Head Only: </b>Shows a Mii's head without its body. Same view as portrait. (Close to Mii Studio face_only)
+                        <ul>
+                            <li>Mii Studio's head_only has the same view as its "face", which is why this is face_only on the API.</li>
+                        </ul>
+                    </li>
+                    <li><b>Head Only Alt: </b>Shows a Mii's head only, but using the same view that some Wii icons use. (Matches RFL/FFLMakeIcon)
+                        <ul>
+                            <li>The view/projection matrix from this is from the above functions - it is slightly different than the portrait/face view.</li>
+                        </ul>
+                    </li>
+                    <li><b>Switch Portrait: </b>Shows a Mii head and its body, slightly zoomed in.
+                        <ul>
+                            <li>(Aims to) match the Switch nn::mii::VariableIconBody icon renders, seen in the MiiEdit applet.</li>
+                        </ul>
+                    </li>
+                    <li><b>Whole Body: </b>Shows a zoomed-out shot of a Mii's entire body.
+                        <ul>
+                            <li>NOTE: Doesn't match anything right now. I believe Mii Studio and the Mii Maker/NNID use different views (should use the same projection though???). This is mostly provided as a tech demo.</li>
+                        </ul>
+                    </li>
+                </ul>
+        </details>
         <label for="expression">{{T("expression_label")}}</label>
         <select name="expression" id="expression">
             <option value="normal">{{T("expression_normal")}}</option>
@@ -319,6 +376,7 @@
             <input id="transparent-checkbox" type="checkbox" checked>
         </div>
 
+        <div style="color: plum;">Choose Miitomo here to get a look like Mii Studio:</div>
         <label for="shaderType">
             {{if .IsntAMonthFromShaderAndLightingTypeBeingNew}}
                 <span style="color: gold;">{{T("shader_type_new")}}</span>
@@ -432,9 +490,11 @@
                 <span class="text-counter" style="display: none;">Copied <span>0</span>x</span>
             </button>
             <details ontoggle="handleConvertDetailsToggle(event)">
-            <summary>Convert <span></span></summary>
+            <summary style="font-size: 18px;">
+                Convert <span style="color: plum;"></span>
+            </summary>
             <div>
-                <div style="margin: 5px;">Current data type:<br><code class="input-type">Unknown</code></div>
+                <div style="margin: 5px;">Input data type:<br><code class="input-type">Unknown</code></div>
                 <!--
                 <label for>Convert to: </label><select>
                 <option>Default</option>
@@ -448,7 +508,7 @@
                     <span class="text-copy">Copy URL</span>
                     <span class="text-counter" style="display: none;">Copied <span>0</span>x</span>
                     </button>
-                    <img class="image-80" data-src="https://studio.mii.nintendo.com/miis/image.png?type=face&width=96&data=">
+                    <img class="image-80" alt="Studio Render" data-src="https://studio.mii.nintendo.com/miis/image.png?type=face&width=96&data=">
                 </li>
                 <li>Studio Code: <code class="studio-code code-block"></code></li>
                 <li>
@@ -465,7 +525,7 @@
                     </ul>
                 </li>
                 <li>Base64 3DS/Wii U StoreData (copying force-enabled): <code class="ver3storedata code-block"></code></li>
-                <li style="margin: 5px;" class="image-qr-container">Mii QR Code (hover to enlarge):<div style="text-align: center;"><img class="image-qr"></div>
+                <li style="margin: 5px;" class="image-qr-container">Mii QR Code (hover to enlarge):<div style="text-align: center;"><img class="image-qr" alt="Mii QR Code"></div>
                 </li>
                 </ul>
             </div>
@@ -486,65 +546,66 @@
     <h3>{{T("samples_section_heading")}}</h3>
     <ul id="samples" class="results entire-width">
         <li>
-            <img style="width: 30%;" src="assets/jasmine-sample-270-wiiu-no-aa.png" alt="Jasmine">
-            <img style="width: 30%;" src="assets/jasmine-sample-270-switch-variableiconbody-no-aa.png" alt="Jasmine">
-            <img style="width: 30%;" src="assets/jasmine-sample-270-miitomo.png" alt="Jasmine">
+            <img style="width: 30%;" src="/assets/jasmine-sample-270-wiiu-no-aa.png" alt="Jasmine">
+            <img style="width: 30%;" src="/assets/jasmine-sample-270-switch-variableiconbody-no-aa.png" alt="Jasmine">
+            <img style="width: 30%;" src="/assets/jasmine-sample-270-miitomo.png" alt="Jasmine">
             <div style="color: hotpink;">{{T("our_output_description")}}
                 <div class="small">{{T("under_our_render_small")}}</div>
             </div>
             <details>
                 <summary><b>{{T("compare_with_official_renders_heading")}}</b></summary>
-                <img style="width: 45%;" src="assets/jasmine-sample-270-wiiu-no-aa.png" alt="Jasmine">
-                <img style="width: 45%;" src="assets/jasmine-mii-maker-270.png" alt="Jasmine">
+                <img style="width: 45%;" src="/assets/jasmine-sample-270-wiiu-no-aa.png" alt="Jasmine" loading="lazy">
+                <img style="width: 45%;" src="/assets/jasmine-mii-maker-270.png" alt="Jasmine" loading="lazy">
                 <div>{{T("label_left")}}<span style="color: hotpink;">{{T("label_our_render_lower")}}</span> {{T("label_right")}}<span style="color: indianred;">{{T("mii_maker_right_side_note")}}</span>
                     <div class="small">{{T("under_mii_maker_render_small")}}</div>
                 </div>
 
-                <img style="width: 45%;" src="assets/jasmine-sample-270-switch-variableiconbody-no-aa.png" alt="Jasmine">
-                <img style="width: 45%;" src="assets/jasmine-variableiconbodyexample-270.png" alt="Jasmine">
+                <img style="width: 45%;" src="/assets/jasmine-sample-270-switch-variableiconbody-no-aa.png" alt="Jasmine" loading="lazy">
+                <img style="width: 45%;" src="/assets/jasmine-variableiconbodyexample-270.png" alt="Jasmine" loading="lazy">
                 <div>{{T("label_left")}}<span style="color: hotpink;">{{T("label_our_render_lower")}}</span> {{T("label_right")}}<span style="color: indianred;">{{T("switch_render_right_side_note")}}</span>
                     <div class="small">{{T("under_switch_render_small")}}</div>
                 </div>
 
-                <img style="width: 45%;" src="assets/jasmine-sample-270-miitomo.png" alt="Jasmine">
-                <img style="width: 45%;" src="assets/jasmine-studio-270.png"
-                    data-not-src="https://studio.mii.nintendo.com/miis/image.png?data=000d142a303f434b717a7b84939ba6b2bbbec5cbc9d0dee6fd0109090f16746f757c77737e747c696b767d747b828d&type=face&expression=normal&width=270" alt="Jasmine">
+                <img style="width: 45%;" src="/assets/jasmine-sample-270-miitomo.png" alt="Jasmine" loading="lazy">
+                <img style="width: 45%;" src="/assets/jasmine-studio-270.png"
+                    data-not-src="https://studio.mii.nintendo.com/miis/image.png?data=000d142a303f434b717a7b84939ba6b2bbbec5cbc9d0dee6fd0109090f16746f757c77737e747c696b767d747b828d&type=face&expression=normal&width=270" alt="Jasmine" loading="lazy">
                 <div>{{T("label_left")}}<span style="color: hotpink;">{{T("label_our_render_lower")}}</span> {{T("label_right")}}<span style="color: indianred;">{{T("studio_render_right_side_note")}}</span>
                     <div class="small">{{T("under_studio_render_small")}}</div>
                 </div>
             </details>
         </li>
     </ul>
-    <script src="{{asset("assets/script.js")}}"></script>
+    <script src="/{{asset("assets/script.js")}}"></script>
     <!--<script src="https://cdn.jsdelivr.net/gh/criteo-forks/qr-scanner/qr-scanner.umd.min.js"></script>-->
     <!-- async because it's not needed to RENDER the page
     ... but will be needed laaateerrrr.... -->
-    <script async src="{{asset("assets/qr-scan-handler.js")}}"></script>
+    <script async src="/{{asset("assets/qr-scan-handler.js")}}"></script>
     <!-- NOTE: qr-scan-handler actually does depend on qr-scanner AND sjcl both to work -->
-    <script async src="{{asset("assets/vendor-js/gh-criteo-forks-qr-scanner-qr-scanner.umd.min.js")}}"></script>
+    <script async src="/{{asset("assets/vendor-js/gh-criteo-forks-qr-scanner-qr-scanner.umd.min.js")}}"></script>
     <!-- TODO: this sjcl (manually crafted) bundle could be smaller if it contained less deps -->
     <!-- NOTE: both jses took manually from jsdelivr -->
-    <script async src="{{asset("assets/vendor-js/sjcl-108-min-plus-codecBytes.js")}}"></script>
+    <script async src="/{{asset("assets/vendor-js/sjcl-108-min-plus-codecBytes.js")}}"></script>
 
 
     <!-- scripts for data conversion -->
     <!-- kaitai runtime -->
-    <script async src="{{asset("assets/vendor-js/KaitaiStream.min.js")}}"></script>
+    <!-- NOTE: all of the kaitais below need this BEFORE THEY LOAD!!!! -->
+    <script src="/{{asset("assets/vendor-js/KaitaiStream.min.js")}}"></script>
     <!-- scripts -->
-    <script async src="{{asset("assets/data-conversion.js")}}"></script>
+    <script async src="/{{asset("assets/data-conversion.js")}}"></script>
     <!-- kaitai structs begin -->
-    <script async src="{{asset("assets/kaitai-structs/js/Gen2Wiiu3dsMiitomo.js")}}"></script>
-    <script async src="{{asset("assets/kaitai-structs/js/Gen3Studio.js")}}"></script>
-    <script async src="{{asset("assets/kaitai-structs/js/Gen1Wii.js")}}"></script>
-    <script async src="{{asset("assets/kaitai-structs/js/Gen3Switch.js")}}"></script>
-    <script async src="{{asset("assets/kaitai-structs/js/Gen2Wiiu3dsMiitomoNfpstoredataextention.js")}}"></script>
-    <script async src="{{asset("assets/kaitai-structs/js/Gen3Switchgame.js")}}"></script>
+    <script async src="/{{asset("assets/kaitai-structs/js/Gen2Wiiu3dsMiitomo.js")}}"></script>
+    <script async src="/{{asset("assets/kaitai-structs/js/Gen3Studio.js")}}"></script>
+    <script async src="/{{asset("assets/kaitai-structs/js/Gen1Wii.js")}}"></script>
+    <script async src="/{{asset("assets/kaitai-structs/js/Gen3Switch.js")}}"></script>
+    <script async src="/{{asset("assets/kaitai-structs/js/Gen2Wiiu3dsMiitomoNfpstoredataextention.js")}}"></script>
+    <script async src="/{{asset("assets/kaitai-structs/js/Gen3Switchgame.js")}}"></script>
     <!-- qr code encoder for data conversion -->
-    <script async src="{{asset("assets/vendor-js/qr.min.js")}}"></script>
+    <script async src="/{{asset("assets/vendor-js/qr.min.js")}}"></script>
 
     <!-- NOTE: this maboii script below
     contains the library AND handler for now -->
-    <script async src="{{asset("assets/vendor-js/maboii-from-ts-browser-port.js")}}"></script>
+    <script async src="/{{asset("assets/vendor-js/maboii-from-ts-browser-port.js")}}"></script>
 
     <!-- just a joke and should not inhibit loading
     of any other scripts ples -->
@@ -613,7 +674,7 @@
     <section id="credits">
     <ul class="left-aligned-ul">
         <li>Renderer backend made by me: <a href="https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype">ariankordi/FFL-Testing (renderer-server-prototype branch)</a></li>
-        <li>FFL Mii rendering library decompiled and reverse engineered by <a href="https://github.com/aboood40091">AboodXD</a>: <a href="https://github.com/aboood40091/ffl/tree/nsmbu-win-port">aboood40091/ffl</a></li>
+        <li>FFL Mii rendering library decompiled and ported to OpenGL by <a href="https://github.com/aboood40091">AboodXD</a>: <a href="https://github.com/aboood40091/ffl/tree/nsmbu-win-port">aboood40091/ffl</a></li>
         <li>Conversion tables to Ver3 and other nn::mii/Switch structs, reversed by Genwald: <a href="https://github.com/Genwald/MiiPort/blob/4ee38bbb8aa68a2365e9c48d59d7709f760f9b5d/include/convert_mii.h#L8">MiiPort > convert_mii.h</a>, <a href="https://github.com/Genwald/MiiPort/blob/4ee38bbb8aa68a2365e9c48d59d7709f760f9b5d/include/mii_ext.h">mii_ext.h</a></li>
     </ul>
     <h4>For client-side site:</h4>
@@ -664,7 +725,7 @@
         <input type="submit">
     </form>
 
-    <meta itemprop="arianhandler-html-path" content="{{asset("assets/warioland3/complicated.html")}}">
+    <meta itemprop="arianhandler-html-path" content="/{{asset("assets/warioland3/complicated.html")}}">
 
     <!-- padding after language select form -->
     <br>

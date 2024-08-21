@@ -60,7 +60,9 @@ const video = document.getElementById('qr-video');
 const camList = document.getElementById('cam-list');
 const videoGroup = document.getElementById('qr-camera-group');
 const startCameraButton = document.getElementById('start-camera');
+const startCameraLabel = document.getElementById('start-camera-label');
 const stopCameraButton = document.getElementById('stop-camera');
+const stopCameraLabel = document.getElementById('stop-camera-label');
 
 // show a status by selectively picking specific id on the dom
 function showStatus(statusId, message = '') {
@@ -110,7 +112,9 @@ startCameraButton.addEventListener('click', () => {
   video.style.height = '';
   videoGroup.style.display = '';
   startCameraButton.style.display = 'none';  // Hide start button
+  startCameraLabel.style.display = 'none';  // Hide start label
   stopCameraButton.style.display = '';  // Unhide stop button
+  stopCameraLabel.style.display = '';  // Unhide stop label
   scanner.start().then(() => {
     // List cameras after the scanner started to avoid listCamera's stream and the scanner's stream being requested
     // at the same time which can result in listCamera's unconstrained stream also being offered to the scanner.
@@ -136,7 +140,9 @@ startCameraButton.addEventListener('click', () => {
     video.style.height = '0px';
     videoGroup.style.display = 'none';
     startCameraButton.style.display = '';  // Unhide start button
+    startCameraLabel.style.display = '';  // Unhide start label
     stopCameraButton.style.display = 'none';  // Hide stop button
+    stopCameraLabel.style.display = 'none';  // Hide stop label
     if(error === 'Camera not found.') {
       showStatus('no-camera');
     } else {
@@ -151,7 +157,9 @@ stopCameraButton.addEventListener('click', () => {
   video.style.height = '0px';
   videoGroup.style.display = 'none';
   startCameraButton.style.display = '';  // Unhide start button
+  startCameraLabel.style.display = '';  // Unhide start label
   stopCameraButton.style.display = 'none';  // Hide stop button
+  stopCameraLabel.style.display = 'none';  // Hide stop label
   showStatus('ready');
 });
 
@@ -260,24 +268,9 @@ function handleDecryption(result) {
   video.style.height = '0px';
   videoGroup.style.display = 'none';
   startCameraButton.style.display = '';  // Unhide start button
+  startCameraLabel.style.display = '';  // Unhide start label
   stopCameraButton.style.display = 'none';  // Hide stop button
+  stopCameraLabel.style.display = 'none';  // Hide stop label
 
   qrCodeInputField.value = btoa(String.fromCharCode(...new Uint8Array(decryptedData)));
-}
-
-function crc16(data) {
-  let crc = 0;
-  let msb = crc >> 8;
-  let lsb = crc & 0xFF;
-
-  for(let i = 0; i < data.length; i++) {
-    let c = data[i];
-    let x = c ^ msb;
-    x ^= (x >> 4);
-    msb = (lsb ^ (x >> 3) ^ (x << 4)) & 0xFF;
-    lsb = (x ^ (x << 5)) & 0xFF;
-  }
-
-  crc = (msb << 8) + lsb;
-  return crc;
 }

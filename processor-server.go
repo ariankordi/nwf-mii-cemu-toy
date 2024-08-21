@@ -140,18 +140,17 @@ const templatesDir = "views"
 func placeholderTranslate(key string) string {
 	return key
 }
-func assetURLWithTimestamp(a jet.Arguments) reflect.Value {
-	assetPath := a.Get(0).String()
+func assetURLWithTimestamp(assetPath string) (string) {//, error) {
 	// Get the file stats
 	fileInfo, err := os.Stat(assetPath)
 	if err != nil {
 		// If the file doesn't exist then return nothing
 		if errors.Is(err, os.ErrNotExist) {
-			return reflect.ValueOf("")
+			return ""//, nil
 		}
 		errStr := "error loading asset path: " + assetPath + " , error:" + err.Error()
 		log.Println(errStr)
-		return reflect.ValueOf(errStr)
+		return errStr//"", err
 	}
 
 	// Extract the modification time
@@ -162,6 +161,11 @@ func assetURLWithTimestamp(a jet.Arguments) reflect.Value {
 
 	// Append the timestamp as a query parameter
 	url := assetPath + "?" + timestamp
+	return url//, nil
+}
+func assetURLWithTimestampJet(a jet.Arguments) reflect.Value {
+	assetPath := a.Get(0).String()
+	url := assetURLWithTimestamp(assetPath)
 	return reflect.ValueOf(url)
 }
 
@@ -178,7 +182,7 @@ func loadTemplates(templatesDir string, opts []jet.Option) {
 	)
 
 	// add global function to append date to asset urls
-	views.AddGlobalFunc("asset", assetURLWithTimestamp)
+	views.AddGlobalFunc("asset", assetURLWithTimestampJet)
 }
 
 const localesDir = "locales"
@@ -340,8 +344,27 @@ func main() {
 	log.Fatalln(err)
 }
 
+func getSelectedInputTypeCookie(r *http.Request, defaultValue string) string {
+	// Default value if the cookie is not found
+
+	// Try to get the cookie from the request
+	cookie, err := r.Cookie("selectedInputType")
+	if err != nil {
+		// If the cookie is not found, return the default value
+		if err == http.ErrNoCookie {
+			return defaultValue
+		}
+		// Handle other possible errors
+		log.Println("Error retrieving cookie:", err)
+		return defaultValue
+	}
+
+	// Return the cookie value
+	return cookie.Value
+}
+
 // TODO REMOVE THIS
-var shaderTypeReleaseDate = time.Date(2024, 8, 12, 0, 0, 0, 0, time.UTC)
+var shaderTypeReleaseDate = time.Date(2024, 8, 25, 0, 0, 0, 0, time.UTC)
 var oneMonthLater = shaderTypeReleaseDate.AddDate(0, 1, 0)
 
 func endpointsHandler(w http.ResponseWriter, r *http.Request) {
@@ -383,8 +406,12 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: REMOVE THIS
 	isNew := time.Now().Before(oneMonthLater)
+
+	// default group that is enabled, controlled by cookie
+	groupEnabled := getSelectedInputTypeCookie(r, "nnid")
 	data := map[string]interface{}{
 		"IsntAMonthFromShaderAndLightingTypeBeingNew": isNew,
+		"GroupEnabled": groupEnabled,
 		"LanguageStrings": languageStrings,
 		"languageStringsUnderscore": languageStringsUnderscore,
 	}
@@ -392,7 +419,16 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := jet.VarMap{}
 	vars.SetFunc("T", i18nFunc)
 
+	// send early hints
+	w.Header().Add("Link", "</assets/nintendo_NTLG.woff2>; rel=prefetch; as=font; type=\"font/woff2\"; crossorigin=anonymous")
+	w.Header().Add("Link", "</" + assetURLWithTimestamp("assets/style.css") + ">; rel=prefetch; as=style")
+	w.Header().Add("Link", "</" + assetURLWithTimestamp("assets/script.js") + ">; rel=prefetch; as=script")
+	w.WriteHeader(http.StatusEarlyHints)
+
+	// write response
 	if err = tmpl.Execute(w, vars, data); err != nil {
+		log.Println("tmpl.Execute:", err)
+		// this will probably say headers already sent sigh
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	//http.ServeFile(w, r, "index.html")
