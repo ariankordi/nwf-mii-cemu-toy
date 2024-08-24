@@ -149,6 +149,65 @@ scaleInput.addEventListener('input', updateMaxResolution);
 // Initial setup - apply the correct maximums based on the initial scale value
 updateMaxResolution();
 
+// save specific fields marked with data-save, to localStorage upon submit
+function saveSpecifiedFieldsToLocalStorage() {
+  // go through every input that is to be saved
+  // and those will have the data-save attribute
+  // if they are not disabled, put their value in localstorage
+  document.querySelectorAll('[data-save]').forEach(function(element) {
+    let inputValue = element.value;
+    // if this is a checkbox, then the value is if it is checked
+    if(element.type === 'checkbox') inputValue = element.checked;
+    // do not save if it is disabled (not active group)
+    if(element.disabled
+       // also don't save if it is default
+       || element.getAttribute('data-default-value') == inputValue
+    )
+      return;
+    const encodedValue = JSON.stringify(inputValue);
+
+    let inputName = element.name;
+    if(!inputName)
+      // use id as name
+      inputName = element.id;
+    // if it's still null then ERROR!!! out
+    if(!inputName) {
+      console.error('this element doesn\'t have name or id:', element);
+      return;
+    }
+    localStorage.setItem('form-value-' + inputName, encodedValue);
+  });
+}
+
+function loadSpecifiedFieldsFromLocalStorage() {
+  // go through every input that has the data-save attribute
+  document.querySelectorAll('[data-save]').forEach(function(element) {
+    let inputName = element.name;
+    if(!inputName)
+      // use id as name if the name is not available
+      inputName = element.id;
+
+    // if it's still null, log an error and skip this element
+    if(!inputName) {
+      console.error('this element doesn\'t have a name or id:', element);
+      return;
+    }
+    const savedValue = localStorage.getItem('form-value-' + inputName);
+    // If there is no saved value, skip this element
+    if(!savedValue) return;
+    // Parse the saved value from JSON
+    const decodedValue = JSON.parse(savedValue);
+    // Set the value or checked status based on the element type
+    if(element.type === 'checkbox')
+      element.checked = decodedValue;
+    else
+      element.value = decodedValue;
+    // Fire the change event after setting the value
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+}
+
 // assumes there is only ONE form on the page or at least the one we want is the first one
 const form = document.forms[0];
 const resultList = document.getElementById('results');
@@ -224,6 +283,22 @@ form.addEventListener('submit', function(event) {
   const searchParams = new URLSearchParams([...formData.entries()]);
   if(transparentCheckbox.checked)
     searchParams.delete('bgColor');
+
+  // iterate through elements with data-default-value attribute
+  // for each of these inputs, if the value matches the default...
+  // then they will be excluded from the search params to clean it up
+  document.querySelectorAll('[data-default-value]').forEach(function(element) {
+    const defaultValue = element.getAttribute('data-default-value');
+
+    let inputValue = element.value;
+    // if this is a checkbox, then the value is if it is checked
+    if(element.type === 'checkbox') inputValue = element.checked;
+
+    // double equals means that '0' will match 'disabled' (checkbox)
+    if(inputValue == defaultValue)
+        searchParams.delete(element.name);
+  });
+
   // data-REAL overrides the data for conversion
   const dataForConversion = formData.get('data-REAL');
   if(dataForConversion)
@@ -315,9 +390,168 @@ form.addEventListener('submit', function(event) {
       // remove on successful load
       const tutorial = document.getElementById('tutorial');
       if(tutorial) tutorial.parentElement.removeChild(tutorial);
+
+      // save fields for saving, only after image successfully loaded
+      saveSpecifiedFieldsToLocalStorage();
     };
   }
 });
+
+const ACCEPT_OCTET_STREAM = false;
+
+
+const nnidInput = document.getElementById('nnid');
+const nnidDataInput = document.getElementById('nnid-data');
+const nnidRandomButton = document.getElementById('random-nnid');
+const nnidLoaded = document.getElementById('nnid-loaded');
+const nnidLastModified = document.getElementById('nnid-last-modified');
+let nnidDebounceTimeout;
+
+
+const pnidInput = document.getElementById('pnid');
+const pnidDataInput = document.getElementById('pnid-data');
+const pnidLoaded = document.getElementById('pnid-loaded');
+let pnidDebounceTimeout;
+
+async function handleNNIDDataFetch(apiUrl, nnidInput, nnidLoaded, nnidDataInput, nnidLastModified) {
+  const headers = ACCEPT_OCTET_STREAM ? { 'Accept': 'application/octet-stream' } : {};
+  return fetch(apiUrl, { headers })
+    .then(async response => {
+      if(!response.ok) {
+        return response.text().then(text => { throw new Error(text); });
+      }
+      if(ACCEPT_OCTET_STREAM && response.headers.get('Content-Type') === 'application/octet-stream') {
+        return response.arrayBuffer().then(buffer => ({
+          data: new Uint8Array(buffer),
+          lastModified: response.headers.get('Last-Modified')
+        }));
+      }
+      return response.json().then(data => ({
+        ...data,
+        lastModified: data.images && data.images.last_modified
+      }));
+    })
+    .then(data => {
+      nnidLoaded.style.display = 'none';
+      if(nnidLastModified)
+        nnidLastModified.style.display = 'none';
+
+      let decodedData;
+      if(data.data instanceof Uint8Array) {
+          decodedData = data.data;
+      } else {
+        if(!data.data) {
+          throw new Error('No data attribute in response');
+        }
+        decodedData = base64ToUint8Array(data.data);
+        if(data.user_id) {
+          nnidInput.value = data.user_id;
+        }
+        // NOTE: means this effectively ONLY passes in data when ACCEPT_OCTET_STREAM is DISABLED!!!!!!!!
+        nnidDataInput.value = data.data;
+      }
+
+      const type = findSupportedTypeBySize(decodedData.length);
+
+      const checkResult = checkSupportedTypeBySize(decodedData, type, globalVerifyCRC16);
+      if(checkResult) {
+        nnidInput.setCustomValidity('');
+
+        // Extract and show Mii name
+        displayNameFromSupportedType(decodedData, nnidLoaded, type, (checkResult === 2));
+
+        // Show last modified date if available
+        if(data.lastModified && nnidLastModified) {
+          nnidLastModified.style.display = '';
+          nnidLastModified.firstElementChild.textContent = new Date(data.lastModified).toLocaleString();
+        }
+      } else {
+        const errorText = document.querySelector('[id^="data-error-"]:not([style*="none"])').textContent;
+        nnidInput.setCustomValidity(errorText || 'Invalid data');
+      }
+  });
+}
+
+nnidInput.addEventListener('input', function () {
+  clearTimeout(nnidDebounceTimeout);
+
+  nnidDebounceTimeout = setTimeout(function () {
+    const nnidValue = nnidInput.value.trim();
+    const apiUrl = nnidInput.getAttribute('data-action') + nnidValue;
+
+    if(nnidValue.length > 0) {
+      handleNNIDDataFetch(apiUrl, nnidInput, nnidLoaded, nnidDataInput, nnidLastModified)
+        .catch(error => {
+            nnidInput.setCustomValidity(error.message);
+            nnidInput.reportValidity();
+        })
+        .finally(() => {
+          if(!formSubmitting) {
+            nnidInput.disabled = false;
+            submitButton.disabled = false;
+            nnidRandomButton.disabled = false;
+          }
+        });
+    } else {
+      nnidInput.setCustomValidity('');
+      nnidInput.reportValidity();
+    }
+  }, 500); // 500ms debounce
+});
+
+
+pnidInput.addEventListener('input', function () {
+  clearTimeout(pnidDebounceTimeout);
+
+  pnidDebounceTimeout = setTimeout(function () {
+    const pnidValue = pnidInput.value.trim();
+    const apiUrl = pnidInput.getAttribute('data-action') + pnidValue
+                   + '?api_id=1';
+
+    if(pnidValue.length > 0) {
+      handleNNIDDataFetch(apiUrl, pnidInput, pnidLoaded, pnidDataInput)
+        .catch(error => {
+            pnidInput.setCustomValidity(error.message);
+            pnidInput.reportValidity();
+        })
+        .finally(() => {
+          if(!formSubmitting) {
+            pnidInput.disabled = false;
+            submitButton.disabled = false;
+          }
+        });
+    } else {
+      pnidInput.setCustomValidity('');
+      pnidInput.reportValidity();
+    }
+  }, 600); // 600ms debounce
+});
+
+nnidRandomButton.addEventListener('click', function () {
+  const apiUrl = nnidRandomButton.getAttribute('data-action');
+  nnidInput.disabled = true;
+  submitButton.disabled = true;
+  nnidRandomButton.disabled = true;
+
+  handleNNIDDataFetch(apiUrl, nnidInput, nnidLoaded, nnidDataInput, nnidLastModified)
+    .catch(error => {
+      // Create and append the error message
+      const errorLiOriginal = document.getElementsByClassName('load-error');
+      const errorLi = errorLiOriginal[errorLiOriginal.length - 1].cloneNode(true);
+      errorLi.style.display = '';
+      errorLi.textContent = error.message;
+      resultList.insertBefore(errorLi, resultList.firstChild);
+    })
+    .finally(() => {
+      if(!formSubmitting) {
+        nnidInput.disabled = false;
+        submitButton.disabled = false;
+        nnidRandomButton.disabled = false;
+        nnidInput.focus();
+      }
+    });
+});
+
 
 const supportedTypes = [
   // don't think anyone actually uses this
@@ -789,6 +1023,7 @@ inputTypeSelect.addEventListener('change', function() {
 // connect the error reporting sse channel when you first open the page
 connectErrorReportingSSE();
 
+loadSpecifiedFieldsFromLocalStorage();
 
 function crc16(data) {
   let crc = 0;
@@ -953,117 +1188,59 @@ function arianHandler() {
     });
 }
 
-const nnidInput = document.getElementById('nnid');
-const randomButton = document.getElementById('random-nnid');
-const nnidLoaded = document.getElementById('nnid-loaded');
-const nnidLastModified = document.getElementById('nnid-last-modified');
-let debounceTimeout;
-const ACCEPT_OCTET_STREAM = false;
 
-async function handleMiiDataFetch(apiUrl) {
-  const headers = ACCEPT_OCTET_STREAM ? { 'Accept': 'application/octet-stream' } : {};
-  return fetch(apiUrl, { headers })
-    .then(async response => {
-      if(!response.ok) {
-        return response.text().then(text => { throw new Error(text); });
-      }
-      if(ACCEPT_OCTET_STREAM && response.headers.get('Content-Type') === 'application/octet-stream') {
-        return response.arrayBuffer().then(buffer => ({
-          data: new Uint8Array(buffer),
-          lastModified: response.headers.get('Last-Modified')
-        }));
-      }
-      return response.json().then(data => ({
-        ...data,
-        lastModified: data.images && data.images.last_modified
-      }));
-    })
-    .then(data => {
-      nnidLoaded.style.display = 'none';
-      nnidLastModified.style.display = 'none';
 
-      let decodedData;
-      if(data.data instanceof Uint8Array) {
-          decodedData = data.data;
-      } else {
-        if(!data.data) {
-          throw new Error('No data attribute in response');
-        }
-        decodedData = base64ToUint8Array(data.data);
-        if(data.user_id) {
-          nnidInput.value = data.user_id;
-        }
-      }
+const handleCopyButtonAndUpdateCounter = (event, data, paramsToRemove) => {
+  // do not visit the link or submit the button
+  event.preventDefault();
 
-      const type = findSupportedTypeBySize(decodedData.length);
+  // this function handles removing query param/params from the url
+  const removeQueryParams = (url, params) => {
+    const urlObj = new URL(url);
+    if(Array.isArray(params))
+      params.forEach(param => urlObj.searchParams.delete(param));
+    else
+      urlObj.searchParams.delete(params);
+    return urlObj.toString();
+  };
 
-      const checkResult = checkSupportedTypeBySize(decodedData, type, globalVerifyCRC16);
-      if(checkResult) {
-        nnidInput.setCustomValidity('');
 
-        // Extract and show Mii name
-        displayNameFromSupportedType(decodedData, nnidLoaded, type, (checkResult === 2));
+  // this function assumes... that this is the anchor...
+  const target = event.currentTarget;
+  // and that the anchor is in a parent element
+  // and to act on the img if there is no data
+  const parent = target.parentElement;
 
-        // Show last modified date if available
-        if(data.lastModified) {
-          nnidLastModified.style.display = '';
-          nnidLastModified.firstElementChild.textContent = new Date(data.lastModified).toLocaleString();
-        }
-      } else {
-        const errorText = document.querySelector('[id^="data-error-"]:not([style*="none"])').textContent;
-        nnidInput.setCustomValidity(errorText || 'Invalid data');
-      }
-  });
-}
-
-nnidInput.addEventListener('input', function () {
-  clearTimeout(debounceTimeout);
-
-  debounceTimeout = setTimeout(function () {
-    const nnidValue = nnidInput.value.trim();
-    const apiUrl = nnidInput.getAttribute('data-action') + nnidValue;
-
-    if(nnidValue.length > 0) {
-      handleMiiDataFetch(apiUrl)
-        .catch(error => {
-            nnidInput.setCustomValidity(error.message);
-            nnidInput.reportValidity();
-        })
-        .finally(() => {
-          if(!formSubmitting) {
-            nnidInput.disabled = false;
-            submitButton.disabled = false;
-            randomButton.disabled = false;
-          }
-        });
-    } else {
-      nnidInput.setCustomValidity('');
-      nnidInput.reportValidity();
+  // if there is data then just return that as a string
+  if(data !== undefined)
+    navigator.clipboard.writeText(data); // NOTE: not used for anything rn
+  else {
+    // there is one img in the parent, where we want to copy the src element
+    const img = parent.getElementsByTagName('img')[0];
+    if(!img || !img.src) // is it undefined, null, or empty?
+      throw new Error('when you clicked the copy button for the studio render, ' +
+        'and we tried to find the image\'s source, it ended up as undefined...???');
+    else {
+      // begin copying
+      // before that tho, if the paramsToRemove argument
+      // is passed in then remove that as a query param
+      let srcToCopy = img.src;
+      if(paramsToRemove)
+        srcToCopy = removeQueryParams(srcToCopy, paramsToRemove);
+      // copy :)
+      navigator.clipboard.writeText(srcToCopy);
     }
-  }, 500); // 500ms debounce
-});
+  }
 
-randomButton.addEventListener('click', function () {
-  const apiUrl = randomButton.getAttribute('data-action');
-  nnidInput.disabled = true;
-  submitButton.disabled = true;
-  randomButton.disabled = true;
-
-  handleMiiDataFetch(apiUrl)
-    .catch(error => {
-      // Create and append the error message
-      const errorLiOriginal = document.getElementsByClassName('load-error');
-      const errorLi = errorLiOriginal[errorLiOriginal.length - 1].cloneNode(true);
-      errorLi.style.display = '';
-      errorLi.textContent = error.message;
-      resultList.insertBefore(errorLi, resultList.firstChild);
-    })
-    .finally(() => {
-      if(!formSubmitting) {
-        nnidInput.disabled = false;
-        submitButton.disabled = false;
-        randomButton.disabled = false;
-        nnidInput.focus();
-      }
-    });
-});
+  // ... and THEN, there is a counter.
+  // the counter increases on every copy
+  // and copying once hides the text and unhides the counter
+  const textCopyElement = parent.getElementsByClassName('text-copy')[0];
+  textCopyElement.style.display = 'none';
+  const textCounterElement = parent.getElementsByClassName('text-counter')[0];
+  // the counter number is the only span inside of here
+  const textCounterNumberElement = textCounterElement.firstElementChild;
+  // pretend it's a number when it's a string and then increment it
+  textCounterNumberElement.textContent++;
+  textCounterElement.style.display = '';
+}

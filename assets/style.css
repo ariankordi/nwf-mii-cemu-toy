@@ -175,13 +175,22 @@ ul {
 @keyframes slideInFrom{ to {  transform: unset; opacity: unset; } }
 */
 
-
+/* summaries are what you click to expand a details */
+summary {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  cursor: default;
+}
 
 /* for data conversion dropdown */
 
 pre, code {
   white-space: pre-wrap;
   word-break: break-all;
+}
+.no-break-all {
+  word-break: break-word;
 }
 
 .left-justified-compact {

@@ -122,7 +122,7 @@
         <!-- the js is STILL RESPONSIBLE for DISABLING THE FORM ELEMENTS -->
         <div id="data-group" {{if .GroupEnabled != "data"}}style="display: none;" {{end}}>
             <label class="small" for="file"><b>{{T("file_input_label")}}</b></label><br>
-            <input class="long-field" type="file" name="file" id="file">
+            <input class="long-field" type="file" id="file">
             <input type="hidden" name="data" id="file-data">
 
             <span id="file-loaded" style="font-weight: bold; color: green; display: none;">{{T("loaded_mii_file")}}<span></span></span>
@@ -146,6 +146,7 @@
                         nn::mii::Ver3StoreData</li>
                         <li>96 bytes: .cfsd, ffsd</li>
                         <li>92 bytes: .3dsmii, .cfcd</li>
+                        <li>Miis stored in Mii Maker databases (Wii U/maybe 3DS) are 92 bytes, but big endian - won't work here for now.</li>
                     </ul>
                 </li>
                 <li>Wii
@@ -198,6 +199,9 @@
             <div id="qr-status-scanning" style="font-weight: bold; color: blue; display: none;">{{T("qr_status_scanning")}}</div>
             <div id="qr-status-waiting" style="font-weight: bold; color: orange; display: none;">{{T("qr_status_waiting")}}</div>
             <div id="qr-status-loaded" style="font-weight: bold; color: green; display: none;">{{T("qr_status_loaded")}}<span></span></div>
+
+            <div id="qr-notice-size" style="color: indianred; display: none;">{{T("qr_status_loaded")}}<span></span></div>
+
             <div id="qr-status-no-qr" style="font-weight: bold; color: red; display: none;">{{T("qr_status_no_qr")}}</div>
             <div id="qr-status-error" style="font-weight: bold; color: red; display: none;">{{T("qr_status_error")}}<span></span></div>
             <div id="qr-status-no-mii" style="font-weight: bold; color: red; display: none;">{{T("qr_status_no_mii")}}<span class="small"></span></div>
@@ -215,6 +219,7 @@
                    it was temporarily removed bc its annoying to see
                   red before you are finished typing -->
             <br>
+            <input type="hidden" name="data" id="nnid-data">
             <!-- TODO THIS SHOULD PROBABLY SEND A RANDOM NUMBER? with JS -->
             <!--<input type="checkbox" id="force_refresh" name="force_refresh" value="1">
             <label for="force_refresh">{{T("force_refresh_label")}}</label>
@@ -246,15 +251,17 @@
             <!-- you may want to add labels to differentiate in the case of no js -->
             <input id="pnid" name="nnid" class="long-field" type="text"
                 placeholder="{{T("input_pnid_placeholder")}}"
-                maxlength="16" pattern="^[0-9a-zA-Z\-_.]+$" required>
+                maxlength="16" pattern="^[0-9a-zA-Z\-_.]+$" required
+                value="PN_Jon" data-action="/mii_data/">
             <!-- DIFFERENTIATES between NNID and PNID request -->
             <!-- TODO: disabled for now because this interferes when js is not there to disable it by default
             but perhaps all other fields should be disabled by default -->
             <input name="api_id" type="hidden" value="1" disabled>
-            <!-- tbd you should add or check minlength
-                   it was temporarily removed bc its annoying to see
-                  red before you are finished typing -->
             <br>
+            <input type="hidden" name="data" id="pnid-data">
+
+            <div id="pnid-loaded" style="font-weight: bold; color: green; display: none;">{{T("qr_status_loaded")}}<span></span></div>
+
             <!-- TODO THIS SHOULD PROBABLY SEND A RANDOM NUMBER? with JS -->
             <input type="checkbox" id="force_refresh_pnid" name="force_refresh" value="1">
             <label for="force_refresh_pnid">{{T("label_force_refresh_pnid")}}</label>
@@ -276,21 +283,31 @@
             <div id="nfp-error" style="font-weight: bold; color: red; display: none;">{{T("nfp_error_label")}}<span></span></div>
 
             <details>
-                <summary>Click here to reveal my tutorial on how to extract your own amiibo to a file.</summary>
-
-            <ul style="padding: 0; text-align: left; font-size: 13px; line-height: 150%;">
-                <li>TBD TBD AAAAAAAAAAAAA
-                    <ul>
-                        <li><b>THIS IS A PLACEHOLDER, BUT</b></li>
-                        <li>download an amiibo scanning app, <a target="_blank" href="https://apps.apple.com/us/app/amiiboss/id1579972834">AmiiBoss</a> works fine for me on iphone</li>
-                        <li>scan a figure then hit "Share" on it</li>
-                        <li>export it to a file and give us the file</li>
-                        <li>if it does not work or appears corrupted then <a href="#contact">PLEASE PLEASE let me know</a>, tell me which app you used
-                        <ul><li class="small">(not ur fault i just want to support everything)</li></ul></li>
-                    </ul>
-                </li>
-            </ul>
-
+                <summary>{{T("nfp_tutorial_summary")}}</summary>
+                <ol style="padding: 0; text-align: left; font-size: 13px; line-height: 150%;">
+                    <li>Find an app that scans and lets you export amiibo files on your phone.
+                        <ul>
+                        <li>The following worked on my iPhone: <a target="_blank" href="https://apps.apple.com/us/app/amiiboss/id1579972834">AmiiBoss</a>, <a target="_blank" href="https://apps.apple.com/us/app/tagmiibo-write-nfc-tags/id1578966288">Tagmiibo</a>, <a target="_blank" href="https://apps.apple.com/us/app/amiibox-identify-write-nfc/id1580281187">Amiibox</a></li>
+                        <li>For Android, I haven’t looked into this <b>(TODO TODO: Use my work phone to test this)</b></li>
+                        </ul>
+                    </li>
+                    <li>Install it and open it…
+                        <ul>
+                        <li>A lot of amiibo apps will nag that they’ll limit your writes or charge you for more writes.</li>
+                        <li>If they do, then ignore it - they shouldn’t charge you to merely scan your amiibo figure.</li>
+                        <li>They also shouldn't ask you for a key just to scan, but if they do, let me knooowww...</li>
+                        </ul>
+                    </li>
+                    <li>Scan your amiibo figure. Then, export it to a file.
+                        <ul>
+                        <li>AmiiBoss and Tagmiibo have a bar at the bottom letting you see what figures you’ve scanned, then you can hit share on them.</li>
+                        <li><b>(Android apps TBD)</b></li>
+                        </ul>
+                    </li>
+                    <li>Upload it here. It should be 540 or 532 bytes.</li>
+                    <li>If the file doesn't work, or there are any anomalies, <a href="#contact">please PLEASE let me know</a>! Let me know which app you used.
+                    <ul><li class="small">(not ur fault i just want to support everything)</li></ul></li>
+                </ol>
             </details>
         </div>
         <!-- these errors are used for file and data thus is being placed here -->
@@ -304,6 +321,19 @@
         <div id="data-error-size-540" style="font-weight: bold; color: red; display: none;">This data is 540 bytes long, and may be an amiibo file. We can decrypt amiibo now, choose the "amiibo Data" option and try again.</div>
         <div id="data-error-size-532" style="font-weight: bold; color: red; display: none;">This data is 532 bytes long, and may be an amiibo file, potentially decrypted. Choose the "amiibo Data" option and try again. If this still doesn't work, please let me know.</div>
 
+        <div style="color: plum;">{{T("shader_lighting_type_above")}}</div>
+        <label for="shaderType">
+            {{if .IsntAMonthFromShaderAndLightingTypeBeingNew}}
+                <span style="color: gold;">{{T("shader_type_new")}}</span>
+            {{end}}
+            {{T("shader_lighting_type_label")}}</label>
+        <select name="shaderType" id="shaderType" data-default-value="0" data-save>
+            <option value="0" selected>{{T("option_wii_u_miiverse")}}</option>
+            <option value="1">Switch</option>
+            <option value="2">{{T("option_miitomo_mii_studio")}}</option>
+            <!--<option value="3">3DS</option>-->
+        </select><br>
+
         <label for="type">{{T("type_label")}}</label>
         <select name="type" id="type">
             <option value="face">{{T("option_face")}}</option>
@@ -313,7 +343,7 @@
             <option value="variableiconbody">{{T("option_variableiconbody")}} (!)</option>
         </select><br>
         <details>
-            <summary>Read an explanation of the view types here.</summary>
+            <summary class="small">{{T("view_types_summary")}}</summary>
                 <ul class="left-aligned-ul">
                     <li><b>Portrait: </b>This is what the API calls "face". Shows a Mii head and its body.
                         <ul>
@@ -343,7 +373,7 @@
                 </ul>
         </details>
         <label for="expression">{{T("expression_label")}}</label>
-        <select name="expression" id="expression">
+        <select name="expression" id="expression" data-default-value="normal">
             <option value="normal">{{T("expression_normal")}}</option>
             <option value="smile">{{T("expression_smile")}}</option>
             <option value="anger">{{T("expression_anger")}}</option>
@@ -363,10 +393,11 @@
             <option value="like_wink_left">{{T("expression_like_wink_left")}}</option>
             <option value="like_wink_right">{{T("expression_like_wink_right")}}</option>
             <option value="frustrated">{{T("expression_frustrated")}}</option>
+            <option value="🥺">🥺</option>
         </select><br>
         <label for="resolution-slider">{{T("resolution_slider_label")}}</label>
         <input id="resolution-slider" type="range" min="96" max="1080" step="16" value="270">
-        <input class="short-number" name="width" id="width" type="number" step="2" value="270">
+        <input class="short-number" name="width" id="width" type="number" step="2" value="270" data-save>
         <label for="width">px</label>
         <br>
         <div>
@@ -376,18 +407,6 @@
             <input id="transparent-checkbox" type="checkbox" checked>
         </div>
 
-        <div style="color: plum;">Choose Miitomo here to get a look like Mii Studio:</div>
-        <label for="shaderType">
-            {{if .IsntAMonthFromShaderAndLightingTypeBeingNew}}
-                <span style="color: gold;">{{T("shader_type_new")}}</span>
-            {{end}}
-            {{T("shader_lighting_type_label")}}</label>
-        <select name="shaderType" id="shaderType">
-            <option value="0">{{T("option_wii_u_miiverse")}}</option>
-            <option value="1">Switch</option>
-            <option value="2">{{T("option_miitomo_mii_studio")}}</option>
-            <!--<option value="3">3DS</option>-->
-        </select><br>
 
 <!--
 <label>Background color opacity: <input name="bgColorOpacity" type="range" min="0" max="255" value="0">
@@ -414,16 +433,16 @@
 -->
 
         <label for="cameraXRotate">{{T("camera_x_rotation_label")}}</label>
-        <input id="cameraXRotate-slider" type="range" min="0" max="360" value="0">
-        <input class="short-number" name="cameraXRotate" id="cameraXRotate" type="number" value="0">
+        <input id="cameraXRotate-slider" type="range" min="0" max="360" value="0" data-default-value="0">
+        <input class="short-number" name="cameraXRotate" id="cameraXRotate" type="number" value="0" data-default-value="0">
         <br>
         <label for="cameraYRotate">{{T("camera_y_rotation_label")}}</label>
         <input id="cameraYRotate-slider" type="range" min="0" max="360" value="0">
-        <input class="short-number" name="cameraYRotate" id="cameraYRotate" type="number" value="0">
+        <input class="short-number" name="cameraYRotate" id="cameraYRotate" type="number" value="0" data-default-value="0">
         <br>
         <label for="cameraZRotate">{{T("camera_z_rotation_label")}}</label>
         <input id="cameraZRotate-slider" type="range" min="0" max="360" value="0">
-        <input class="short-number" name="cameraZRotate" id="cameraZRotate" type="number" value="0">
+        <input class="short-number" name="cameraZRotate" id="cameraZRotate" type="number" value="0" data-default-value="0">
 
         <details>
             <summary>{{T("advanced_options")}}</summary>
@@ -435,14 +454,14 @@
             <div class="smaller" style="margin-bottom: 5px;">{{T("scale_label_small")}}</div>
 
             <label for="resourceType">{{T("resource_type_label")}}</label>
-            <select name="resourceType" id="resourceType">
+            <select name="resourceType" id="resourceType" data-default-value="1">
                 <option value="0">FFL_RESOURCE_TYPE_MIDDLE</option>
                 <option value="1" selected>FFL_RESOURCE_TYPE_HIGH</option>
             </select><br>
             <div class="smaller">{{T("resource_type_note")}}</div>
 
             <label for="lightEnable">{{T("disable_lighting_label")}}</label>
-            <input type="checkbox" name="lightEnable" id="lightEnable" value="0">
+            <input type="checkbox" name="lightEnable" id="lightEnable" value="0" data-default-value="0">
             <div class="smaller">{{T("disable_lighting_note")}}</div>
 
             <!--
@@ -458,11 +477,12 @@
             <div class="smaller">{{T("texture_resolution_note")}}</div>
 
             <label for="verifyCRC16">{{T("disable_crc16_label")}}</label>
-            <input type="checkbox" data-name-disabled="verifyCRC16" id="verifyCRC16" value="0">
+            <input type="checkbox" data-name-disabled="verifyCRC16" id="verifyCRC16" value="0" data-default-value="0" data-save>
             <div class="smaller">{{T("disable_crc16_note")}}<b>{{T("disable_crc16_note_bold")}}</b></div>
 
             <label for="verifyCharInfo">{{T("disable_charinfo_verify_label")}}</label>
-            <input type="checkbox" name="verifyCharInfo" id="verifyCharInfo" value="0">
+            <!-- NOTE: in this case, data-default-value on checkboxes means if they are checked -->
+            <input type="checkbox" name="verifyCharInfo" id="verifyCharInfo" value="0" data-default-value="0" data-save>
 
             <div class="smaller">{{T("disable_charinfo_verify_note")}}<b>{{T("disable_charinfo_verify_note_bold")}}</b></div>
 
@@ -475,6 +495,10 @@
         <div id="view-type-all-body-inaccurate" style="font-weight: bold; color: red; display: none;">{{T("view_type_all_body_inaccurate_note")}}
         <br><div class="small">{{T("view_type_all_body_inaccurate_note_small")}}</div></div>
 
+        <label for="auto-submit"><b>{{T("auto_submit_label")}}</b></label>
+        <input id="auto-submit" type="checkbox">
+        <br>
+
         <input id="submit" type="submit" data-value="{{T("submit_button_text")}}">
     </form>
     <hr>
@@ -485,47 +509,55 @@
             <div class="image-template entire-width">
                 <!-- js appends the image element in here -->
             </div>
-            <button onclick="handleCopyButtonAndUpdateCounter(event)">
-                <span class="text-copy">Copy image URL</span>
-                <span class="text-counter" style="display: none;">Copied <span>0</span>x</span>
+            <!-- the last argument controls whether to remove that as a query param -->
+            <button onclick="handleCopyButtonAndUpdateCounter(event, undefined, 'erri')">
+                <span class="text-copy">{{T("copy_image_url")}}</span>
+                <span class="text-counter" style="display: none;">{{T("copied")}}<span>0</span>x</span>
             </button>
             <details ontoggle="handleConvertDetailsToggle(event)">
             <summary style="font-size: 18px;">
-                Convert <span style="color: plum;"></span>
+                {{T("convert_label")}}<span style="color: plum;"></span>
             </summary>
             <div>
-                <div style="margin: 5px;">Input data type:<br><code class="input-type">Unknown</code></div>
+                <div style="margin: 5px;">{{T("input_data_type_label")}}<br><code class="input-type no-break-all">{{T("input_data_type_unknown")}}</code></div>
                 <!--
-                <label for>Convert to: </label><select>
-                <option>Default</option>
+                <label for>{{T("convert_to_label")}}</label><select>
+                <option>{{T("convert_to_default")}}</option>
                 <option></option>
                 </select>
                 -->
                 <ul class="left-justified-compact">
                 <li style="margin: 5px;">
-                    Studio Render
+                    {{T("studio_render_label")}}
                     <button onclick="handleCopyButtonAndUpdateCounter(event)">
-                    <span class="text-copy">Copy URL</span>
-                    <span class="text-counter" style="display: none;">Copied <span>0</span>x</span>
+                    <span class="text-copy">{{T("copy_image_url")}}</span>
+                    <span class="text-counter" style="display: none;">{{T("copied")}}<span>0</span>x</span>
                     </button>
-                    <img class="image-80" alt="Studio Render" data-src="https://studio.mii.nintendo.com/miis/image.png?type=face&width=96&data=">
+                    <img class="image-80" alt="{{T("studio_render_label")}}" data-src="https://studio.mii.nintendo.com/miis/image.png?type=face&width=96&data=">
                 </li>
-                <li>Studio Code: <code class="studio-code code-block"></code></li>
+                <li>{{T("studio_code_label")}}<code class="studio-code code-block"></code></li>
                 <li>
                     <button class="download-studio-data" onclick="handleDownloadDataFileButton(event)" data-filename="Mii.mnms">
-                    Download .mnms
+                    {{T("download_prefix")}}.mnms
                     </button>
                     &lt;-- for <a target="_blank" href="https://heyimheroic.github.io/MiiStudioMiiLoader/">Mii Studio Mii Loader</a></li>
                 <li>
                     <button class="download-switch-charinfo" onclick="handleDownloadDataFileButton(event)" data-filename="Mii.charinfo">
-                    Download .charinfo
+                    {{T("download_prefix")}}.charinfo
                     </button>
                     <ul>
                     <li>Try this on <a target="_blank" href="https://miiinstructions.sticksweb.site">Switch Mii to Instructions, created by</a> <a target="_blank" href="https://github.com/sticks-stuff">stick</a></li>
                     </ul>
                 </li>
-                <li>Base64 3DS/Wii U StoreData (copying force-enabled): <code class="ver3storedata code-block"></code></li>
-                <li style="margin: 5px;" class="image-qr-container">Mii QR Code (hover to enlarge):<div style="text-align: center;"><img class="image-qr" alt="Mii QR Code"></div>
+                <li>{{T("post_convert_fflstoredata_label")}}<code class="ver3storedata code-block"></code></li>
+                <!-- TODO 2024-08-25: IMPLEMENT THIS ASAP IF YOU WANT WII MIIS TO SCAN ON 3DS SYSTEMS ..........
+                <li>
+                    <label>Always regenerate Mii ID: </label>
+                    <input type="checkbox" name="remake-mii-id">
+                    <div style="font-size: 10px;">Check this if the QR below doesn't scan on a 3DS. I apologize if it didn't! (Assigns CreateID to hash of data, always done for Switch/Studio input)</div>
+                </li>
+                -->
+                <li style="margin: 5px;" class="image-qr-container">{{T("post_convert_qr_code_label")}}<div style="text-align: center;"><img class="image-qr" alt="{{T("post_convert_qr_code_label")}}"></div>
                 </li>
                 </ul>
             </div>
@@ -621,13 +653,13 @@
 
     <hr>
 
-    <h2>Welcome to my site!</h2>
+    <h2>{{T("welcome_to_site_header")}}</h2>
     <ul class="left-aligned-ul">
         <li>You just found a Mii renderer powered by N*ntendo's official FFL library, decompiled by <a href="https://github.com/aboood40091">AboodXD</a>.</li>
         <li>See it on GitHub: <a href="https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype">ariankordi/FFL-Testing (renderer-server-prototype branch)</a></li>
         <li>It has new shaders, support for all* Mii data types, new Switch colors and glasses, and it is completely self-hosted. If you have a Mii-centric service, you can host it on your own server!
         <ul>
-            <li class="smaller">* Exceptions: DS (just Wii but endian-flipped), Switch CoreData and StoreData (for now), any unofficial format, game-specific formats or any other one I'm not aware of.</li>
+            <li class="smaller">* Exceptions: DS (just Wii but endian-flipped to LE), Miis in 3DS/Wii U databases (also endian-flipped but to BE), any unofficial format, game-specific formats or any other one I'm not aware of.</li>
             <li>See the GitHub linked above for more details.</li>
         </ul></li>
 
@@ -652,25 +684,25 @@
         </li>
     </ul>
 
-    <h2>Contact Me</h2>
+    <h2>{{T("contact_me_header")}}</h2>
     <div id="contact">
         <ul class="left-aligned-ul">
             <li>This project/site is maintained by just me, Arian Kordi - yes, that one...
             <ul>
             <li class="smaller">If you're going to contact me, don't ask me about the site that rhymes with "Clone Worst", alright?</li>
             </ul></li>
-            <li>For comments, questions, concerns, help with this or any other Mii topic, etc... PLEASE don't hesitate to contact me!
+            <li>{{T("contact_info_label")}}
             <ul>
                 <li><b>Discord: ".arian"</b></li>
                 <li><b>Email: ariankordi@ariankordi.net</b></li>
             </ul></li>
-            <li>I welcome any new people, I'm open to discuss anything even if it doesn't have to do with the project :)</li>
+            <li>{{T("contact_info_post")}}</li>
         </ul>
     </div>
 
     {{ include "index-accuracy-section.html" }}
 
-    <h2>Credits</h2>
+    <h2>{{T("credits_header")}}</h2>
     <section id="credits">
     <ul class="left-aligned-ul">
         <li>Renderer backend made by me: <a href="https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype">ariankordi/FFL-Testing (renderer-server-prototype branch)</a></li>

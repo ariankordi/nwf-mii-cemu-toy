@@ -598,7 +598,7 @@ nfpFileInput.addEventListener('input', function() {
 
   //nfpFileInput.setCustomValidity('');
 
-  reader.onload = function(e) {
+  reader.onload = function() {
     const arrayBuffer = reader.result;
     ensureMaboiiKeysLoaded(); // load keys if needed
     // wrap THIS FUNCTION!!! to catch any decrypt errors

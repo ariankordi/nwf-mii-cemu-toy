@@ -4,9 +4,12 @@ other = "Background color:"
 [button_open_amiibo_dump]
 other = "Open amiibo dump"
 
-[contact_info]
+[contact_info_label]
 # proper: discord, iMessage
-other = "for comments, questions, concerns, help, etc. PLEASE don't hesitate to contact me on discord!: \".arian.\" or email (you can also iMessage this): ariankordi@ariankordi.net. i barely have any new messages per day so I welcome any new people, we can discuss anything even if it doesn't have to do with the site. :)"
+other = "For comments, questions, concerns, help with this or any other Mii topic, etc... PLEASE don't hesitate to contact me!"
+
+[contact_info_post]
+other = "I welcome any new people, I'm open to discuss anything even if it doesn't have to do with the project :)"
 
 [data_placeholder]
 # proper: hex, base64
@@ -274,6 +277,15 @@ other = "This is Mii data meant for the Wii, so you will need to convert accordi
 [miis_from_nnids_prior_notice]
 other = "This will only show Miis from NNIDs as they were prior to April 8th, 2024."
 
+
+[welcome_to_site_header]
+other = "Welcome to my site!"
+[contact_me_header]
+other = "Contact Me"
+[credits_header]
+other = "Credits"
+
+
 [button_random_nnid]
 other = "Random NNID"
 
@@ -425,3 +437,54 @@ other = "Switch nn:mii::VariableIconBody render."
 other = "(Same as: NNID server, Miiverse, cdn-mii 1.0.0)"
 [mii_maker_right_side_note]
 other = "Wii U Mii Maker app."
+
+[view_types_summary]
+other = "Read an explanation of the view types here."
+[nfp_tutorial_summary]
+# proper: amiibo
+other = "Click here to reveal my tutorial on how to extract your own amiibo to a file."
+[shader_lighting_type_above]
+# proper: Miitomo, Mii Studio
+other = "Choose Miitomo here to get a look like Mii Studio:"
+
+[copied]
+# as in: (Copied )x times
+other = "Copied "
+
+[copy_image_url]
+other = "Copy image URL"
+
+[convert_label]
+other = "Convert "
+[input_data_type_label]
+other = "Input data type:"
+[input_data_type_unknown]
+other = "Unknown"
+
+[convert_to_label]
+other = "Convert to: "
+[convert_to_default]
+other = "Default"
+
+[studio_render_label]
+# as in "Mii Studio"
+other = "Studio Render"
+
+[studio_code_label]
+# as in "Mii Studio"
+other = "Studio Code: "
+
+[post_convert_qr_code_label]
+# proper: Mii, QR Code
+other = "Mii QR Code (hover to enlarge):"
+
+[post_convert_fflstoredata_label]
+# proper: Base64, 3DS, Wii U, StoreData
+other = "Base64 3DS/Wii U StoreData (copying force-enabled): "
+
+[download_prefix]
+# as in: (Download ).filetype
+other = "Download "
+
+[auto_submit_label]
+other = "Auto-Submit:"

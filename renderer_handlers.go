@@ -67,7 +67,8 @@ var viewTypes = map[string]int {
 	"face":             0,
 	"face_only":        1,
 	"all_body":         2,
-	"variableiconbody": 3,
+	"fflmakeicon":      3,
+	"variableiconbody": 4,
 }
 
 // decodeBase64 decodes a Base64 string, handling both standard and URL-safe Base64.
@@ -350,7 +351,15 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		expressionFlag = 1
 	}*/
 	//expressionFlag := getExpressionFlag(expressionStr)
-	expression := getExpressionInt(expressionStr)
+	// first try to parse the expression as int
+	// should be safe as long as the server wraps around exp flags
+	var expression int
+	expression, err = strconv.Atoi(expressionStr)
+	if err != nil {
+		// now try to parse it as a string
+		// this defaults to normal if it fails
+		expression = getExpressionInt(expressionStr)
+	}
 
 	// Parsing and validating width
 	width, err := strconv.Atoi(widthStr)
@@ -626,6 +635,7 @@ var expressionMap = map[string]int{
 	"open_mouth":            FFL_EXPRESSION_OPEN_MOUTH,
 	"puzzled":               FFL_EXPRESSION_SORROW, // assuming PUZZLED is similar to SORROW
 	"normal_open_mouth":     FFL_EXPRESSION_OPEN_MOUTH,
+	"🥺": 65,
 }
 
 // Function to map a string input to an expression flag
