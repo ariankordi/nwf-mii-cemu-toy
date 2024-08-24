@@ -6,7 +6,7 @@
             ❌ NO PANTS COLORS
             <ul>
                 <li>Wii U Mii Maker draws the pants and torso separately but it's one model.</li>
-                <li>They are using the bone weights for this...</li>
+                <li>They are using the skeleton to separate those, so, it depends on this:</li>
             </ul>
             </li>
             <li>
@@ -15,12 +15,6 @@
                 <li>This is why the body's arms may look a little wonky and unnatural.</li>
                 <li>Need to use the skeleton from MiiBodyMiddle.bfres (MK8/Wii U Mii Maker)
                 <li class="small">So I need to find something that extracts these from the bfres. The <a href="https://github.com/nw4f/G3d">NW4F G3d decomp</a> has no documentation and needs a major refactor to work on 64-bit, the only other thing I can find is Switch Toolbox which is in C#.</li>
-            </ul>
-            </li>
-            <li>
-            ⚠️Switch icon view isn't accurate to nn::mii::VariableIconBody
-            <ul>
-                <li>Should be being set by this function: <code>void nn::mii::VariableIconBody::StoreCameraMatrix (struct nn::util::FloatColumnMajor4x3*, struct nn::mii::VariableIconBodyWorldMatrix const&amp;)</code></li>
             </ul>
             </li>
             <li>
@@ -42,7 +36,7 @@
             <li>
             ⚠️ Need to find whole body camera view for Wii U Mii Maker and potentially Miitomo (Mii Studio)
             <ul>
-                <li>Unfortunately it isn't as easy as grabbing the MVP uniforms from Cemu as they do some optimization to shuffle them</li>
+                <li>Unfortunately it isn't as easy as grabbing the MVP uniforms from Cemu as they do some optimization on the shaders that shuffles uniforms.</li>
             </ul>
             <details>
                 <summary>🚩 Missing a few parameters to be fully compatible with the Mii Studio API (read more...)</summary>

@@ -42,12 +42,12 @@
     <meta property="og:locale:alternate" content="{{lang}}">
     {{end}}
     <meta property="og:url" content="https://mii-unsecure.ariankordi.net/">
-    <meta property="og:image" content="/assets/page-screenshot-2024-07-10-dark.png">
+    <meta property="og:image" content="/assets/page-screenshot-2024-08-24-dark.png">
     <!-- TODO BELOW IS TO BE LOCALIZED -->
     <meta property="og:title" content="{{T("page_title")}}">
 
     <meta name="og:description" content="That's right, we will render your Miis with our bare f*cking hands.
-    This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*ss Mii Studio API. NO. This runs on MY COMPUTER. On MY very own Intel® Core™ i7-1185G7 Intel Iris® Xᵉ Graphics™. And guess what? It can run on yours too, since the renderer is entirely open source.">
+This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*ss Mii Studio API. NO. This runs on MY COMPUTER. On MY very own Intel® Core™ i7-1185G7 Intel Iris® Xᵉ Graphics™. And guess what? It can run on yours too, since the renderer is entirely open source.">
     <link rel="alternate" hreflang="x-default" href="https://mii-unsecure.ariankordi.net/">
     {{range _, lang := .LanguageStrings}}
     <link rel="alternate" hreflang="{{lang}}" href="https://mii-unsecure.ariankordi.net/?locale.lang={{lang}}">
@@ -340,7 +340,7 @@
             <option value="face_only">{{T("option_face_only")}}</option>
             <option value="fflmakeicon">{{T("option_fflmakeicon")}}</option>
             <option value="all_body">{{T("option_all_body")}} (!!)</option>
-            <option value="variableiconbody">{{T("option_variableiconbody")}} (!)</option>
+            <option value="variableiconbody">{{T("option_variableiconbody")}}</option>
         </select><br>
         <details>
             <summary class="small">{{T("view_types_summary")}}</summary>
@@ -362,7 +362,7 @@
                     </li>
                     <li><b>Switch Portrait: </b>Shows a Mii head and its body, slightly zoomed in.
                         <ul>
-                            <li>(Aims to) match the Switch nn::mii::VariableIconBody icon renders, seen in the MiiEdit applet.</li>
+                            <li>Matches the Switch nn::mii::VariableIconBody icon renders, seen in the MiiEdit applet. <span class="small">Actually I'm not completely sure whether those are the ones it uses</span></li>
                         </ul>
                     </li>
                     <li><b>Whole Body: </b>Shows a zoomed-out shot of a Mii's entire body.
