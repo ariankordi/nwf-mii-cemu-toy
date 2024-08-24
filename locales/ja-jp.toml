@@ -1,297 +1,458 @@
-[amiibo_instruction]
-other = "未定 / 未実装：現時点ではJSの実装が見つかりません。いずれ作成予定です。未定 未定 TODO TODO これには詳細な指示と説明が必要です..."
-
 [background_color_label]
-other = "背景色："
-
-[beta_warning]
-other = "これは完全には完成していません。PoCとして考えてください。あなたの洗濯物をたたんだり、夜にキスしたりすることを期待しないでください"
-
-[beta_warning_title]
-other = "もしこれを何とか見つけたなら"
-
-[button_from_camera]
-other = "カメラから"
+other = "背景色:"
 
 [button_open_amiibo_dump]
-other = "amiiboダンプを開く"
+other = "amiibo ダンプを開く"
 
-[button_select_file_photo]
-other = "ファイルまたは写真を選択"
+[contact_info_label]
+other = "コメント、質問、懸念、このプロジェクトや他のMiiに関するヘルプなど... お気軽にご連絡ください！"
 
-[contact_info]
-other = "コメント、質問、懸念事項、助けが必要などがある場合は、遠慮なくDiscordで私に連絡してください！: \".arian.\" もしくはメール (またはiMessageでも可): ariankordi@ariankordi.net。翻訳に問題がある場合は、教えてください。新しい人と話すのが好きなので、遠慮なく。翻訳に限らず、この仕組みについて何でも聞いてください。ありがとう！"
+[contact_info_post]
+other = "新しい方も大歓迎です。プロジェクトに関係なく、どんなことでも話し合いましょう :)"
 
 [data_placeholder]
-other = "account.nintendo.netからのBase64 Miiデータ、96バイト"
+# proper: hex, base64
+other = "MiiデータをhexまたはBase64でここに入力してください。"
+
+# 表情
 
 [expression_anger]
 other = "怒り"
 
 [expression_anger_open_mouth]
-other = "怒り（口開け）"
+other = "怒り（口を開けている）"
 
 [expression_blink]
 other = "まばたき"
 
 [expression_blink_open_mouth]
-other = "まばたき（口開け）"
+other = "まばたき（口を開けている）"
 
 [expression_frustrated]
-other = "いらいら"
+other = "いら立ち"
 
 [expression_label]
-other = "表情："
+other = "表情:"
 
 [expression_like_wink_left]
-other = "ウィンク（左目開き、笑顔）"
+other = "ウインク（左目開いて笑顔）"
 
 [expression_like_wink_right]
-other = "ウィンク（右目開き、笑顔）"
+other = "ウインク（右目開いて笑顔）"
 
 [expression_normal]
-other = "普通"
+other = "通常"
 
 [expression_normal_open_mouth]
-other = "普通（口開け）"
+other = "通常（口を開けている）"
 
 [expression_smile]
 other = "笑顔"
 
 [expression_smile_open_mouth]
-other = "笑顔（口開け）"
+other = "笑顔（口を開けている）"
 
 [expression_sorrow]
 other = "悲しみ"
 
 [expression_sorrow_open_mouth]
-other = "悲しみ（口開け）"
+other = "悲しみ（口を開けている）"
 
 [expression_surprise]
 other = "驚き"
 
 [expression_surprise_open_mouth]
-other = "驚き（口開け）"
+other = "驚き（口を開けている）"
 
 [expression_wink_left]
-other = "ウィンク（左目開き）"
+other = "ウインク（左目開いている）"
 
 [expression_wink_left_open_mouth]
-other = "ウィンク（左目と口を開けて）"
+other = "ウインク（左目と口を開けている）"
 
 [expression_wink_right]
-other = "ウィンク（右目開き）"
+other = "ウインク（右目開いている）"
 
 [expression_wink_right_open_mouth]
-other = "ウィンク（右目と口を開けて）"
+other = "ウインク（右目と口を開けている）"
 
-[file_input_label]
-other = "(96バイトのCFL/FFLStoreData Miiバイナリ形式)"
-
-[file_input_todo]
-other = "(TODO TODO ファイルの長さを検証し、CRC16とbase64を確認し、POSTに変換する必要があります。これは大変です)"
+# 表情の終わり
 
 [force_refresh_description]
-other = "古いバージョンのMiiを表示し続ける場合、このオプションでMiiを更新できます。他の問題を解決するわけではありません。"
+other = "このオプションを使用すると、古いバージョンが表示され続ける場合にMiiをリフレッシュします。他の問題は解決しません。"
 
 [force_refresh_label]
-other = "キャッシュなしでNNIDを強制更新"
+# proper: NNID
+other = "キャッシュを使用せずにNNIDを強制リフレッシュ"
 
 [github_prefix]
-other = "これのコード（または少なくともバックエンド）はGitHubにあります。是非チェックしてみてください："
+# proper: GitHub
+other = "コード（またはバックエンド）はGitHubで公開されています。ぜひチェックしてください:"
 
 [heading_main]
-other = "Miiレンダラー（リアル）"
+other = "Miiレンダラー（REAL）"
 
 [label_input_type]
-other = "Mii入力タイプ："
+other = "Mii入力タイプ:"
 
 [html_lang]
 other = "ja-JP"
 
 [load_error_message]
-other = "下の画像の読み込みに失敗しました!!（何が間違っていたのかを確認するために、新しいタブで画像を開くことをお勧めします）"
+other = "下の画像の読み込みに失敗しました!! （何が間違っていたかを確認するために、画像を新しいタブで開くと良いかもしれません）"
 
 [nnid_placeholder]
-other = "Wii Uまたは3DSで作成されたニンテンドーネットワークID。"
+# proper: Nintendo Network ID, Wii U, 3DS
+other = "Wii Uまたは3DSで作成されたNintendo Network ID。"
 
 [option_amiibo]
-other = "Amiiboデータ（未定）"
+# proper: amiibo
+other = "amiiboデータ"
 
 [option_face]
-other = "顔"
+other = "ポートレート"
 
 [option_face_only]
-other = "顔のみ"
-
-[option_file]
-other = "Mii FFSD/CFSDファイル"
+other = "頭のみ"
+[option_fflmakeicon]
+other = "頭のみ（代替）"
 
 [option_nnid]
-other = "ニンテンドーネットワークID"
+# proper
+other = "Nintendo Network ID"
 
 [our_output_description]
-other = "上の画像はこのサイトでレンダリングされたものです！"
+other = "上記のアイコンは、完全にこのサイトによってレンダリングされています！"
 
 [outputs_section_heading]
 other = "出力"
 
 [page_title]
-other = "Miiレンダラー（リアル）"
-
-[qrcode_instruction]
-other = "これは実装されておらず、何も機能しません。何もしないので、試さないでください。何もしないので、試しても無駄です。SEGGS。P*RN。AAAAAAAAAA"
+other = "Miiレンダラー（REAL）"
 
 [resolution_label]
-other = "解像度："
+other = "解像度:"
 
 [resolution_slider_label]
-other = "解像度："
+other = "解像度:"
 
 [samples_section_heading]
-other = "サンプル"
+other = "サンプル & 比較"
+
+[compare_with_official_renders_heading]
+other = "公式レンダリングと比較:"
 
 [scale_label]
-other = "2倍スーパーサンプリングを無効化:"
+other = "2xスーパーサンプリングを無効化:"
 
 [scale_label_small]
-other = "高解像度でのレンダリングを高速化できます。"
-
-[studio_output_description]
-other = "上の画像はstudio.mii.nintendo.comからのものです。"
+# NOTE
+other = "高解像度でのレンダリングを高速化する可能性があります。現時点では、スケーリングはGPUではなくCPUで行われるため、アルファブリーディングに問題があります。"
 
 [submit_button_text]
 other = "レンダリング中..."
 
 [transparent_checkbox_label]
-other = "透明？"
+other = "透明化する？"
 
 [tutorial_message]
-other = "\"Mii入力タイプ\"をクリックしてMiiをインポートする方法を確認してください。その後、提出をクリックして開始します。"
+other = "\"Mii入力タイプ\"をクリックして、Miiをインポートする方法を確認してください。次に、[送信]をクリックして開始します。"
 
 [type_label]
-other = "タイプ："
-
-[unfinished_warning]
-other = "このサービスはMii Studio APIの機能を反映することを目的としています。all_bodyビューなど、すべてのオプションには対応していません。ただし、希望する機能がある場合や、正確でない点があれば、できるだけ早くお知らせください。確認して対応します。"
+other = "表示タイプ:"
 
 [option_pnid]
 other = "Pretendo Network ID"
 
 [option_data]
-other = "Base64形式のMiiデータ"
+other = "Miiデータ/ファイル/スタジオコード"
 
 [option_qrcode]
-other = "MiiのQRコードをスキャン"
+other = "Mii QRコードをスキャン"
 
 [button_open_camera]
 other = "カメラを開く"
+[open_camera_label]
+other = "カメラを開いて開始:"
 
 [button_close_camera]
 other = "カメラを閉じる"
+[close_camera_label]
+other = "カメラを閉じて停止:"
 
 [label_select_camera]
-other = "カメラを選択："
+other = "カメラを選択: "
 
 [option_back_camera]
-other = "背面カメラ（デフォルト）"
+other = "バックカメラ（デフォルト）"
 
 [option_front_camera]
-other = "フロント/ユーザー向けカメラ"
-
-[option_start_camera_more_options]
-other = "（より多くのオプションのためにカメラを開始）"
+other = "ユーザー/フロントカメラ"
 
 [status_ready]
-other = "ステータス：スキャン準備完了。"
+other = "ステータス: スキャンする準備ができました。"
 
 [qr_status_scanning]
-other = "スキャニング中... QRコードにカメラを向けてください。"
+other = "スキャン中... カメラをQRコードに向けてください。"
 
 [qr_status_waiting]
-other = "QrScanner.scanImage()の10秒のタイムアウトを待っています..."
+other = "QrScanner.scanImage()の10秒タイムアウトを待っています..."
 
 [qr_status_loaded]
-other = "読み込まれたMii："
+other = "Miiを読み込みました: "
 
 [qr_status_no_qr]
 other = "QRコードが見つかりません。"
 
 [qr_status_error]
-other = "エラー："
+other = "エラー: "
 
 [qr_status_no_mii]
 other = "このQRコードにはMiiが含まれていません。"
 
 [qr_status_no_camera]
-other = "カメラが見つからないか、許可が与えられていません。"
+other = "カメラが見つからない、または許可が付与されていません。"
 
 [input_pnid_placeholder]
 other = "pretendo.networkで作成されたPretendo Network ID。"
 
 [label_force_refresh_pnid]
-other = "キャッシュなしでPNIDを強制更新"
+other = "キャッシュを使用せずにPNIDを強制リフレッシュ"
 
 [pretendo_network_description]
-other = "Pretendo Networkは、Wii Uと3DS用の任天堂ネットワークとMiiverseサービスの再開です。こちらをチェック："
+other = "Pretendo Networkは、Wii Uと3DS向けのNintendo NetworkおよびMiiverseサービスの復活版です。ここからチェックしてください: "
 
 [mii_data_field_description]
-other = "このフィールドは、account.nintendo.netまたはMiiverse APIで見つかる96バイトの標準Base64 Miiデータを受け入れます。"
+other = "このフィールドは、account.nintendo.netまたはMiiverse APIで見つけることができる96バイトの通常のBase64 Miiデータを受け付けます。"
 
 [change_language]
 other = "言語を変更"
 
 [file_photo_selection_prompt]
-other = "ファイルまたは写真を選択することもできます："
+other = "ファイルまたは写真を選択することもできます:"
 
-[miis_from_nnids_prior_notice]
-other = "これは2024年4月8日以前のNNIDsのMiisのみを表示します。"
-
+[above_input_type_choose_text]
+other = "NNID、PNID、QRコード、またはデータを選択:"
 
 [data_error_size_mismatch]
-other = "このデータは96バイト長ではありません。FFLStoreDataであることを確認しましたか？ サイズ: "
+other = "このMiiデータのタイプが認識できません。サポートされているタイプリストを確認してください。サイズ: "
 
 [data_error_invalid_checksum]
-other = "このデータは無効なCRC16チェックサムを持っています。"
+other = "このデータには無効なCRC16チェックサムがあります。"
 
 [data_error_size_0]
 other = "データが空です。おっと！"
 
-[data_error_size_92_part1]
-other = "データは96バイト長ではありません（FFLStoreData）が、データのサイズ（92）はFFLiMiiDataOfficial（別名 \".3dsmii\" または \"CFCD/FFCD\"）に一致します。"
+[miis_from_nnids_prior_notice]
+other = "これにより、2024年4月8日以前のNNIDのMiiのみが表示されます。"
 
-[data_error_size_92_part2]
-other = "これはCRC16チェックサムがないFFLStoreDataに過ぎないので、それを追加してください。"
-
-[data_error_size_88_part1]
-other = "データは96バイト長ではありません（FFLStoreData）が、データのサイズ（88）はnn::mii::CharInfo（別名 \".charinfo\"、AFLiNXCharInfo、Switchタイトルに見られる）に一致します。"
-
-[data_error_size_88_part2]
-other = "これはSwitch用のMiiデータであるため、適切に変換する必要があります。"
-
-[data_error_size_88_part3]
-other = "Switch SDKにアクセスできる場合は、まず私に連絡してください。"
-
-[data_error_size_88_part4]
-other = "しかし、アクセスできる場合は、以下の関数を使用してCharInfoをnn::mii::Ver3StoreData、別名FFLStoreData/CFLStoreDataに変換できます。"
-
-[data_error_size_72_part1]
-other = "データは96バイト長ではありません（FFLStoreData）が、データのサイズ（72）はFFLiMiiDataCore（別名「core data」、CharInfoとは異なります）に一致します。"
-
-[data_error_size_72_part2]
-other = "これはほぼFFLStoreDataと同じですが、CRC16や作成者名がないため、適切に変換する必要があります。"
-
-[data_error_size_74_part1]
-other = "データは96バイト長ではありません（FFLStoreData）が、データのサイズ（74）はRFLCharData/FFLiMiiDataOfficialRFL（別名 \".mii\"）に一致します。"
-
-[data_error_size_74_part2]
-other = "これはWii用のMiiデータであるため、適切に変換する必要があります。"
-
-[above_input_type_choose_text]
-other = "NNID、PNID、QRコード、またはデータを選択してください："
+[welcome_to_site_header]
+other = "サイトへようこそ！"
+[contact_me_header]
+other = "お問い合わせ"
+[credits_header]
+other = "クレジット"
 
 [button_random_nnid]
-other = "ランダムなNNID"
+other = "ランダムNNID"
 
 [last_modified]
-other = "最終更新日： "
+other = "最終更新日: "
+
+[error_container_title]
+other = "😭 JavaScript エラー!! 😭"
+
+[crc16_failed]
+other = " (CRC16チェックサム失敗)"
+
+[file_input_label]
+other = "サポートされているMiiバイナリファイルを選択:"
+
+[loaded_mii_file]
+other = "読み込まれたMiiファイル: "
+
+[enter_data_in_hex_or_base64]
+other = "または、hex、Base64、またはMiiスタジオのURLを入力してください:"
+
+[loaded_mii_data]
+other = "読み込まれたMiiデータ: "
+
+[click_on_label_to_select_field]
+other = "(ラベルをクリックしてフィールドを選択)"
+
+[support_summary]
+other = "3DS/Wii U、Wii、Switch、およびMii Studioをサポートする必要があります。詳細についてはクリックしてください。"
+
+[option_all_body]
+other = "全身"
+
+[option_variableiconbody]
+other = "Switchポートレート"
+
+[shader_lighting_type_label]
+other = "シェーダー/ライティングタイプ:"
+
+[option_wii_u_miiverse]
+other = "Wii U/Miiverse"
+
+[option_miitomo_mii_studio]
+other = "Miitomo/Miiスタジオ"
+
+[shader_type_new]
+other = "(新しい!)"
+
+[nfp_data_loaded_label]
+other = "読み込まれたamiibo Mii: "
+[nfp_figure_loaded_label]
+other = "フィギュア名: "
+[nfp_error_label]
+other = "ファイルを読み取れません: "
+[nfp_file_label]
+other = "Miiを含む、暗号化されたamiiboの540/532バイトのファイルを提供してください。Switch Miiをサポートしています！"
+
+[advanced_options]
+other = "高度なオプション"
+
+[resource_type_label]
+other = "リソースタイプ:"
+
+[resource_type_note]
+other = "常に高を使用する必要がありますが、公式レンダリングはすべて中を使用しているため、それらと一致させたい場合、またはこのレンダラーを低性能なマシンで実行している場合に使用します。"
+
+[disable_lighting_label]
+other = "ライティングを無効にする:"
+
+[disable_lighting_note]
+other = "Miiスタンプを作成したい場合にのみ役立ちます（シェーダーを書くこともできます）"
+
+[texture_resolution_label]
+other = "テクスチャの解像度:"
+
+[texture_resolution_note]
+# proper: XluMask
+other = "顔のテクスチャ / XluMaskの解像度。無効にするとデフォルトを使用します。"
+
+[disable_crc16_label]
+# proper: StoreData, CRC16
+other = "StoreData CRC16検証を無効にする:"
+
+[disable_crc16_note]
+# proper: CRC16
+other = "データにCRC16チェックサムが含まれている場合、検証をスキップします。"
+[disable_crc16_note_bold]
+other = " 2024年8月現在、これはクライアント側のみであることに注意してください。"
+
+[disable_charinfo_verify_label]
+# proper: CharInfo
+other = "CharInfo検証を無効にする:"
+
+[disable_charinfo_verify_note]
+other = "どのようなデータでもMiiデータとして使用できるようになります。それでも動作しない可能性があります。"
+[disable_charinfo_verify_note_bold]
+other = " 2024年8月現在、サーバーからの検証理由はまだ表示されませんが、申し訳ないことに長々とした応答しかありません。"
+
+[camera_x_rotation_label]
+other = "カメラX回転:"
+[camera_y_rotation_label]
+other = "カメラY回転:"
+[camera_z_rotation_label]
+other = "カメラZ回転:"
+
+
+[miitomo_shader_inaccurate_note_pre_link]
+other = "ご注意ください、この"
+[miitomo_shader_inaccurate_note_link]
+# proper: Mii Studio
+other = "は現在、Mii Studioのボディモデルを使用していません"
+[miitomo_shader_inaccurate_note_post_link]
+other = " なので、レンダリングがずれて見える可能性があります。"
+[miitomo_shader_inaccurate_note_small]
+# proper: Switch
+other = "公平を期すために言えば、SwitchオプションもSwitchのボディモデルを使用していませんが、違いはそれほど大きくありません。"
+
+[view_type_all_body_inaccurate_note]
+other = "全身ビューにはあまり意味がありません。推測されたビューであり、ボディ自体が正しくスケーリングされておらず、ズボンの色が個別に設定されていません。主に技術デモとして提供されています。"
+[view_type_all_body_inaccurate_note_small]
+other = "また、現時点ではすべて正方形のみで、すべてのコードの書き方がこのようになっているためであり、Mii Studioの全身ビューもわからないんです。"
+
+# 比較セクション
+
+[label_left]
+other = "左: "
+[label_right]
+other = "右: "
+[label_our_render_lower]
+other = "私たちのレンダリングです。"
+
+[under_our_render_small]
+other = "(Wii U + 中リソース + アンチエイリアシングなし / Switch + アンチエイリアシングなし / Miitomo)"
+
+[under_studio_render_small]
+# proper: domain name, cdn-mii, Miitomol
+other = "(つまり、studio.mii.nintendo.com/cdn-mii 2.0.0、Miitomoと同じルック/シェーダー/誤って大きなメガネ)"
+[studio_render_right_side_note]
+other = "Mii Studioサイト/API。"
+
+[under_switch_render_small]
+# proper: MiiEdit, amiibo
+other = "(MiiEditとamiiboアプレットで使用されますが、ユーザーアイコンには使用されていません。)"
+[switch_render_right_side_note]
+other = "Switch nn:mii::VariableIconBodyレンダリング。"
+
+[under_mii_maker_render_small]
+# proper: NNID, Miiverse, cdn-mii
+other = "(同様: NNIDサーバー、Miiverse、cdn-mii 1.0.0)"
+[mii_maker_right_side_note]
+other = "Wii U Miiメーカーアプリ。"
+
+[view_types_summary]
+other = "表示タイプの説明はこちらをお読みください。"
+[nfp_tutorial_summary]
+# proper: amiibo
+other = "独自のamiiboをファイルに抽出する方法についてのチュートリアルはこちらをクリックしてください。"
+[shader_lighting_type_above]
+# proper: Miitomo, Mii Studio
+other = "ここでMiitomoを選択して、Mii Studioのような見た目にします:"
+
+[copied]
+# as in: (Copied )x times
+other = "コピーしました "
+
+[copy_image_url]
+other = "画像URLをコピー"
+
+[convert_label]
+other = "変換 "
+[input_data_type_label]
+other = "入力データタイプ:"
+[input_data_type_unknown]
+other = "不明"
+
+[convert_to_label]
+other = "変換先: "
+[convert_to_default]
+other = "デフォルト"
+
+[studio_render_label]
+# as in "Mii Studio"
+other = "スタジオレンダリング"
+
+[studio_code_label]
+# as in "Mii Studio"
+other = "スタジオコード: "
+
+[post_convert_qr_code_label]
+# proper: Mii, QR Code
+other = "Mii QRコード（拡大表示にはホバーしてください）:"
+
+[post_convert_fflstoredata_label]
+# proper: Base64, 3DS, Wii U, StoreData
+other = "Base64 3DS/Wii U StoreData（コピー強制有効化）: "
+
+[download_prefix]
+# as in: (Download ).filetype
+other = "ダウンロード "
+
+[auto_submit_label]
+other = "自動送信:"
+

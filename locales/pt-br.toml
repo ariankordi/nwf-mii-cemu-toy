@@ -1,23 +1,20 @@
-[amiibo_instruction]
-other = "NÃO IMPLEMENTADO: NÃO CONSEGUI ENCONTRAR UMA IMPLEMENTAÇÃO EM JS NO MOMENTO. FAREI UMA EM ALGUM MOMENTO. TAMBÉM PRECISA DE DIREÇÕES DETALHADAS E UMA EXPLICAÇÃO..."
-
 [background_color_label]
 other = "Cor de fundo:"
-
-[beta_warning]
-other = "isto não está completamente finalizado, considere como uma prova de conceito. não espere que dobre suas roupas e te beije à noite"
-
-[beta_warning_title]
-other = "SE DE ALGUMA FORMA VOCÊ ENCONTROU ISSO:"
 
 [button_open_amiibo_dump]
 other = "Abrir arquivo de amiibo"
 
-[contact_info]
-other = "Para comentários, perguntas, preocupações, ajuda, etc. você pode entrar em contato comigo no Discord: \".arian.\" ou por e-mail: ariankordi@ariankordi.net (Eu não falo português, então terei que usar um tradutor, desculpe)."
+[contact_info_label]
+other = "Para comentários, perguntas, preocupações, ajuda com este ou qualquer outro assunto relacionado a Mii, etc... POR FAVOR, não hesite em me contatar!"
+
+[contact_info_post]
+other = "Eu recebo qualquer pessoa nova, estou aberto para discutir qualquer coisa, mesmo que não tenha a ver com o projeto :)"
 
 [data_placeholder]
-other = "Dados Mii em Base64, como em account.nintendo.net, 96 bytes"
+# proper: hex, base64
+other = "Insira os dados do seu Mii em hex ou Base64 aqui."
+
+# Expressões
 
 [expression_anger]
 other = "Raiva"
@@ -79,62 +76,59 @@ other = "Piscar (olho direito aberto)"
 [expression_wink_right_open_mouth]
 other = "Piscar (olho direito e boca abertos)"
 
-[file_input_label]
-other = "(Formato binário Mii CFL/FFLStoreData de 96 bytes)"
-
-[file_input_todo]
-other = "(ainda é necessário VERIFICAR O TAMANHO, e o CRC16 do arquivo. E o base64. E converter para POST. Por agora, está péssimo!)"
+# Fim das expressões
 
 [force_refresh_description]
 other = "Esta opção atualizará seu Mii se continuarmos mostrando uma versão antiga. Não resolverá outros problemas."
 
 [force_refresh_label]
-other = "Forçar atualização NNID sem cache"
+# proper: NNID
+other = "Forçar atualização do NNID sem cache"
 
 [github_prefix]
-other = "O código (ou pelo menos o backend) para isso está no GitHub. Fique à vontade para conferir:"
+# proper: GitHub
+other = "O código (ou pelo menos o backend) está disponível no GitHub. Sinta-se à vontade para conferir:"
 
 [heading_main]
 other = "Renderizador de Mii (É SÉRIO!)"
 
 [label_input_type]
-other = "Tipo de entrada Mii:"
+other = "Tipo de entrada do Mii:"
 
 [html_lang]
 other = "pt-BR"
 
 [load_error_message]
-other = "Houve algum erro ao carregar a renderização :( (Você provavelmente vai querer abrir a imagem em uma nova aba para ver o que deu errado)"
+other = "A imagem abaixo falhou ao carregar!! (Você provavelmente vai querer abrir a imagem em uma nova aba para ver o que deu errado)"
 
 [nnid_placeholder]
-other = "Nintendo Network ID criada em um Wii U ou 3DS."
+# proper: Nintendo Network ID, Wii U, 3DS
+other = "Nintendo Network ID criado em um Wii U ou 3DS."
 
 [option_amiibo]
-other = "Dados de amiibo (ainda em desenvolvimento)"
+# proper: amiibo
+other = "Dados de amiibo"
 
 [option_face]
-other = "Face"
+other = "Retrato"
 
 [option_face_only]
-other = "Apenas Face"
-
-[option_file]
-other = "Arquivo Mii FFSD/CFSD"
+other = "Apenas Cabeça"
+[option_fflmakeicon]
+other = "Apenas Cabeça Alternativa"
 
 [option_nnid]
+# proper
 other = "Nintendo Network ID"
 
 [our_output_description]
-other = "A imagem acima foi renderizada por este site!"
+other = "Os ícones acima foram renderizados completamente por este site!"
 
 [outputs_section_heading]
-other = "Imagens Renderizadas"
+other = "Saídas"
 
 [page_title]
-other = "Renderizador de Miis (REAL)"
-
-[qrcode_instruction]
-other = "ISTO NÃO ESTÁ IMPLEMENTADO E NÃO FUNCIONARÁ. NÃO FARÁ NADA. NÃO TENTE PORQUE NÃO FARÁ NADA. SEXO. P*RNO. AAAAAAAAAA"
+other = "Renderizador de Mii (REAL)"
 
 [resolution_label]
 other = "Resolução:"
@@ -143,47 +137,48 @@ other = "Resolução:"
 other = "Resolução:"
 
 [samples_section_heading]
-other = "Amostras"
+other = "Amostras & Comparações"
+
+[compare_with_official_renders_heading]
+other = "Comparar com renders oficiais:"
 
 [scale_label]
 other = "Desativar supersampling 2x:"
 
 [scale_label_small]
-other = "Pode acelerar a renderização em altas resoluções."
-
-[studio_output_description]
-other = "A imagem acima é de \"studio.mii.nintendo.com\"."
+# NOTE
+other = "Pode acelerar a renderização em altas resoluções. Note que a escala é feita na CPU e não na GPU no momento devido a problemas que tive com vazamento de alfa."
 
 [submit_button_text]
 other = "Renderizando..."
 
 [transparent_checkbox_label]
-
 other = "Transparente?"
 
 [tutorial_message]
-other = "Clique em \"Tipo de entrada Mii\" para ver como você pode importar um Mii. Então, clique em Enviar para começar."
+other = "Clique em \"Tipo de entrada do Mii\" para ver como você pode importar um Mii. Em seguida, clique em Enviar para começar."
 
 [type_label]
-other = "Tipo:"
-
-[unfinished_warning]
-other = "Este serviço tem como objetivo espelhar a funcionalidade da API Mii Studio. Não é compatível com todas as opções, como a visualização all_body. No entanto, se você encontrar uma funcionalidade desejada ou se algo não estiver preciso, por favor, me avise o mais rápido possível e eu irei verificar."
+other = "Tipo de visualização:"
 
 [option_pnid]
 other = "Pretendo Network ID"
 
 [option_data]
-other = "Dados Mii em Base64"
+other = "Dados Mii/Arquivo/Código de Estúdio"
 
 [option_qrcode]
-other = "Escanear código QR do Mii"
+other = "Escanear Código QR do Mii"
 
 [button_open_camera]
 other = "Abrir câmera"
+[open_camera_label]
+other = "Abra a câmera para começar:"
 
 [button_close_camera]
 other = "Fechar câmera"
+[close_camera_label]
+other = "Feche a câmera para parar:"
 
 [label_select_camera]
 other = "Selecionar câmera: "
@@ -194,14 +189,11 @@ other = "Câmera traseira (padrão)"
 [option_front_camera]
 other = "Câmera frontal/do usuário"
 
-[option_start_camera_more_options]
-other = "(Iniciar câmera para mais opções)"
-
 [status_ready]
 other = "Status: Pronto para escanear."
 
 [qr_status_scanning]
-other = "Escanear... Você pode apontar sua câmera para um código QR."
+other = "Escaneando... Você pode apontar sua câmera para um código QR."
 
 [qr_status_waiting]
 other = "Aguardando o timeout de QrScanner.scanImage() de 10s..."
@@ -231,7 +223,7 @@ other = "Forçar atualização do PNID sem cache"
 other = "Pretendo Network é um renascimento dos serviços Nintendo Network e Miiverse para o Wii U e 3DS. Confira aqui: "
 
 [mii_data_field_description]
-other = "Este campo aceita dados Mii em Base64 regular de 96 bytes que você pode encontrar em account.nintendo.net ou na API do Miiverse."
+other = "Este campo aceita dados Mii de 96 bytes regulares em Base64 que você pode encontrar em account.nintendo.net ou na API do Miiverse."
 
 [change_language]
 other = "Mudar idioma"
@@ -239,11 +231,11 @@ other = "Mudar idioma"
 [file_photo_selection_prompt]
 other = "Você também pode selecionar um arquivo ou foto:"
 
-[miis_from_nnids_prior_notice]
-other = "Isso mostrará apenas Miis de NNIDs como eram antes de 8 de abril de 2024."
+[above_input_type_choose_text]
+other = "Escolha NNID, PNID, Código QR ou dados:"
 
 [data_error_size_mismatch]
-other = "Estes dados não têm 96 bytes de comprimento. Tem certeza de que é FFLStoreData? Tamanho: "
+other = "Não reconhecemos o tipo destes dados do Mii. Verifique a lista de tipos suportados. Tamanho: "
 
 [data_error_invalid_checksum]
 other = "Estes dados têm uma soma de verificação CRC16 inválida."
@@ -251,41 +243,217 @@ other = "Estes dados têm uma soma de verificação CRC16 inválida."
 [data_error_size_0]
 other = "Os dados estão vazios. Opa!"
 
-[data_error_size_92_part1]
-other = "Os dados não têm 96 bytes de comprimento (FFLStoreData), mas o tamanho dos dados (92) corresponde a FFLiMiiDataOfficial (também conhecido como \".3dsmii\" ou \"CFCD/FFCD\")."
+[miis_from_nnids_prior_notice]
+other = "Isso mostrará apenas Miis de NNIDs como eram antes de 8 de abril de 2024."
 
-[data_error_size_92_part2]
-other = "Isso é apenas FFLStoreData, mas sem uma soma de verificação CRC16, então por favor, adicione isso."
+[welcome_to_site_header]
+other = "Bem-vindo ao meu site!"
+[contact_me_header]
+other = "Contate-me"
+[credits_header]
+other = "Créditos"
 
-[data_error_size_88_part1]
-other = "Os dados não têm 96 bytes de comprimento (FFLStoreData), mas o tamanho dos dados (88) corresponde a nn::mii::CharInfo (também conhecido como \".charinfo\", AFLiNXCharInfo, visto em títulos de Switch)."
-
-[data_error_size_88_part2]
-other = "Estes são dados Mii destinados ao Switch, então você precisará convertê-los de acordo."
-
-[data_error_size_88_part3]
-other = "Se você tiver acesso ao SDK do Switch, por favor, me ligue primeiro."
-
-[data_error_size_88_part4]
-other = "Mas se você tiver, pode usar a seguinte função para converter CharInfo para nn::mii::Ver3StoreData, também conhecido como FFLStoreData/CFLStoreData."
-
-[data_error_size_72_part1]
-other = "Os dados não têm 96 bytes de comprimento (FFLStoreData), mas o tamanho dos dados (72) corresponde a FFLiMiiDataCore (também conhecido como \"core data\", mas não é o mesmo que CharInfo)."
-
-[data_error_size_72_part2]
-other = "Isso é quase o mesmo que FFLStoreData, mas sem CRC16 ou nome do criador, então você precisará convertê-los de acordo."
-
-[data_error_size_74_part1]
-other = "Os dados não têm 96 bytes de comprimento (FFLStoreData), mas o tamanho dos dados (74) corresponde a RFLCharData/FFLiMiiDataOfficialRFL (também conhecido como \".mii\")."
-
-[data_error_size_74_part2]
-other = "Estes são dados Mii destinados ao Wii, então você precisará convertê-los de acordo."
-
-[above_input_type_choose_text]
-other = "Escolha NNID, PNID, Código QR ou dados:"
 
 [button_random_nnid]
 other = "NNID Aleatório"
 
 [last_modified]
 other = "Última modificação: "
+
+[error_container_title]
+other = "😭 Erro de JavaScript!! 😭"
+
+[crc16_failed]
+other = " (FALHA NA SOMA DE VERIFICAÇÃO CRC16)"
+
+[file_input_label]
+other = "Selecione um arquivo binário Mii suportado:"
+
+[loaded_mii_file]
+other = "Arquivo Mii carregado: "
+
+[enter_data_in_hex_or_base64]
+other = "Ou, insira dados em hex, Base64, ou um URL do Mii Studio:"
+
+[loaded_mii_data]
+other = "Dados do Mii carregados: "
+
+[click_on_label_to_select_field]
+other = "(Clique em um rótulo para selecionar esse campo)"
+
+[support_summary]
+other = "Deve suportar 3DS/Wii U, Wii, Switch, e Mii Studio. Clique para mais detalhes."
+
+[option_all_body]
+other = "Corpo Inteiro"
+
+[option_variableiconbody]
+other = "Retrato do Switch"
+
+[shader_lighting_type_label]
+other = "Tipo de sombreado/iluminação:"
+
+[option_wii_u_miiverse]
+other = "Wii U/Miiverse"
+
+[option_miitomo_mii_studio]
+other = "Miitomo/Mii Studio"
+
+[shader_type_new]
+other = "(NOVO!)"
+
+[nfp_data_loaded_label]
+other = "Mii do amiibo carregado: "
+[nfp_figure_loaded_label]
+other = "Nome da Figura: "
+[nfp_error_label]
+other = "Não é possível ler o seu arquivo: "
+[nfp_file_label]
+other = "Forneça um arquivo de 540/532 bytes de um amiibo preferencialmente criptografado contendo um Mii. Isso suporta Miis do Switch!"
+
+[advanced_options]
+other = "Opções avançadas"
+
+[resource_type_label]
+other = "Tipo de recurso:"
+
+[resource_type_note]
+other = "Você deve sempre usar alta, mas os renders oficiais todos usam médio caso você queira combinar com eles, ou esteja rodando este renderizador em uma máquina terrível."
+
+[disable_lighting_label]
+other = "Desativar iluminação:"
+
+[disable_lighting_note]
+other = "Útil apenas se você quiser fazer um Carimbo Mii (você também pode escrever um shader para isso)"
+
+[texture_resolution_label]
+other = "Resolução da textura:"
+
+[texture_resolution_note]
+# proper: XluMask
+other = "Resolução da textura do rosto / XluMask. Desative para usar o padrão."
+
+[disable_crc16_label]
+# proper: StoreData, CRC16
+other = "Desativar verificação CRC16 dos StoreData:"
+
+[disable_crc16_note]
+# proper: CRC16
+other = "Pula a verificação da soma de verificação CRC16 se seus dados tiverem uma."
+[disable_crc16_note_bold]
+other = " Note que a partir de agosto de 2024, isso é apenas no lado do cliente por enquanto."
+
+[disable_charinfo_verify_label]
+# proper: CharInfo
+other = "Desativar verificação de CharInfo:"
+
+[disable_charinfo_verify_note]
+other = "Permite usar qualquer tipo de dado como dados Mii. Pode ainda não funcionar."
+[disable_charinfo_verify_note_bold]
+other = " NOTA a partir de agosto de 2024: isso ainda não mostra o motivo da verificação do servidor, tudo que tenho é uma resposta excessivamente prolixa, desculpe por isso."
+
+[camera_x_rotation_label]
+other = "Rotação X da câmera:"
+[camera_y_rotation_label]
+other = "Rotação Y da câmera:"
+[camera_z_rotation_label]
+other = "Rotação Z da câmera:"
+
+
+[miitomo_shader_inaccurate_note_pre_link]
+other = "Por favor, note que este "
+[miitomo_shader_inaccurate_note_link]
+# proper: Mii Studio
+other = "não usa o modelo de corpo do Mii Studio"
+[miitomo_shader_inaccurate_note_post_link]
+other = " no momento, então vai parecer diferente desses renders."
+[miitomo_shader_inaccurate_note_small]
+# proper: Switch
+other = "Para ser justo, a opção do Switch também não usa o modelo de corpo do Switch, mas a diferença é menor lá."
+
+[view_type_all_body_inaccurate_note]
+other = "Não há muito sentido na visualização de corpo inteiro porque é uma visualização estimada, e o corpo em si não está escalado corretamente e as calças não têm cor separada. É fornecida principalmente como uma demonstração técnica."
+[view_type_all_body_inaccurate_note_small]
+other = "Também é apenas quadrado por enquanto devido à maneira como tudo está escrito E eu nem conheço a visualização all_body do Mii Studio hhhhhhh"
+
+# seção de comparação
+
+[label_left]
+other = "Esquerda: "
+[label_right]
+other = "Direita: "
+[label_our_render_lower]
+other = "nosso render."
+
+[under_our_render_small]
+other = "(Wii U + recurso médio + sem AA / Switch + sem AA / Miitomo)"
+
+[under_studio_render_small]
+# proper: domain name, cdn-mii, Miitomol
+other = "(Ou seja, studio.mii.nintendo.com/cdn-mii 2.0.0, mesmo visual/sombreado/óculos erroneamente grandes como Miitomo)"
+[studio_render_right_side_note]
+other = "Site/API Mii Studio."
+
+[under_switch_render_small]
+# proper: MiiEdit, amiibo
+other = "(Usado nos applets MiiEdit e amiibo, mas não para ícones de usuários.)"
+[switch_render_right_side_note]
+other = "Render nn:mii::VariableIconBody do Switch."
+
+[under_mii_maker_render_small]
+# proper: NNID, Miiverse, cdn-mii
+other = "(Igual a: servidor NNID, Miiverse, cdn-mii 1.0.0)"
+[mii_maker_right_side_note]
+other = "Aplicativo Mii Maker do Wii U."
+
+[view_types_summary]
+other = "Leia uma explicação dos tipos de visualização aqui."
+[nfp_tutorial_summary]
+# proper: amiibo
+other = "Clique aqui para revelar meu tutorial sobre como extrair seu próprio amiibo para um arquivo."
+[shader_lighting_type_above]
+# proper: Miitomo, Mii Studio
+other = "Escolha Miitomo aqui para obter uma aparência como Mii Studio:"
+
+[copied]
+# as in: (Copied )x times
+other = "Copiado "
+
+[copy_image_url]
+other = "Copiar URL da imagem"
+
+[convert_label]
+other = "Converter "
+[input_data_type_label]
+other = "Tipo de dado de entrada:"
+[input_data_type_unknown]
+other = "Desconhecido"
+
+[convert_to_label]
+other = "Converter para: "
+[convert_to_default]
+other = "Padrão"
+
+[studio_render_label]
+# as in "Mii Studio"
+other = "Render do Studio"
+
+[studio_code_label]
+# as in "Mii Studio"
+other = "Código do Studio: "
+
+[post_convert_qr_code_label]
+# proper: Mii, QR Code
+other = "Código QR do Mii (passe o mouse para ampliar):"
+
+[post_convert_fflstoredata_label]
+# proper: Base64, 3DS, Wii U, StoreData
+other = "Base64 3DS/Wii U StoreData (cópia forçada habilitada): "
+
+[download_prefix]
+# as in: (Download ).filetype
+other = "Baixar "
+
+[auto_submit_label]
+other = "Auto-Enviar:"
+
