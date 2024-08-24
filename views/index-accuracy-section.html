@@ -14,9 +14,7 @@
             <ul>
                 <li>This is why the body's arms may look a little wonky and unnatural.</li>
                 <li>Need to use the skeleton from MiiBodyMiddle.bfres (MK8/Wii U Mii Maker)
-                <ul>
-                    <li>So I need to find something that extracts these from the bfres. The <a href="https://github.com/nw4f/G3d">NW4F G3d decomp</a> has no documentation, only other thing I can find is Switch Toolbox which is in C#.</li>
-                </ul></li>
+                <li class="small">So I need to find something that extracts these from the bfres. The <a href="https://github.com/nw4f/G3d">NW4F G3d decomp</a> has no documentation and needs a major refactor to work on 64-bit, the only other thing I can find is Switch Toolbox which is in C#.</li>
             </ul>
             </li>
             <li>
@@ -28,16 +26,17 @@
             <li>
             ⚠️ Default portrait view isn't accurate to Wii U Mii Maker
             <ul>
-                <li>Initialization is done here in ffl_app.rpx...</li>
+                <li>Initialization is done here in ffl_app.rpx:</li>
                 <li>FFLUtility: <code>FUN_0210a9b4</code> (I think)</li>
                 <li>Wii U Mii Maker, US latest ver: <code>FUN_02086e9</code></li>
-                <li>Side note: I think this is very similar to the one Mii Studio is using, except it uses it for face AND face only. Comparison: <a href="https://web.archive.org/web/20170521213000im_/https://cdn-mii.accounts.nintendo.com/1.0.0/miis/8ed7ef7660b3b2cf/image/1dd84ae2a599e70f-ebcc0c4f725b6b02.png?type=face&expression=normal&width=512&instanceCount=1&instanceRotationMode=model">Mii Maker/NNID/cdn-mii 1.0.0 (all the same)</a> vs <a href="https://cdn-mii.accounts.nintendo.com/2.0.0/miis/8ed7ef7660b3b2cf/image/1dd84ae2a599e70f-ebcc0c4f725b6b02.png?type=face&expression=normal&width=512&instanceCount=1&instanceRotationMode=model">cdn-mii 2.0.0/Mii Studio</a></li>
+                <li class="small">Side note: I think this is very similar to the one Mii Studio is using, except it uses it for face AND face only. Comparison: <a href="https://web.archive.org/web/20170521213000im_/https://cdn-mii.accounts.nintendo.com/1.0.0/miis/8ed7ef7660b3b2cf/image/1dd84ae2a599e70f-ebcc0c4f725b6b02.png?type=face&expression=normal&width=512&instanceCount=1&instanceRotationMode=model">Mii Maker/NNID/cdn-mii 1.0.0 (all the same)</a> vs <a href="https://cdn-mii.accounts.nintendo.com/2.0.0/miis/8ed7ef7660b3b2cf/image/1dd84ae2a599e70f-ebcc0c4f725b6b02.png?type=face&expression=normal&width=512&instanceCount=1&instanceRotationMode=model">cdn-mii 2.0.0/Mii Studio</a></li>
             </ul>
             </li>
             <li>
-            ⚠️ Need to find out how Miitomo adjusts hair colors...???? in order for it to be accurate
+            ⚠️ Need to find out how Miitomo adjusts colors...???? in order for it to be accurate
             <ul>
-                <li>Because even though it uses the same Switch colors as we do, they pass in different color values, to the fragment shader, and I couldn't find the colors in the binary. Wooohooooo...</li>
+                <li>Because even though it uses the same Switch colors as we do, they pass in different color values, to the fragment shader.
+                <li class="small">Happens for the LUT shader and mask shader (MiiDefaultShader). I couldn't find the colors in the binary, nor have I found where this happens yet. Wooohooooo...</li>
             </ul>
             </li>
             <li>
@@ -77,6 +76,7 @@
             </summary>
             <ul class="left-aligned-ul">
             <li>❔Don't have the body model used in Mii Studio at the moment. May be the same as Miitomo.</li>
+
             <li>❔Poses from the Wii U Mii Maker are planned as soon as skeletal animations work.
             <details>
                 <summary>❔Need to reverse the custom QR code format from Miitomo/Miitopia/Tomodachi Life.</summary>

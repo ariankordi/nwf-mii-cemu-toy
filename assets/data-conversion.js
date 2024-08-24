@@ -47,9 +47,10 @@ window.supportedFormats = [{
     toVer4Function: 'useNfpStoreDataExtentionFieldsForVer4',
   },
   {
+    // mii studio site decoded URL format/LocalStorage format
     className: 'Gen3Studio',
     // the js will deobfuscate length 47 itself
-    sizes: [46, 47],
+    sizes: [46, 47], // 46 = decoded/raw format
     technicalName: 'Mii Studio Data',
     version: 4,
     encodeFunction: 'encodeKaitaiStructToUint8Array',
@@ -151,7 +152,7 @@ conversionMethods.useNfpStoreDataExtentionFieldsForVer4 = data => {
 }
 
 // add 3 to eyebrow vertical
-conversionMethods.correctFromVer4CoreDataFields = (output, input) => {
+conversionMethods.correctFromVer4CoreDataFields = (_, input) => {
   input.eyebrowVertical += 3;
   /*
   Object.defineProperty(output, 'eyebrowVertical', {
@@ -283,43 +284,6 @@ conversionMethods.gen3studioDefineBeardFromFacialHairFields = (output, input) =>
   output.beardSize = input.facialHairSize;
   output.beardMustache = input.facialHairMustache;
   output.beardVertical = input.facialHairVertical;
-}
-
-const handleCopyButtonAndUpdateCounter = (event, data) => {
-  // do not visit the link or submit the button
-  event.preventDefault();
-
-  // this function assumes... that this is the anchor...
-  const target = event.currentTarget;
-  // and that the anchor is in a parent element
-  // and to act on the img if there is no data
-  const parent = target.parentElement;
-
-  // if there is data then just return that as a string
-  if(data !== undefined)
-    navigator.clipboard.writeText(data); // NOTE: not used for anything rn
-  else {
-    // there is one img in the parent, where we want to copy the src element
-    const img = parent.getElementsByTagName('img')[0];
-    if(!img || !img.src) // is it undefined, null, or empty?
-      throw new Error('when you clicked the copy button for the studio render, ' +
-        'and we tried to find the image\'s source, it ended up as undefined...???');
-    else
-      // copy :)
-      navigator.clipboard.writeText(img.src);
-  }
-
-  // ... and THEN, there is a counter.
-  // the counter increases on every copy
-  // and copying once hides the text and unhides the counter
-  const textCopyElement = parent.getElementsByClassName('text-copy')[0];
-  textCopyElement.style.display = 'none';
-  const textCounterElement = parent.getElementsByClassName('text-counter')[0];
-  // the counter number is the only span inside of here
-  const textCounterNumberElement = textCounterElement.firstElementChild;
-  // pretend it's a number when it's a string and then increment it
-  textCounterNumberElement.textContent++;
-  textCounterElement.style.display = '';
 }
 
 // current name of studio kaitai struct class being used
@@ -1007,7 +971,7 @@ const studioURLObfuscationDecode = data => {
 
   return decodedData.slice(0, 46); // resize to normal studio data
 }
-
+/*
 function crc16(data) {
   let crc = 0;
   let msb = crc >> 8;
@@ -1024,9 +988,7 @@ function crc16(data) {
   crc = (msb << 8) + lsb;
   return crc;
 }
-
-// sjcl formats keys in these huge 32 bit ints
-const qrEncryptionKey = [1509720446, 1682369121, -1875608800, -373436846];
+*/
 const encryptAndEncodeVer3StoreDataToQRCodeFormat = data => {
   // NOTE: uses sjcl and assumes it is loaded
   const nonce = data.slice(12, 20);
@@ -1040,7 +1002,7 @@ const encryptAndEncodeVer3StoreDataToQRCodeFormat = data => {
   content = [...content.slice(0, -2), ...newChecksumArray];
 
   //const cipher =  new sjcl.cipher.aes(sjcl.codec.hex.toBits('59FC817E6446EA6190347B20E9BDCE52'));
-  const cipher = new sjcl.cipher.aes(qrEncryptionKey);
+  const cipher = new sjcl.cipher.aes([1509720446, 1682369121, -1875608800, -373436846]);
 
   const paddedContent = new Uint8Array([...content, ...new Array(8).fill(0)]);
   const paddedContentBits = sjcl.codec.bytes.toBits(Array.from(paddedContent));
