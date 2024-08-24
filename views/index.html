@@ -272,12 +272,12 @@
         </div>
         <div id="nfp-group" {{if .GroupEnabled != "nfp"}}style="display: none;" {{end}}>
             <label class="small" for="nfp-file"><b>{{T("nfp_file_label")}}</b></label><br>
-            <input class="long-field" type="file" name="nfp-file" id="nfp-file" required>
+            <input class="long-field" type="file" id="nfp-file" required>
             <input type="hidden" name="data" id="nfp-file-data">
             <!-- while data is put in the url, data-REAL is used by the conversion routine -->
             <input type="hidden" name="data-REAL" id="nfp-file-data-with-ext">
 
-            <span id="nfp-data-loaded" style="font-weight: bold; color: green; display: none;">{{T("nfp_data_loaded_label")}}<span></span></span>
+            <div id="nfp-data-loaded" style="font-weight: bold; color: green; display: none;">{{T("nfp_data_loaded_label")}}<span></span></div>
             <div id="nfp-figure-loaded" style="font-weight: bold; color: green; display: none;">{{T("nfp_figure_loaded_label")}}<span></span></div>
 
             <div id="nfp-error" style="font-weight: bold; color: red; display: none;">{{T("nfp_error_label")}}<span></span></div>
@@ -330,7 +330,7 @@
         <select name="shaderType" id="shaderType" data-default-value="0" data-save>
             <option value="0" selected>{{T("option_wii_u_miiverse")}}</option>
             <option value="1">Switch</option>
-            <option value="2">{{T("option_miitomo_mii_studio")}}</option>
+            <option value="2">{{T("option_miitomo_mii_studio")}} (!)</option>
             <!--<option value="3">3DS</option>-->
         </select><br>
 
@@ -453,12 +453,14 @@
             <input type="checkbox" name="scale" id="scale" value="1">
             <div class="smaller" style="margin-bottom: 5px;">{{T("scale_label_small")}}</div>
 
+            <!--
             <label for="resourceType">{{T("resource_type_label")}}</label>
             <select name="resourceType" id="resourceType" data-default-value="1">
                 <option value="0">FFL_RESOURCE_TYPE_MIDDLE</option>
                 <option value="1" selected>FFL_RESOURCE_TYPE_HIGH</option>
             </select><br>
             <div class="smaller">{{T("resource_type_note")}}</div>
+            -->
 
             <label for="lightEnable">{{T("disable_lighting_label")}}</label>
             <input type="checkbox" name="lightEnable" id="lightEnable" value="0" data-default-value="0">
@@ -494,11 +496,11 @@
         <br><div class="small">{{T("miitomo_shader_inaccurate_note_small")}}</div></div>
         <div id="view-type-all-body-inaccurate" style="font-weight: bold; color: red; display: none;">{{T("view_type_all_body_inaccurate_note")}}
         <br><div class="small">{{T("view_type_all_body_inaccurate_note_small")}}</div></div>
-
+<!-- TODO: AUTO-SUBMIT NOT IMPLEMENTED
         <label for="auto-submit"><b>{{T("auto_submit_label")}}</b></label>
         <input id="auto-submit" type="checkbox">
         <br>
-
+-->
         <input id="submit" type="submit" data-value="{{T("submit_button_text")}}">
     </form>
     <hr>
@@ -735,7 +737,7 @@
                 <a href="https://github.com/educastellano/qr.js">qr.js (encoder)</a>
             </li>
         </ul></li>
-        <li>Brazilian Portuguese translation courtesy of <a href="https://github.com/GabIsAwesome">GabIsAwesome</a>.</li>
+        <li class="small">Gab if you are reading this, this is where I would credit you for the Portuguese translation but since I was in a rush I completely threw away your translation and all of the old ones I had before and did not feel like asking you to translate hundreds of strings by hand so. just did them with machine translation this time 😭 😭 😭 </li>
     </ul>
     </section>
 
@@ -751,7 +753,6 @@
             <option value="es-419" {{if T("html_lang") == "es-419"}}selected{{end}}>Español (LATAM)</option>
             <option value="pt-BR" {{if T("html_lang") == "pt-BR"}}selected{{end}}>Português (Brasil)</option>
             <option value="fr-FR" {{if T("html_lang") == "fr-FR"}}selected{{end}}>Français</option>
-            <option value="de-DE" {{if T("html_lang") == "de-DE"}}selected{{end}}>Deutsch</option>
             <option value="ja-JP" {{if T("html_lang") == "ja-JP"}}selected{{end}}>日本語 🥺</option>
         </select>
         <input type="submit">

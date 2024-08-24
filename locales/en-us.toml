@@ -5,7 +5,6 @@ other = "Background color:"
 other = "Open amiibo dump"
 
 [contact_info_label]
-# proper: discord, iMessage
 other = "For comments, questions, concerns, help with this or any other Mii topic, etc... PLEASE don't hesitate to contact me!"
 
 [contact_info_post]
@@ -244,36 +243,6 @@ other = "This data has an invalid CRC16 checksum."
 [data_error_size_0]
 other = "The data is empty. Oops!"
 
-[data_error_size_92_part1]
-other = "The data is not 96 bytes long (FFLStoreData), but the size of the data (92) matches FFLiMiiDataOfficial (AKA \".3dsmii\" or \"CFCD/FFCD\")."
-
-[data_error_size_92_part2]
-other = "This is just FFLStoreData but without a CRC16 checksum, so please add that."
-
-[data_error_size_88_part1]
-other = "The data is not 96 bytes long (FFLStoreData), but the size of the data (88) matches nn::mii::CharInfo (AKA \".charinfo\", AFLiNXCharInfo, seen in Switch titles)."
-
-[data_error_size_88_part2]
-other = "This is Mii data meant for the Switch, so you will need to convert accordingly."
-
-[data_error_size_88_part3]
-other = "If you have access to the Switch SDK, first of all, please call me."
-
-[data_error_size_88_part4]
-other = "But if you do, you can use the following function to convert CharInfo to nn::mii::Ver3StoreData, otherwise known as FFLStoreData/CFLStoreData."
-
-[data_error_size_72_part1]
-other = "The data is not 96 bytes long (FFLStoreData), but the size of the data (72) matches FFLiMiiDataCore (AKA \"core data\" but not the same thing as CharInfo)."
-
-[data_error_size_72_part2]
-other = "This is almost the same as FFLStoreData but without a CRC16 or a creator name, so you will need to convert accordingly."
-
-[data_error_size_74_part1]
-other = "The data is not 96 bytes long (FFLStoreData), but the size of the data (74) matches RFLCharData/FFLiMiiDataOfficialRFL (AKA \".mii\")."
-
-[data_error_size_74_part2]
-other = "This is Mii data meant for the Wii, so you will need to convert accordingly."
-
 [miis_from_nnids_prior_notice]
 other = "This will only show Miis from NNIDs as they were prior to April 8th, 2024."
 
@@ -329,7 +298,7 @@ other = "Shader/lighting type:"
 other = "Wii U/Miiverse"
 
 [option_miitomo_mii_studio]
-other = "Miitomo/Mii Studio (!)"
+other = "Miitomo/Mii Studio"
 
 [shader_type_new]
 other = "(NEW!)"
