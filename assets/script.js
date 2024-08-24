@@ -155,17 +155,12 @@ function saveSpecifiedFieldsToLocalStorage() {
   // and those will have the data-save attribute
   // if they are not disabled, put their value in localstorage
   document.querySelectorAll('[data-save]').forEach(function(element) {
+    // do not save if it is disabled (not active group)
+    if(element.disabled)
+      return;
     let inputValue = element.value;
     // if this is a checkbox, then the value is if it is checked
     if(element.type === 'checkbox') inputValue = element.checked;
-    // do not save if it is disabled (not active group)
-    if(element.disabled
-       // also don't save if it is default
-       || element.getAttribute('data-default-value') == inputValue
-    )
-      return;
-    const encodedValue = JSON.stringify(inputValue);
-
     let inputName = element.name;
     if(!inputName)
       // use id as name
@@ -175,6 +170,13 @@ function saveSpecifiedFieldsToLocalStorage() {
       console.error('this element doesn\'t have name or id:', element);
       return;
     }
+    // if it is default, check if it is there and remove it
+    if(element.getAttribute('data-default-value') == inputValue) {
+      localStorage.removeItem('form-value-' + inputName);
+      return;
+    }
+    const encodedValue = JSON.stringify(inputValue);
+
     localStorage.setItem('form-value-' + inputName, encodedValue);
   });
 }
