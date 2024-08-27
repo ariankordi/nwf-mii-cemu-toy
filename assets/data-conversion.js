@@ -336,6 +336,9 @@ const handleConvertDetailsToggle = event => {
   const studioCode = [...studioData].map(byteToHex).join('');
   studioCodeElement.textContent = studioCode;
 
+  const miiInstructionsLinkElement = event.target.getElementsByClassName('mii-instructions-link')[0];
+  miiInstructionsLinkElement.href += studioCode;
+
   const studioURLData = encodeStudioToObfuscatedHex(studioData);
   const studioURLRender = studioImageElement.getAttribute('data-src') + studioURLData;
   //studioURLDataElement.textContent = studioURLData;
@@ -351,7 +354,8 @@ const handleConvertDetailsToggle = event => {
     inputTypeElement.textContent = inputFormat.technicalName;
 
   const ver3StoreData = convertDataToType(inputData, ver3Format, inputFormat.className);
-  ver3StoreDataElement.textContent = uint8ArrayToBase64(ver3StoreData);
+  const ver3StoreDataB64 = uint8ArrayToBase64(ver3StoreData);
+  ver3StoreDataElement.textContent = ver3StoreDataB64;
   // finally make a qr code
   if(window.QRCode !== undefined) {
     const ver3QRCodeDataArray = encryptAndEncodeVer3StoreDataToQRCodeFormat(ver3StoreData);
@@ -381,6 +385,11 @@ const handleConvertDetailsToggle = event => {
   convertDataAndBindToDLButton(studioDataDownloadButton, inputData, 'Gen3Studio', inputFormat.className);
   studioDataDownloadButton.setAttribute('data-filename',
                                         fileBaseName + '.mnms');
+
+  const ffsdDownloadButton = event.target.getElementsByClassName('download-ffsd')[0];
+  ffsdDownloadButton.setAttribute('data-data', ver3StoreDataB64);
+  studioDataDownloadButton.setAttribute('data-filename',
+                                        fileBaseName + '.ffsd');
 
 
   // mark as revealed at the end, i.e. do NOT RUN THE HANDLER ANYMORE
