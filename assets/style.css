@@ -11,11 +11,10 @@
   color: white;
   background-color: black;
 }
-/* link color from freebsd.org (dark)
-for both light and dark */
+/* link for both light and dark */
 :link,
 :visited {
-  color: #BAD7FF;
+  color: #90aefc;
 }
 
 @font-face {

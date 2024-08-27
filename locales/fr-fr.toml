@@ -90,7 +90,7 @@ other = "Actualiser le NNID sans cache"
 other = "Le code (ou du moins le backend) est disponible sur GitHub. N'hésitez pas à y jeter un œil :"
 
 [heading_main]
-other = "Rendu Mii (RÉEL)"
+other = "Rendu de Mii (RÉEL)"
 
 [label_input_type]
 other = "Type d'entrée Mii :"
@@ -128,7 +128,7 @@ other = "Les icônes ci-dessus sont entièrement rendues par ce site !"
 other = "Sorties"
 
 [page_title]
-other = "Rendu Mii (RÉEL)"
+other = "Rendu de Mii (RÉEL)"
 
 [resolution_label]
 other = "Résolution :"

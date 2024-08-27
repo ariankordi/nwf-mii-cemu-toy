@@ -125,9 +125,9 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             <input class="long-field" type="file" id="file">
             <input type="hidden" name="data" id="file-data">
 
-            <span id="file-loaded" style="font-weight: bold; color: green; display: none;">{{T("loaded_mii_file")}}<span></span></span>
+            <div id="file-loaded" style="font-weight: bold; color: green; display: none;">{{T("loaded_mii_file")}}<span></span></div>
 
-            <br><label class="small" for="data"><b>{{T("enter_data_in_hex_or_base64")}}</b></label><br>
+            <div><label class="small" for="data"><b>{{T("enter_data_in_hex_or_base64")}}</b></label></div>
             <input class="long-field green-border" id="data" type="text" name="data"
                 placeholder="{{T("data_placeholder")}}"
                 value="AwBgMIJUICvpzY4vnWYVrXy7ikd01AAAWR1KAGEAcwBtAGkAbgBlAAAAAAAAABw3EhB7ASFuQxwNZMcYAAgegg0AMEGzW4JtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAML0">
@@ -537,20 +537,23 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
                     </button>
                     <img class="image-80" alt="{{T("studio_render_label")}}" data-src="https://studio.mii.nintendo.com/miis/image.png?type=face&width=96&data=">
                 </li>
-                <li>{{T("studio_code_label")}}<code class="studio-code code-block"></code></li>
+                <li>{{T("studio_code_label")}}
+                    (for <a target="_blank" href="https://heyimheroic.github.io/MiiStudioMiiLoader/">Mii Studio Mii Loader</a>)
+                <code class="studio-code code-block"></code></li>
                 <li>
                     <button class="download-studio-data" onclick="handleDownloadDataFileButton(event)" data-filename="Mii.mnms">
                     {{T("download_prefix")}}.mnms
                     </button>
-                    &lt;-- for <a target="_blank" href="https://heyimheroic.github.io/MiiStudioMiiLoader/">Mii Studio Mii Loader</a></li>
-                <li>
+
                     <button class="download-switch-charinfo" onclick="handleDownloadDataFileButton(event)" data-filename="Mii.charinfo">
                     {{T("download_prefix")}}.charinfo
                     </button>
-                    <ul>
-                    <li>Try this on <a target="_blank" href="https://miiinstructions.sticksweb.site">Switch Mii to Instructions, created by</a> <a target="_blank" href="https://github.com/sticks-stuff">stick</a></li>
-                    </ul>
+
+                    <button class="download-ffsd" onclick="handleDownloadDataFileButton(event)" data-filename="Mii.ffsd">
+                    {{T("download_prefix")}}.ffsd
+                    </button>
                 </li>
+                <li><a class="mii-instructions-link" target="_blank" href="https://miiinstructions.sticksweb.site/?data=">See instructions on how to recreate on the Switch</a> (created by <a target="_blank" href="https://github.com/sticks-stuff">stick</a>)</li>
                 <li>{{T("post_convert_fflstoredata_label")}}<code class="ver3storedata code-block"></code></li>
                 <!-- TODO 2024-08-25: IMPLEMENT THIS ASAP IF YOU WANT WII MIIS TO SCAN ON 3DS SYSTEMS ..........
                 <li>
