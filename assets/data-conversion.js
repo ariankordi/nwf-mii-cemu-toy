@@ -37,6 +37,12 @@ window.supportedFormats = [{
     version: 3,
     encodeFunction: 'encodeVer3StoreData',
     toVer4Function: 'convertVer3FieldsToVer4',
+    // NOTE: right now we are force enabling copy from
+    // structs that do not support it, specifically TO only ver3
+    // perhaps if we are converting to other types that allow
+    // copying, which I know nn::mii::CharInfo may but who cares...
+    // ... then it should logically be applied there as WELL, bleh.
+    postConvertToFunction: 'forceEnableCopyingIfUndefined'
   },
   {
     className: 'Gen2Wiiu3dsMiitomoNfpstoredataextention',
@@ -286,6 +292,13 @@ conversionMethods.gen3studioDefineBeardFromFacialHairFields = (output, input) =>
   output.beardVertical = input.facialHairVertical;
 }
 
+conversionMethods.forceEnableCopyingIfUndefined = (output, input) => {
+  if(input.copying === undefined)
+    Object.defineProperty(output, 'copying', {
+      value: true
+    });
+}
+
 // current name of studio kaitai struct class being used
 const studioFormat = supportedFormats.find(f => f.className === 'Gen3Studio');
 const ver3Format = supportedFormats.find(f => f.className === 'Gen2Wiiu3dsMiitomo');
@@ -358,7 +371,8 @@ const handleConvertDetailsToggle = event => {
   ver3StoreDataElement.textContent = ver3StoreDataB64;
   // finally make a qr code
   if(window.QRCode !== undefined) {
-    const ver3QRCodeDataArray = encryptAndEncodeVer3StoreDataToQRCodeFormat(ver3StoreData);
+    const ver3StoreDataForQR = convertDataToType(inputData, ver3Format, inputFormat.className, true); // set "forQRCode" true
+    const ver3QRCodeDataArray = encryptAndEncodeVer3StoreDataToQRCodeFormat(ver3StoreDataForQR);
     const qrCodeImage = event.target.getElementsByClassName('image-qr')[0];
     qrCodeImage.src = QRCode.generatePNG(ver3QRCodeDataArray, {
       margin: null
@@ -432,20 +446,21 @@ const handleDownloadDataFileButton = event => {
 }
 
 // encodes a compatible struct to Ver3StoreData
-/* NOTE: CURRENTLY DOES THESE ADDITIONAL (potentially undesirable) THINGS:
+/* NOTE: forQRCode DOES THESE (potentially undesirable) THINGS:
  * FORCE ENABLES COPYING
  * sets MiiVersion to 0x03, and birth platform to 3DS
    - both needed to scan as a qr code
- * DOES NOT SET CHECKSUM...
+ * skips crc16 but actually only bc qr encode routine does it itself
  */
-conversionMethods.encodeVer3StoreData = dataStruct => {
+conversionMethods.encodeVer3StoreData = (dataStruct, forQRCode) => {
   // set unmarked fields
-  dataStruct.unknown1 = 0x03;
+  dataStruct.unknown1 = 0x03; // ALWAYS constant 100% of the time
   // 3ds version mii, will scan as a qr code on 3ds and wii u
   // may already be set so using defineProperty on it
-  Object.defineProperty(dataStruct, 'version', {
-    value: 3
-  });
+  if(forQRCode)
+    Object.defineProperty(dataStruct, 'version', {
+      value: 3
+    });
   // mii needs a non-null name to scan
   // TODO: you may want to make this part of a hash or encoding or.. something
   // TODO: you have enough bytes to pack the studio info within all arbitrary data given
@@ -474,14 +489,18 @@ conversionMethods.encodeVer3StoreData = dataStruct => {
       Math.floor(Math.random() * 257),
       Math.floor(Math.random() * 257),
     ];
-  // finally, pwease make this copying 🥺
-  Object.defineProperty(dataStruct, 'copying', {
-    value: true
-  });
+  // force enable copying, but only if qr code mode is on
+  if(forQRCode)
+    Object.defineProperty(dataStruct, 'copying', {
+      value: true
+    });
   // mingle, or local only, is already initialized to false tho
 
   //origMii.clientId = [0, 0, 0, 0, 0, 0];
-  return encode3DSStoreDataFromStructCopiedFromKazukiMiiEncode(dataStruct);
+  // skip crc16 for qr code bc qr encode function does it itself
+  let skipCRC16 = Boolean(forQRCode);
+  return encode3DSStoreDataFromStructCopiedFromKazukiMiiEncode(dataStruct,
+                                                               skipCRC16);
 };
 
 // iterate through format list, assumed to be called supportedFormats
@@ -581,7 +600,7 @@ const mapObjectFieldsOneToOne = (src, dest) => {
 // if not provided then the size is used to auto detect
 // length of obfuscated studio data
 const STUDIO_OBFUSCATED_LENGTH = 47;
-const convertDataToType = (data, outputFormat, inputFormatName) => {
+const convertDataToType = (data, outputFormat, inputFormatName, optionalBoolToEncodeFunc) => {
   // ensure that data is an ArrayBuffer
   /*if(!(data instanceof ArrayBuffer))
   	throw new Error('data must be ArrayBuffer or compatible.');
@@ -684,7 +703,7 @@ const convertDataToType = (data, outputFormat, inputFormatName) => {
   // we should be finished
   //return outputStruct;
   // FINALLY, call the encoding function
-  const encodedOutput = conversionMethods[outputFormat.encodeFunction](outputStruct);
+  const encodedOutput = conversionMethods[outputFormat.encodeFunction](outputStruct, optionalBoolToEncodeFunc);
   return encodedOutput; // should be a uint8array
 }
 
@@ -777,7 +796,7 @@ conversionMethods.convertWiiFieldsToVer3 = data => {
 // NOTE: customized for the kaitai by GPT-4o...
 // ... and adapted from MiiInfoEditorCTR: https://github.com/kazuki-4ys/kazuki-4ys.github.io/blob/148dc339974f8b7515bfdc1395ec1fc9becb68ab/web_apps/MiiInfoEditorCTR/mii.js#L348
 // 2024-08-10: tested to be accurate with: blanco, bro-mole-high, jasmine
-const encode3DSStoreDataFromStructCopiedFromKazukiMiiEncode = data => {
+const encode3DSStoreDataFromStructCopiedFromKazukiMiiEncode = (data, skipCRC16) => {
   // Create buffer to store the encoded data
   let buf = new Uint8Array(0x48 + 20 + 2 + 2); // 0x48 bytes + 20 bytes for creatorName + 2 bytes padding + 2 bytes checksum
 
@@ -954,11 +973,13 @@ const encode3DSStoreDataFromStructCopiedFromKazukiMiiEncode = data => {
 
   // SET CRC16 CHECKSUM
 
-  // crc all before last two bytes
-  const calculatedCRC16 = crc16(buf.slice(0, 94));
-  // think MSB and LSB are reversed here but eh
-  buf[0x5E] = (calculatedCRC16 >> 8) & 0xFF;
-  buf[0x5F] = calculatedCRC16 & 0xFF;
+  if(!skipCRC16) {
+    // crc all before last two bytes
+    const calculatedCRC16 = crc16(buf.slice(0, 94));
+    // think MSB and LSB are reversed here but eh
+    buf[0x5E] = (calculatedCRC16 >> 8) & 0xFF;
+    buf[0x5F] = calculatedCRC16 & 0xFF;
+  }
 
   return buf; // return the buffer containing the encoded StoreData
 }

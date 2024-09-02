@@ -445,11 +445,11 @@ other = "Studio Code: "
 
 [post_convert_qr_code_label]
 # proper: Mii, QR Code
-other = "Mii QR Code (hover to enlarge):"
+other = "Mii QR Code, Copying Enabled (hover to enlarge):"
 
 [post_convert_fflstoredata_label]
 # proper: Base64, 3DS, Wii U, StoreData
-other = "Base64 3DS/Wii U StoreData (copying force-enabled): "
+other = "Base64 3DS/Wii U StoreData: "
 
 [download_prefix]
 # as in: (Download ).filetype

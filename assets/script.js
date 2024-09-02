@@ -730,6 +730,9 @@ function displayNameFromSupportedType(data, nameElement, type, crc16NotPassed) {
 const fileInput = document.getElementById('file');
 const fileDataInput = document.getElementById('file-data');
 const fileLoaded = document.getElementById('file-loaded');
+
+const dataInput = document.getElementById('data');
+const dataLoaded = document.getElementById('data-loaded');
 // select an error element that is visible
 // visible = does not have (display: )none
 const errorTextQuery = '[id^="data-error-"]:not([style*="none"]';
@@ -744,6 +747,7 @@ fileInput.addEventListener('input', function() {
   fileDataInput.value = '';
   // clear validity
   fileInput.setCustomValidity('');
+  dataInput.setCustomValidity('');
   const reader = new FileReader();
   reader.onload = function(e) {
     // When file is read, replace/add the 'data' parameter with the file content in Base64
@@ -775,8 +779,6 @@ fileInput.addEventListener('input', function() {
   return;
 });
 
-const dataLoaded = document.getElementById('data-loaded');
-const dataInput = document.getElementById('data');
 
 const stripSpaces = str => str.replace(/\s+/g, '');
 const hexToUint8Array = hex => new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
@@ -806,6 +808,8 @@ const parseHexOrB64TextStringToUint8Array = text => {
 dataInput.addEventListener('input', function() {
   // remove mii name
   dataLoaded.style.display = 'none';
+  // unset validity on both fields
+  fileInput.setCustomValidity('');
   dataInput.setCustomValidity('');
   // ignore if is not base64
   if(dataInput.validity.patternMismatch) {
@@ -1192,7 +1196,7 @@ function arianHandler() {
 
 
 
-const handleCopyButtonAndUpdateCounter = (event, data, paramsToRemove) => {
+const handleCopyButtonAndUpdateText = (event, data, paramsToRemove) => {
   // do not visit the link or submit the button
   event.preventDefault();
 
@@ -1239,10 +1243,11 @@ const handleCopyButtonAndUpdateCounter = (event, data, paramsToRemove) => {
   // and copying once hides the text and unhides the counter
   const textCopyElement = parent.getElementsByClassName('text-copy')[0];
   textCopyElement.style.display = 'none';
-  const textCounterElement = parent.getElementsByClassName('text-counter')[0];
+  const textCopiedElement = parent.getElementsByClassName('text-copied')[0];
   // the counter number is the only span inside of here
-  const textCounterNumberElement = textCounterElement.firstElementChild;
+  /*const textCounterNumberElement = textCounterElement.firstElementChild;
   // pretend it's a number when it's a string and then increment it
   textCounterNumberElement.textContent++;
-  textCounterElement.style.display = '';
+  */
+  textCopiedElement.style.display = '';
 }

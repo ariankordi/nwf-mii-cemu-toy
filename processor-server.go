@@ -189,6 +189,8 @@ const localesDir = "locales"
 
 var handler http.Handler = http.DefaultServeMux
 
+
+var gtmContainerID, sentryDSN string
 func main() {
 	var port, certFile, keyFile, hostnamesSniAllowArg string
 	var isDevelopment bool
@@ -197,6 +199,10 @@ func main() {
 	flag.StringVar(&keyFile, "key", "", "TLS key file")
 	flag.StringVar(&hostnamesSniAllowArg, "hostnames", "", "Allowlist of hostnames for TLS SNI")
 	flag.BoolVar(&isDevelopment, "live-reloading", false, "Live reload locales and HTML")
+
+	// analytics
+	flag.StringVar(&gtmContainerID, "gtm-container-id", "", "Google Tag Manager container ID - passing this will enable it")
+	flag.StringVar(&sentryDSN, "sentry-dsn", "", "Sentry (or other compatible platform) DSN")
 
 	var (
 		// cache db connection string
@@ -225,6 +231,13 @@ func main() {
 	flag.BoolVar(&useXForwardedFor, "use-x-forwarded-for", false, "Use X-Forwarded-For header for client IP")
 
 	flag.Parse()
+
+	if sentryDSN != "" {
+		log.Println("Sentry enabled - DSN:", sentryDSN)
+	}
+	if gtmContainerID != "" {
+		log.Println("Google Tag Manager enabled - container ID:", gtmContainerID)
+	}
 
 	jetOpts := []jet.Option{}
 	if isDevelopment {
@@ -410,10 +423,14 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 	// default group that is enabled, controlled by cookie
 	groupEnabled := getSelectedInputTypeCookie(r, "nnid")
 	data := map[string]interface{}{
+		// analytics, optional
+		"GTMContainerID": gtmContainerID,
+		"SentryDSN": sentryDSN,
+
 		"IsntAMonthFromShaderAndLightingTypeBeingNew": isNew,
 		"GroupEnabled": groupEnabled,
 		"LanguageStrings": languageStrings,
-		"languageStringsUnderscore": languageStringsUnderscore,
+		"LanguageStringsUnderscore": languageStringsUnderscore,
 	}
 	// functions need to be in vars i think
 	vars := jet.VarMap{}

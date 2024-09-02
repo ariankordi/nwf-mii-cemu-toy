@@ -610,28 +610,31 @@ const (
 )
 
 // Map of expression strings to their respective flags
+// NOTE: Mii Studio expression parameters, which
+// this aims to be compatible with, use
+// the opposite direction for all wink expressions.
 var expressionMap = map[string]int{
 	"surprise":              FFL_EXPRESSION_SURPRISE,
 	"surprise_open_mouth":   FFL_EXPRESSION_SURPRISE_OPEN_MOUTH,
-	"wink_left_open_mouth":  FFL_EXPRESSION_WINK_LEFT_OPEN_MOUTH,
+	"wink_left_open_mouth":  FFL_EXPRESSION_WINK_RIGHT_OPEN_MOUTH,
 	"like":                  FFL_EXPRESSION_LIKE,
 	"anger_open_mouth":      FFL_EXPRESSION_ANGER_OPEN_MOUTH,
 	"blink_open_mouth":      FFL_EXPRESSION_BLINK_OPEN_MOUTH,
 	"anger":                 FFL_EXPRESSION_ANGER,
-	"like_wink_left":        FFL_EXPRESSION_LIKE,
+	"like_wink_left":        FFL_EXPRESSION_LIKE_WINK_RIGHT,
 	"happy":                 FFL_EXPRESSION_HAPPY,
 	"blink":                 FFL_EXPRESSION_BLINK,
 	"smile":                 FFL_EXPRESSION_SMILE,
 	"sorrow_open_mouth":     FFL_EXPRESSION_SORROW_OPEN_MOUTH,
-	"wink_right":            FFL_EXPRESSION_WINK_RIGHT,
+	"wink_right":            FFL_EXPRESSION_WINK_LEFT,
 	"sorrow":                FFL_EXPRESSION_SORROW,
 	"normal":                FFL_EXPRESSION_NORMAL,
-	"like_wink_right":       FFL_EXPRESSION_LIKE_WINK_RIGHT,
-	"wink_right_open_mouth": FFL_EXPRESSION_WINK_RIGHT_OPEN_MOUTH,
+	"like_wink_right":       FFL_EXPRESSION_LIKE,
+	"wink_right_open_mouth": FFL_EXPRESSION_WINK_LEFT_OPEN_MOUTH,
 	"smile_open_mouth":      FFL_EXPRESSION_HAPPY,
 	"frustrated":            FFL_EXPRESSION_FRUSTRATED,
 	"surprised":             FFL_EXPRESSION_SURPRISE,
-	"wink_left":             FFL_EXPRESSION_WINK_LEFT,
+	"wink_left":             FFL_EXPRESSION_WINK_RIGHT,
 	"open_mouth":            FFL_EXPRESSION_OPEN_MOUTH,
 	"puzzled":               FFL_EXPRESSION_SORROW, // assuming PUZZLED is similar to SORROW
 	"normal_open_mouth":     FFL_EXPRESSION_OPEN_MOUTH,

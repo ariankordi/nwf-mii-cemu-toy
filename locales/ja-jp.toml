@@ -443,11 +443,11 @@ other = "スタジオコード: "
 
 [post_convert_qr_code_label]
 # proper: Mii, QR Code
-other = "Mii QRコード（拡大表示にはホバーしてください）:"
+other = "Mii QRコード（コピー強制有効化）（拡大表示にはホバーしてください）:"
 
 [post_convert_fflstoredata_label]
 # proper: Base64, 3DS, Wii U, StoreData
-other = "Base64 3DS/Wii U StoreData（コピー強制有効化）: "
+other = "Base64 3DS/Wii U StoreData: "
 
 [download_prefix]
 # as in: (Download ).filetype

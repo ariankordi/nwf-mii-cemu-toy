@@ -2,6 +2,32 @@
 <html lang="{{T("html_lang")}}">
 
 <head>
+    {{if .SentryDSN != ""}}
+        <!-- NOTE: this will not be blocked by ad blockers -->
+        <!-- if we do our own analytics it may not be blocked at all bleh -->
+        <!-- TODO: make this friendly to ad blockers -->
+        <script src="/{{asset("assets/vendor-js/sentry-7.60.0-bundle.min.js")}}"></script>
+        <script>
+        Sentry.init({
+            dsn: "{{.SentryDSN}}",
+            tracesSampleRate: 0.01,
+        });
+        </script>
+    {{end}}
+    {{if .GTMContainerID != ""}}
+        <!-- Google Tag Manager -->
+        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','{{.GTMContainerID}}');</script>
+        <!-- End Google Tag Manager -->
+    {{end}}
+
+    <!-- NOTE: both of the above run before any
+    error handling handler is bound so they will not show errors -->
+
+
     <title>{{T("page_title")}}</title>
     <link rel="stylesheet" href="/{{asset("assets/style.css")}}">
     <!-- preload this huge font -->
@@ -38,7 +64,7 @@
 
     <!-- NOTE: default locale -->
     <meta property="og:locale" content="en_US">
-    {{range _, lang := .languageStringsUnderscore}}
+    {{range _, lang := .LanguageStringsUnderscore}}
     <meta property="og:locale:alternate" content="{{lang}}">
     {{end}}
     <meta property="og:url" content="https://mii-unsecure.ariankordi.net/">
@@ -170,6 +196,9 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
                         <li>Encoded/URL format: 47 characters</li>
                         <li>46 bytes: .mnms (decoded format)</li>
                         <li>Doesn't support hex data from a .txt file (just paste the hex in the data field and it should work there)</li>
+                        <li><b>NOTE: This DOES NOT, and WILL NEVER support 8-character Nintendo Account/Mii Studio IDs.</b> Unfortunately, those do not provide the Mii data we need.
+                        <ul><li>If you need to obtain a Mii Studio code, I like the guide from <a href="https://limes.pink/spinmii">SpinMii: navigate here and click on the question mark on the top right corner.</a> Use the "data-params" as the input to this site.</li>
+                        </li>
                     </ul>
                 </li>
             </ul>
@@ -319,12 +348,14 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
 
         <div id="data-error-size-0" style="font-weight: bold; color: red; display: none;">{{T("data_error_size_0")}}</div>
         <div id="data-error-size-540" style="font-weight: bold; color: red; display: none;">This data is 540 bytes long, and may be an amiibo file. We can decrypt amiibo now, choose the "amiibo Data" option and try again.</div>
+        <div id="data-error-size-8" style="font-weight: bold; color: orangered; display: none;">Is this a Nintendo Account ID? If so, then I'm sorry, but this tool cannot support those. You will have to continue to use <a target="_blank" href="https://pf2m.com/tools/mii/">pf2m.com/tools/mii</a>.
+        <br>Now, if this is a Mii Studio Mii, you will need to get its data instead of its ID. I like the guide from <a href="https://limes.pink/spinmii">SpinMii: navigate here and click on the question mark on the top right corner.</a> We need what they call "data-params". Thanks.</div>
         <div id="data-error-size-532" style="font-weight: bold; color: red; display: none;">This data is 532 bytes long, and may be an amiibo file, potentially decrypted. Choose the "amiibo Data" option and try again. If this still doesn't work, please let me know.</div>
 
         <div style="color: plum;">{{T("shader_lighting_type_above")}}</div>
         <label for="shaderType">
             {{if .IsntAMonthFromShaderAndLightingTypeBeingNew}}
-                <span style="color: gold;">{{T("shader_type_new")}}</span>
+                <span style="color: goldenrod;">{{T("shader_type_new")}}</span>
             {{end}}
             {{T("shader_lighting_type_label")}}</label>
         <select name="shaderType" id="shaderType" data-default-value="0" data-save>
@@ -432,17 +463,19 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
 <br>
 -->
 
-        <label for="cameraXRotate">{{T("camera_x_rotation_label")}}</label>
-        <input id="cameraXRotate-slider" type="range" min="0" max="360" value="0" data-default-value="0">
-        <input class="short-number" name="cameraXRotate" id="cameraXRotate" type="number" value="0" data-default-value="0">
-        <br>
-        <label for="cameraYRotate">{{T("camera_y_rotation_label")}}</label>
-        <input id="cameraYRotate-slider" type="range" min="0" max="360" value="0">
-        <input class="short-number" name="cameraYRotate" id="cameraYRotate" type="number" value="0" data-default-value="0">
-        <br>
-        <label for="cameraZRotate">{{T("camera_z_rotation_label")}}</label>
-        <input id="cameraZRotate-slider" type="range" min="0" max="360" value="0">
-        <input class="short-number" name="cameraZRotate" id="cameraZRotate" type="number" value="0" data-default-value="0">
+        <div style="font-size: 14px;">
+            <label for="cameraXRotate">{{T("camera_x_rotation_label")}}</label>
+            <input id="cameraXRotate-slider" type="range" min="0" max="360" value="0" data-default-value="0">
+            <input class="short-number" name="cameraXRotate" id="cameraXRotate" type="number" value="0" data-default-value="0">
+            <br>
+            <label for="cameraYRotate">{{T("camera_y_rotation_label")}}</label>
+            <input id="cameraYRotate-slider" type="range" min="0" max="360" value="0">
+            <input class="short-number" name="cameraYRotate" id="cameraYRotate" type="number" value="0" data-default-value="0">
+            <br>
+            <label for="cameraZRotate">{{T("camera_z_rotation_label")}}</label>
+            <input id="cameraZRotate-slider" type="range" min="0" max="360" value="0">
+            <input class="short-number" name="cameraZRotate" id="cameraZRotate" type="number" value="0" data-default-value="0">
+        </div>
 
         <details>
             <summary>{{T("advanced_options")}}</summary>
@@ -453,14 +486,12 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             <input type="checkbox" name="scale" id="scale" value="1">
             <div class="smaller" style="margin-bottom: 5px;">{{T("scale_label_small")}}</div>
 
-            <!--
             <label for="resourceType">{{T("resource_type_label")}}</label>
             <select name="resourceType" id="resourceType" data-default-value="1">
                 <option value="0">FFL_RESOURCE_TYPE_MIDDLE</option>
                 <option value="1" selected>FFL_RESOURCE_TYPE_HIGH</option>
             </select><br>
             <div class="smaller">{{T("resource_type_note")}}</div>
-            -->
 
             <label for="lightEnable">{{T("disable_lighting_label")}}</label>
             <input type="checkbox" name="lightEnable" id="lightEnable" value="0" data-default-value="0">
@@ -492,8 +523,8 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
 
         </details>
 
-        <div id="shader-type-2-inaccurate" style="font-weight: bold; color: red; display: none;">{{T("miitomo_shader_inaccurate_note_pre_link")}}<a href="#accuracy-status">{{T("miitomo_shader_inaccurate_note_link")}}</a>{{T("miitomo_shader_inaccurate_note_post_link")}}
-        <br><div class="small">{{T("miitomo_shader_inaccurate_note_small")}}</div></div>
+        <div id="shader-type-2-inaccurate" style="font-weight: bold; color: orange; font-size: 12px; display: none;">{{T("miitomo_shader_inaccurate_note_pre_link")}}<a href="#accuracy-status">{{T("miitomo_shader_inaccurate_note_link")}}</a>{{T("miitomo_shader_inaccurate_note_post_link")}}
+        <br><div style="font-size: 10px; line-height: 120%;">{{T("miitomo_shader_inaccurate_note_small")}}</div></div>
         <div id="view-type-all-body-inaccurate" style="font-weight: bold; color: red; display: none;">{{T("view_type_all_body_inaccurate_note")}}
         <br><div class="small">{{T("view_type_all_body_inaccurate_note_small")}}</div></div>
 <!-- TODO: AUTO-SUBMIT NOT IMPLEMENTED
@@ -512,9 +543,9 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
                 <!-- js appends the image element in here -->
             </div>
             <!-- the last argument controls whether to remove that as a query param -->
-            <button onclick="handleCopyButtonAndUpdateCounter(event, undefined, 'erri')">
+            <button onclick="handleCopyButtonAndUpdateText(event, undefined, 'erri')">
                 <span class="text-copy">{{T("copy_image_url")}}</span>
-                <span class="text-counter" style="display: none;">{{T("copied")}}<span>0</span>x</span>
+                <span class="text-copied" style="display: none;">{{T("copied")}}</span>
             </button>
             <details ontoggle="handleConvertDetailsToggle(event)">
             <summary style="font-size: 18px;">
@@ -531,9 +562,9 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
                 <ul class="left-justified-compact">
                 <li style="margin: 5px;">
                     {{T("studio_render_label")}}
-                    <button onclick="handleCopyButtonAndUpdateCounter(event)">
+                    <button onclick="handleCopyButtonAndUpdateText(event)">
                     <span class="text-copy">{{T("copy_image_url")}}</span>
-                    <span class="text-counter" style="display: none;">{{T("copied")}}<span>0</span>x</span>
+                    <span class="text-copied" style="display: none;">{{T("copied")}}</span>
                     </button>
                     <img class="image-80" alt="{{T("studio_render_label")}}" data-src="https://studio.mii.nintendo.com/miis/image.png?type=face&width=96&data=">
                 </li>
@@ -553,7 +584,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
                     {{T("download_prefix")}}.ffsd
                     </button>
                 </li>
-                <li><a class="mii-instructions-link" target="_blank" href="https://miiinstructions.sticksweb.site/?data=">See instructions on how to recreate on the Switch</a> (created by <a target="_blank" href="https://github.com/sticks-stuff">stick</a>)</li>
+                <li><a class="mii-instructions-link" target="_blank" href="https://miiinstructions.sticksweb.site/?data=">See instructions for how to recreate on the Switch</a></li>
                 <li>{{T("post_convert_fflstoredata_label")}}<code class="ver3storedata code-block"></code></li>
                 <!-- TODO 2024-08-25: IMPLEMENT THIS ASAP IF YOU WANT WII MIIS TO SCAN ON 3DS SYSTEMS ..........
                 <li>
@@ -662,7 +693,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
     <ul class="left-aligned-ul">
         <li>You just found a Mii renderer powered by N*ntendo's official FFL library, decompiled by <a href="https://github.com/aboood40091">AboodXD</a>.</li>
         <li>See it on GitHub: <a href="https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype">ariankordi/FFL-Testing (renderer-server-prototype branch)</a></li>
-        <li>It has new shaders, support for all* Mii data types, new Switch colors and glasses, and it is completely self-hosted. If you have a Mii-centric service, you can host it on your own server!
+        <li>It has new shaders, support for all* Mii data types as well as Switch Miis, and it is completely self-hosted. If your site uses Mii icons, you can now render them on your own server!
         <ul>
             <li class="smaller">* Exceptions: DS (just Wii but endian-flipped to LE), Miis in 3DS/Wii U databases (also endian-flipped but to BE), any unofficial format, game-specific formats or any other one I'm not aware of.</li>
             <li>See the GitHub linked above for more details.</li>
@@ -720,7 +751,6 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             mii2studio authors: <a href="https://github.com/bennyman123abc">bendevnull</a>, <a href="https://github.com/HEYimHeroic">HEYimHeroic</a>, <a href="https://github.com/larsenv">Larsenv</a>, <a href="https://github.com/matthe815">Matthe815</a>
         <ul>
             <li>For all Mii Kaitai structs used in the client-side JS.</li>
-            <li>Larsenv told me he made the structs, but I'll credit everyone anyway.</li>
             <li>I modified <a href="https://github.com/ariankordi/mii2studio/blob/master/gen2_wiiu_3ds_miitomo.ksy">gen2_wiiu_3ds_miitomo.ksy</a> to fix accuracy.</li>
         </ul></li>
         <li><a href="https://github.com/kazuki-4ys">kazuki-4ys</a>:
