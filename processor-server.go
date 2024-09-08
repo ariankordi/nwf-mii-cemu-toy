@@ -36,6 +36,8 @@ import (
 
 	//"slices" // for slices.Delete which did not even work
 
+	"github.com/getsentry/sentry-go"
+	sentryhttp "github.com/getsentry/sentry-go/http"
 	roundrobin "github.com/hlts2/round-robin"
 
 	// gorm dialector type
@@ -191,9 +193,11 @@ var handler http.Handler = http.DefaultServeMux
 
 
 var gtmContainerID, sentryDSN string
+var sentryInitialized, isDevelopment bool
 func main() {
 	var port, certFile, keyFile, hostnamesSniAllowArg string
-	var isDevelopment bool
+	var sentryEnableTracing bool
+	//var isDevelopment bool
 	flag.StringVar(&port, "port", ":8080", "http port to listen to, OR https if you specify cert and key")
 	flag.StringVar(&certFile, "cert", "", "TLS certificate file")
 	flag.StringVar(&keyFile, "key", "", "TLS key file")
@@ -203,6 +207,7 @@ func main() {
 	// analytics
 	flag.StringVar(&gtmContainerID, "gtm-container-id", "", "Google Tag Manager container ID - passing this will enable it")
 	flag.StringVar(&sentryDSN, "sentry-dsn", "", "Sentry (or other compatible platform) DSN")
+	flag.BoolVar(&sentryEnableTracing, "sentry-enable-tracing", false, "Enable performance tracing for Sentry")
 
 	var (
 		// cache db connection string
@@ -233,8 +238,23 @@ func main() {
 	flag.Parse()
 
 	if sentryDSN != "" {
-		log.Println("Sentry enabled - DSN:", sentryDSN)
+		log.Println("Sentry enabled, client and server - DSN:", sentryDSN)
+		clientOptions := sentry.ClientOptions{
+			Dsn: sentryDSN,
+			EnableTracing: sentryEnableTracing,
+			Debug: isDevelopment,
+		}
+		err := sentry.Init(clientOptions)
+		if err != nil {
+			log.Println("sentry.Init ERROR:", err)
+		}
+		defer sentry.Flush(5 * time.Second)
 	}
+	sentryHandler := sentryhttp.New(sentryhttp.Options{
+		Repanic: true,
+	})
+	sentryInitialized = sentry.CurrentHub().Client() != nil
+
 	if gtmContainerID != "" {
 		log.Println("Google Tag Manager enabled - container ID:", gtmContainerID)
 	}
@@ -298,7 +318,14 @@ func main() {
 
 
 	http.HandleFunc("/error_reporting", sseErrorHandler)
-	http.HandleFunc("/miis/image.png", logRequest(http.HandlerFunc(renderImage)).ServeHTTP)
+
+	if sentryInitialized {
+		http.HandleFunc("/miis/image.png", logRequest(sentryHandler.HandleFunc(renderImage)).ServeHTTP)
+	} else {
+		http.HandleFunc("/miis/image.png", logRequest(http.HandlerFunc(renderImage)).ServeHTTP)
+	}
+
+
 	http.HandleFunc("/render.png", miisImagePngRedirectHandler)
 
 	// add frontend
@@ -317,6 +344,8 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading templates: ", err)
 	}*/
+
+
 
 	// index = /index.html
 	http.HandleFunc("/", endpointsHandler)
