@@ -161,6 +161,7 @@ function saveSpecifiedFieldsToLocalStorage() {
     let inputValue = element.value;
     // if this is a checkbox, then the value is if it is checked
     if(element.type === 'checkbox') inputValue = element.checked;
+    else if(element.nodeName === 'DETAILS') inputValue = element.open;
     let inputName = element.name;
     if(!inputName)
       // use id as name
@@ -202,11 +203,15 @@ function loadSpecifiedFieldsFromLocalStorage() {
     // Set the value or checked status based on the element type
     if(element.type === 'checkbox')
       element.checked = decodedValue;
+    else if(element.nodeName === 'DETAILS')
+      element.open = decodedValue;
     else
       element.value = decodedValue;
     // Fire the change event after setting the value
     element.dispatchEvent(new Event('change', { bubbles: true }));
     element.dispatchEvent(new Event('input', { bubbles: true }));
+    if(element.type === 'details')
+      element.dispatchEvent(new Event('toggle', { bubbles: true }));
   });
 }
 

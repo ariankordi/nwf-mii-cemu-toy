@@ -27,6 +27,7 @@ import (
 	roundrobin "github.com/hlts2/round-robin"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/getsentry/sentry-go"
 )
 
 var (
@@ -94,6 +95,26 @@ func isHex(s string) bool {
 	return err == nil
 }
 
+func isConnectionRefused(err error) bool {
+	return errors.Is(err, syscall.ECONNREFUSED) ||
+		// WSAECONNREFUSED on windows
+		errors.Is(err, syscall.Errno(10061))
+}
+
+func handleConnectionRefused(err error) {
+	if !isConnectionRefused(err) {
+		return
+	}
+
+	if eventID := sentry.CaptureException(err); eventID != nil {
+		log.Print("(Event ID: "+*eventID+")")
+	}
+}
+
+// if a socket response starts with this it
+// is always read out to the api response
+const socketErrorPrefix = "ERROR: "
+
 // sendRenderRequest sends the render request to the render server and receives the buffer data
 func sendRenderRequest(request RenderRequest) ([]byte, error) {
 	var buffer bytes.Buffer
@@ -112,6 +133,9 @@ func sendRenderRequest(request RenderRequest) ([]byte, error) {
 		conn, err = net.Dial("tcp", nextServer)
 		if err != nil {
 			log.Println("\033[1;31mURGENT: Failed to connect to "+nextServer+". The upstream may be down:\033[0m", err)
+
+			go handleConnectionRefused(err) // handle error async
+
 			return nil, err
 		}
 	} else {
@@ -135,7 +159,7 @@ func sendRenderRequest(request RenderRequest) ([]byte, error) {
 	receivedData := make([]byte, bufferSize)
 	_, err = io.ReadFull(conn, receivedData)
 	if err != nil {
-		return nil, err
+		return receivedData, err
 	}
 
 	return receivedData, nil
@@ -341,6 +365,14 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	lightEnable := query.Get("lightEnable") != "0" // 0 = no lighting
 	verifyCharInfo := query.Get("verifyCharInfo") != "0" // verify default
 
+	// Parsing and validating resource type
+	resourceType, err := strconv.Atoi(resourceTypeStr)
+	if err != nil {
+		http.Error(w, "resource type is not a number", http.StatusBadRequest)
+		return
+	}
+
+
 	// Parsing and validating expression flag
 	/*expressionFlag, err := strconv.Atoi(expressionFlagStr)
 	if err != nil {
@@ -359,6 +391,11 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		// now try to parse it as a string
 		// this defaults to normal if it fails
 		expression = getExpressionInt(expressionStr)
+	}
+
+	if expression > 18 && resourceType < 1 {
+		http.Error(w, "🥺🥺 🥺🥺🥺🥺 🥺🥺🥺, 🥺🥺🥺 😔 (Translation: Sorry, you cannot use this expression with the middle resource.)", http.StatusBadRequest)
+		return
 	}
 
 	// Parsing and validating width
@@ -381,13 +418,6 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	// NOTE: excessive high texture resolutions crash (assert fail) the renderer
 	if texResolution > 8192 {
 		http.Error(w, "you cannot make texture resolution this high it will make your balls explode", http.StatusBadRequest)
-		return
-	}
-
-	// Parsing and validating resource type
-	resourceType, err := strconv.Atoi(resourceTypeStr)
-	if err != nil {
-		http.Error(w, "resource type is not a number", http.StatusBadRequest)
 		return
 	}
 
@@ -506,34 +536,33 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		*/
 		// Handling incomplete data response
 		if err.Error() == "EOF" ||
-		errors.Is(err, syscall.ECONNRESET) ||
-		// WSAECONNREFUSED on windows
-		errors.Is(err, syscall.Errno(10061)) {
-			http.Error(w, `incomplete data from backend :( render probably failed bc FFLInitCharModelCPUStep failed... probably because data is invalid
-<details>
-<summary>
-TODO: to make this error better here are the steps where the error is discarded:
-</summary>
-<pre>
-* RootTask::calc_ responds to socket
-* Model::initialize makes model nullptr
-* Model::setCharModelSource_ calls initializeCpu_
-* Model::initializeCpu_ calls FFLInitCharModelCPUStep
-  - FFLResult is discarded here
-* FFLInitCharModelCPUStep...
-* FFLiInitCharModelCPUStep...
-* FFLiCharModelCreator::ExecuteCPUStep
-* FFLiDatabaseManager::PickupCharInfo
-now, PickupCharInfo calls:
-* GetCharInfoFromStoreData, fails if StoreData is not big enough or its CRC16 fails - pretty simple.
-* FFLiiVerifyCharInfo or FFLiIsNullMiiID are called.
-  - i think FFLiIsNullMiiID is for if a mii is marked as deleted by setting its ID to null
-  - FFLiiVerifyCharInfo -> FFLiVerifyCharInfoWithReason
-    + FFLiVerifyCharInfoReason is discarded here
-    + <b>FFLiVerifyCharInfoWithReason IS THE MOST LIKELY REASON</b>
-</pre>
-</details>
-		`, http.StatusInternalServerError)
+		err.Error() == "unexpected EOF" || // from io.ReadFull
+		errors.Is(err, syscall.ECONNRESET) {
+			// if it begins with the prefix
+			responseStr := string(bufferData)
+			// Find the first occurrence of the null character (0 byte)
+			if nullIndex := strings.Index(responseStr, string(byte(0))); nullIndex != -1 {
+				// If the null character exists, slice the string until that point
+				responseStr = responseStr[:nullIndex]
+			}
+			if strings.HasPrefix(responseStr, socketErrorPrefix) {
+				// in this case, respond with that error
+				http.Error(w, "renderer returned " + responseStr, http.StatusInternalServerError)
+				return
+			}
+
+			http.Error(w, `incomplete data from backend :( render probably failed for one of the following reasons:
+* FFLInitCharModelCPUStep failed: internal error or use of out-of-bounds parts
+* FFLiVerifyCharInfoWithReason failed: mii data/CharInfo is invalid`, http.StatusInternalServerError)
+			return
+		// handle connection refused/backend down
+		} else if isConnectionRefused(err) {
+			msg := "OH NO!!! the site is up, but the renderer backend is down..."
+			if sentryInitialized {
+				msg += "\n(AN ALERT HAS BEEN SENT TO THE SITE OWNER ABOUT THIS. please try again in a few minutes...)"
+			}
+			msg += "\nerror detail: " + err.Error()
+			http.Error(w, msg, http.StatusInternalServerError)
 			return
 		}
 		http.Error(w, "incomplete response from backend, error is: "+err.Error(), http.StatusInternalServerError)

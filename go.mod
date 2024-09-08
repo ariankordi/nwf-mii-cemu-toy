@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	golang.org/x/image v0.15.0
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 )
 
 require (
@@ -26,10 +26,11 @@ require (
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/getsentry/sentry-go v0.28.1 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/kevinpollet/nego v0.0.0-20211010160919-a65cd48cee43 // indirect
 	github.com/mattn/go-sqlite3 v1.14.17 // indirect
-	golang.org/x/net v0.19.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
 )

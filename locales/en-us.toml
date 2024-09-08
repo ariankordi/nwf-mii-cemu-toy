@@ -319,7 +319,7 @@ other = "Advanced options"
 other = "Resource type:"
 
 [resource_type_note]
-other = "You should always use high, but official renders all use middle in case you want to match them, or you're running this renderer on a terrible machine."
+other = "You should always use high, but official renders all use middle in case you want to match them. Note that middle does not have new glasses or expressions."
 
 [disable_lighting_label]
 other = "Disable lighting:"
@@ -350,8 +350,6 @@ other = "Disable CharInfo verification:"
 
 [disable_charinfo_verify_note]
 other = "Allows you to use any kind of data as Mii data. May still not work."
-[disable_charinfo_verify_note_bold]
-other = " NOTE as of August 2024: this doesn't show you the verification reason from the server just yet, all I have is an overly long-winded response, sorry for that."
 
 [camera_x_rotation_label]
 other = "Camera X rotation:"
@@ -457,3 +455,6 @@ other = "Download "
 
 [auto_submit_label]
 other = "Auto-Submit:"
+
+[camera_controls_label]
+other = "Camera controls"

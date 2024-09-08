@@ -317,7 +317,7 @@ other = "高度なオプション"
 other = "リソースタイプ:"
 
 [resource_type_note]
-other = "常に高を使用する必要がありますが、公式レンダリングはすべて中を使用しているため、それらと一致させたい場合、またはこのレンダラーを低性能なマシンで実行している場合に使用します。"
+other = "必ず high を使用するべきですが、公式レンダーは middle を使用するので、それに合わせたい場合は middle を使ってください。middle には新しいメガネや表情が含まれていないことに注意してください。"
 
 [disable_lighting_label]
 other = "ライティングを無効にする:"
@@ -348,8 +348,6 @@ other = "CharInfo検証を無効にする:"
 
 [disable_charinfo_verify_note]
 other = "どのようなデータでもMiiデータとして使用できるようになります。それでも動作しない可能性があります。"
-[disable_charinfo_verify_note_bold]
-other = " 2024年8月現在、サーバーからの検証理由はまだ表示されませんが、申し訳ないことに長々とした応答しかありません。"
 
 [camera_x_rotation_label]
 other = "カメラX回転:"
@@ -456,3 +454,5 @@ other = "ダウンロード "
 [auto_submit_label]
 other = "自動送信:"
 
+[camera_controls_label]
+other = "カメラ制御"

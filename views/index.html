@@ -463,19 +463,22 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
 <br>
 -->
 
-        <div style="font-size: 14px;">
-            <label for="cameraXRotate">{{T("camera_x_rotation_label")}}</label>
-            <input id="cameraXRotate-slider" type="range" min="0" max="360" value="0" data-default-value="0">
-            <input class="short-number" name="cameraXRotate" id="cameraXRotate" type="number" value="0" data-default-value="0">
-            <br>
-            <label for="cameraYRotate">{{T("camera_y_rotation_label")}}</label>
-            <input id="cameraYRotate-slider" type="range" min="0" max="360" value="0">
-            <input class="short-number" name="cameraYRotate" id="cameraYRotate" type="number" value="0" data-default-value="0">
-            <br>
-            <label for="cameraZRotate">{{T("camera_z_rotation_label")}}</label>
-            <input id="cameraZRotate-slider" type="range" min="0" max="360" value="0">
-            <input class="short-number" name="cameraZRotate" id="cameraZRotate" type="number" value="0" data-default-value="0">
-        </div>
+        <details id="camera-controls-details" data-save data-default-value="0">
+            <summary>{{T("camera_controls_label")}}</summary>
+            <div style="font-size: 14px;">
+                <label for="cameraXRotate">{{T("camera_x_rotation_label")}}</label>
+                <input id="cameraXRotate-slider" type="range" min="0" max="360" value="0" data-default-value="0">
+                <input class="short-number" name="cameraXRotate" id="cameraXRotate" type="number" value="0" data-default-value="0">
+                <br>
+                <label for="cameraYRotate">{{T("camera_y_rotation_label")}}</label>
+                <input id="cameraYRotate-slider" type="range" min="0" max="360" value="0">
+                <input class="short-number" name="cameraYRotate" id="cameraYRotate" type="number" value="0" data-default-value="0">
+                <br>
+                <label for="cameraZRotate">{{T("camera_z_rotation_label")}}</label>
+                <input id="cameraZRotate-slider" type="range" min="0" max="360" value="0">
+                <input class="short-number" name="cameraZRotate" id="cameraZRotate" type="number" value="0" data-default-value="0">
+            </div>
+        </details>
 
         <details>
             <summary>{{T("advanced_options")}}</summary>
@@ -517,7 +520,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             <!-- NOTE: in this case, data-default-value on checkboxes means if they are checked -->
             <input type="checkbox" name="verifyCharInfo" id="verifyCharInfo" value="0" data-default-value="0" data-save>
 
-            <div class="smaller">{{T("disable_charinfo_verify_note")}}<b>{{T("disable_charinfo_verify_note_bold")}}</b></div>
+            <div class="smaller">{{T("disable_charinfo_verify_note")}}</div>
 
             </div>
 
@@ -662,12 +665,15 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
     <!-- scripts -->
     <script async src="/{{asset("assets/data-conversion.js")}}"></script>
     <!-- kaitai structs begin -->
+    <!--
     <script async src="/{{asset("assets/kaitai-structs/js/Gen2Wiiu3dsMiitomo.js")}}"></script>
     <script async src="/{{asset("assets/kaitai-structs/js/Gen3Studio.js")}}"></script>
     <script async src="/{{asset("assets/kaitai-structs/js/Gen1Wii.js")}}"></script>
     <script async src="/{{asset("assets/kaitai-structs/js/Gen3Switch.js")}}"></script>
     <script async src="/{{asset("assets/kaitai-structs/js/Gen2Wiiu3dsMiitomoNfpstoredataextention.js")}}"></script>
     <script async src="/{{asset("assets/kaitai-structs/js/Gen3Switchgame.js")}}"></script>
+    -->
+    <script async src="/{{asset("assets/kaitai-structs/js/2024-09-07-all-compiled-kaitai-structs.min.js")}}"></script>
     <!-- qr code encoder for data conversion -->
     <script async src="/{{asset("assets/vendor-js/qr.min.js")}}"></script>
 
@@ -717,6 +723,9 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             </ul>
 
             </details>
+        </li>
+        <li>
+            <b>Do you want to help?</b> If you want to give me advice or lend a hand with: frontend design/UX, help with OpenGL/C++, porting to WebGL, <a href="#contact">please get in touch!</a>
         </li>
     </ul>
 

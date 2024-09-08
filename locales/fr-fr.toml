@@ -319,7 +319,7 @@ other = "Options avancées"
 other = "Type de ressource :"
 
 [resource_type_note]
-other = "Vous devriez toujours utiliser \"haut\", mais les rendus officiels utilisent tous \"moyen\" au cas où vous voudriez les imiter, ou si vous exécutez ce renderer sur une machine médiocre."
+other = "Vous devez toujours utiliser high, mais les rendus officiels utilisent middle au cas où vous voudriez les correspondre. Notez que middle n'a pas de nouvelles lunettes ni d'expressions."
 
 [disable_lighting_label]
 other = "Désactiver l'éclairage :"
@@ -350,8 +350,6 @@ other = "Désactiver la vérification CharInfo :"
 
 [disable_charinfo_verify_note]
 other = "Vous permet d'utiliser n'importe quel type de données comme données Mii. Peut ne pas fonctionner."
-[disable_charinfo_verify_note_bold]
-other = " NOTE en août 2024 : cela ne vous montre pas encore la raison de la vérification depuis le serveur, tout ce que j'ai est une réponse trop verbeuse, désolé pour cela."
 
 [camera_x_rotation_label]
 other = "Rotation X de la caméra :"
@@ -458,3 +456,5 @@ other = "Télécharger "
 [auto_submit_label]
 other = "Soumission automatique :"
 
+[camera_controls_label]
+other = "Commandes de la caméra"
