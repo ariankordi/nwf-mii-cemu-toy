@@ -191,6 +191,7 @@ const localesDir = "locales"
 
 var handler http.Handler = http.DefaultServeMux
 
+const gltfPath = "/miis/image.glb"
 
 var gtmContainerID, sentryDSN string
 var sentryInitialized, isDevelopment bool
@@ -321,8 +322,11 @@ func main() {
 
 	if sentryInitialized {
 		http.HandleFunc("/miis/image.png", logRequest(sentryHandler.HandleFunc(renderImage)).ServeHTTP)
+		http.HandleFunc(gltfPath, logRequest(sentryHandler.HandleFunc(renderImage)).ServeHTTP)
+
 	} else {
 		http.HandleFunc("/miis/image.png", logRequest(http.HandlerFunc(renderImage)).ServeHTTP)
+		http.HandleFunc(gltfPath, logRequest(http.HandlerFunc(renderImage)).ServeHTTP)
 	}
 
 
@@ -405,10 +409,6 @@ func getSelectedInputTypeCookie(r *http.Request, defaultValue string) string {
 	return cookie.Value
 }
 
-// TODO REMOVE THIS
-var shaderTypeReleaseDate = time.Date(2024, 8, 25, 0, 0, 0, 0, time.UTC)
-var oneMonthLater = shaderTypeReleaseDate.AddDate(0, 1, 0)
-
 func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/favicon.ico" {
 		http.ServeFile(w, r, "assets/favicon.ico")
@@ -446,9 +446,6 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: REMOVE THIS
-	isNew := time.Now().Before(oneMonthLater)
-
 	// default group that is enabled, controlled by cookie
 	groupEnabled := getSelectedInputTypeCookie(r, "nnid")
 	data := map[string]interface{}{
@@ -456,7 +453,7 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 		"GTMContainerID": gtmContainerID,
 		"SentryDSN": sentryDSN,
 
-		"IsntAMonthFromShaderAndLightingTypeBeingNew": isNew,
+		"IframeMode": r.URL.Query().Has("iframeMode"),
 		"GroupEnabled": groupEnabled,
 		"LanguageStrings": languageStrings,
 		"LanguageStringsUnderscore": languageStringsUnderscore,

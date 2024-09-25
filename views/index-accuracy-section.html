@@ -1,4 +1,4 @@
-    <section id="accuracy-status">
+    <section id="accuracy-status" class="hide-iframe-mode">
         <h2>Accuracy Status/Known Flaws</h2>
         <p>Current goals are to perfectly reproduce Wii U Mii Maker/NNID renders, Mii Studio/Miitomo renders, and Switch icon renders.</p>
         <ul class="left-aligned-ul">
@@ -34,25 +34,31 @@
             <details>
                 <summary>🚩 Missing a few parameters to be fully compatible with the Mii Studio API (read more...)</summary>
                 <ul>
-                    <li>characterXRotate, characterYRotate, characterZRotate
+                    <li>Note: Camera rotation lighting is inaccurate, and both rotations have slightly different ways of combining.???
                     <ul>
-                        <li>Difference between this and camera rotation comes down to model matrix vs view matrix, the only noticeable difference I've seen is in lighting.</li>
-                        <li>Seems that most people use character rotation instead of camera rotation so, sigh, gotta figure this out...</li>
+                        <li>Our character rotation is pretty much as accurate in terms of lighting, but camera rotation isn't.</li>
+                        <li>Legitimately not sure why that is. Camera rotation rotates the view matrix and character rotation moves the model matrix, so, don't know.</li>
+                        <li>If you use multiple rotation axises, with our camera rotation it matches Mii Studio's character rotation, and combining axises with our character rotation matches Mii Studio's camera rotation...??????????? I can't wrap my head around all of this...</li>
                     </ul></li>
-                    <li>clothesColor
-                    <ul><li>No reason I can't make this a hex color too. Also going to add "pantsColor" when that's a thing probably.</li></ul></li>
+                    <li><s>clothesColor</s> (still need pantsColor tho)</li>
                     <li>instanceCount, instanceRotationMode</li>
-                    <li>splitMode, splitDepthOffset(?)
+                    <ul>
+                        <li>Many ways to approach doing this efficiently.  glDrawElementsInstanced?</li>
+                        <li>Was also considering making a variant (as another instanceRotationMode?) for the same render but multiple expressions.</li>
+                        <li>I did attempt this at some point but couldn't wrap my head around getting it right.. I'll probably try it again soon.</li>
+                    </ul>
+                    <li>splitMode, splitDepthOffset(??)
                     <ul><li>Feel like splitDepthOffset doesn't do anything? It maaaay have done something on cdn-mii 1.0.0 though...??</li></ul></li>
-                    <li>lightXDirection, lightYDirection, lightZDirection, lightDirectionMode(?)
+                    <li>lightXDirection, lightYDirection, lightZDirection, lightDirectionMode(??)
                     <ul>
                         <li>I officially don't like the light direction parameters, I legitimately don't think anyone uses it right.</li>
                         <li>Both mii-js AND pf2m.com/tools/mii at some point used to initialize it to zero...</li>
                         <li>... while zero is not the default, so it just gives you a terrible result.</li>
                         <li>There's also lightDirectionMode, which cdn-mii 2.0.0/Mii Studio completely ignore. We don't know what its options do and, while setting it to "none" (the sites above were also doing this so eh where's the blame supposed to go) is SUPPOSED to not make the light directions apply, well, they do.</li>
-                        <li class="small">Was light direction even a thing on cdn-mii 1.0.0...??? I feel like pf2m.com/tools/mii specifically said it wasn't.</li>
+                        <li class="small">Was light direction even a thing on cdn-mii 1.0.0...??? I feel like pf2m.com/tools/mii specifically said it only worked on 2.0.0.</li>
+                        <li>The light direction parameter on cdn-mii/Mii Studio is also clearly not the real light direction uniform being passed to the shader, it would have more intense effects.</li>
                     </ul></li>
-                    <li>Also IMO all of the above are straightforward to implement except for light direction, since that's not the real light direction uniform being passed to the shader (it would have more intense effects).</li>
+                    <li>If you find anything else I should implement from cdn-mii/Mii Studio (other than Miitomo clothing/headgear), <a href="#contact">ping me.</a></li>
                 </ul>
             </details></li>
         </ul>
@@ -62,44 +68,72 @@
             <h3 style="display: inline;">Planned &amp; Unplanned: <span class="small">click to expand</span></h3>
             </summary>
             <ul class="left-aligned-ul">
-            <li>❔Don't have the body model used in Mii Studio at the moment. May be the same as Miitomo.</li>
+            <li>❔At the moment I don't have the Switch and Miitomo body models, I believe they would once again require skeletal animation to be implemented..</li>
 
             <li>❔Poses from the Wii U Mii Maker are planned as soon as skeletal animations work.
-            <details>
-                <summary>❔Need to reverse the custom QR code format from Miitomo/Miitopia/Tomodachi Life.</summary>
                 <ul>
-                    <li>There's no reason this renderer can't support the custom Mii colors from Miitopia and Tomodachi Life, and it's proven that Miitomo is using some Switch format on 2.3.0 and later.</li>
-                    <li>When all of those games encode the QR codes, they put downgraded 3DS/Wii U data in the beginning so that it can still scan on all devices supporting those Mii QR codes.</li>
-                    <li>...However, all of those games are putting the game-specific data after that in the QR code, and I've taken a look, and it seems obfuscated or encrypted on TOP of the encryption Mii QR codes already have :\</li>
-                    <li>I haven't personally taken a deep dive into this - it's definitely encrypted, with some <abbr title="Cryptographic term - Number Used Only Once">nonce?</abbr> or constant key at the beginning.</li>
-                    <li>It looks like if you scan Miitomo codes in Tomodachi Life it will pick up on those extra details, leading me to believe that potentially all games use the same thing.</li>
-                    <li>Neither of these games have debug symbols <span class="small">(despite that Miitomo has symbols for AFL/nn::mii on Android)</span> though so it's not going to be extremely straightforward to find, you'd have to do some memory debugging.</li>
-                    <li><span class="small">Feel like if someone like <a href="https://github.com/jaames">jaames</a> or <a href="https://github.com/Kinnay">Kinnay</a> looked into this they'd be able to find it in a jiffy but, alas, we are just mere mortals 😔</span></li>
+                    <li>Every pose is just a single-frame animation from MiiAnim.bfres, same source as everything else.</li>
+                    <li>Something I'm worried about is, I'm not sure where the camera view is coming from, because the angle is clearly changed.
+                        <ul><li>I've seen that it maayy be in the binary...</li>
+                        <li>If so, that will SUCK because I've had a reeeeally really hard time navating ffl_app.rpx 😭😭😭</li></ul>
+                    </li>
+                </ul>
+            <details>
+                <summary>❔Need to reverse the Tomodachi Life and Miitopia QR code formats. Miitomo codes are planned as soon as Kaerutomo properly implements them.</summary>
+
+                <ul>
+                    <li>To be clear, this is not referring to being able to merely scan their codes, but rather make use of the extra game-specific data within.</li>
+                    <li> ... For example, applying the custom colors (hair color, etc.) within, displaying their voice or personality traits...
+                        <ul><li>In the case of Miitomo, this means extracting the "nx_mii_core_data" Switch data that QR codes are supposed to give you, for the wider colors.</ul></li>
+                    <li>I actually did find the AES key and was able to make an encoder/decoder for the extra data within these codes for all of those games, check it out: <a target="_blank" href="https://jsfiddle.net/arian_/ckya346z/8/">https://jsfiddle.net/arian_/ckya346z/8/</a></li>
+                    <li>For Tomodachi Life and Miitopia, all of the data is within the code and just needs to be reversed. For Miitomo, it's more complicated, and sadly existing codes won't work, because:</li>
+                    <li>It looks like the only thing Miitomo stores in the QR code is some sort of ID ("token_for_json_data") - it expects the server to store the extra data with this ID and will use it to retrieve that data back from the server.</li>
+                    <li>Problem is, Kaerutomo does not store or retrieve this data for you. At all. And since it's not open source, nobody can add it except for them, and they aren't interested. 😐</li>
+                    <li>(If you are a Kaeru dev reading this, <a href="#contact">PLEEEASEEEE get in touch!!!</a> 😭)</li>
                 </ul>
             </details></li>
-            <li>❔May want to look into why the face texture looks more, blurry? on our renders compared to theirs.
+            <li>❔Need to match the texture filtering/mipmap options.
             <ul>
-                <li>Particularly at low resolutions like 96x96.</li>
-                <li>Feel like they may be using either different texture filtering or a different texture resolution (unlikely).</li>
+                <li>I feel that the clarity of the face texture doesn't match Wii U or Miitomo, I don't know.</li>
+                <li>Some face features are hard to make out at low resolutions like 96x96.</li>
+                <li>Will need to take a long hard look at this one day...</li>
+            </ul>
+
+            <details>
+                <summary>❔Replicating 3DS and Wii renders has been considered but isn't easy or a priority.</summary>
+                <ul>
+                    <li>This requires extracting the meshes (and textures? but those can be downscaled from the new ones) from CFL_Res.dat, but its header hasn't been reversed.</li>
+                    <li>In a pinch RFL_Res.dat could work, but 3DS/Wii U hair styles, textures etc. wouldn't work, and while there's an RFL decomp, I can't find the source code for <a target="_blank" href="https://wiki.tockdom.com/wiki/RFL_Res.dat_Editor">the one RFL_Res.dat editor everyone uses.</a></li>
+                    <li>Now, I could try making an extractor for the RFL_Res.dat format using the RFL decomp for structures, and then see how far I can apply that to CFL_Res.dat.</li>
+                    <li>... But if it doesn't work, well I'm not familiar with many games that have symbols for CFL (or even how to look at 3DS binaries in Ghidra), and frankly don't care enough to put a lot of time into it. Sorry, 3DS Mii render fans.</li>
+
+                    <li>Second obstacle is shaders, neither of these consoles use GLSL-compatible shaders. This can probably be worked around (or remade since it's very basic) but is still annoying.</li>
+                </ul>
+            </details></li>
+
+            <li>❔Miitomo/Tomodachi Life clothing/headgear/wigs may be planned.
+            <ul>
+                <li>Don't expect any of these any time soon, especially clothing and wigs.</li>
+                <li>Do keep in mind that these body models are different from the Wii U/Switch models and therefore the clothing may not work on those.</li>
             </ul></li>
 
-            <li>❔May look into doing a primitive shader. Potentially 3DS, Wii, maybe even both.
+            <li>❔I've thought about making a Mii Maker-like app with the FFL decomp, but... don't get your hopes up too far about this.</li>
             <ul>
-                <li>May require making the meshes/textures look worse for authenticity.
-                <ul><li>Artificially using the shader, or by importing from CFL_Res.dat, or both?</li></ul></li>
-                <li>Neither the 3DS nor Wii use traditional OpenGL-compatible shaders, though...</li>
-                <li>... however, emulators eventually translate both to GLSL, and N*ntendo made a TEV emulator on Wii U.</li>
+                <li>However, if you like the sound of this...</li>
+                <li>... and you're either working on something like this right now and it just needs Mii heads, OR you'd want to design the UI for this and let me add the rendering logic, <a href="#contact">do get in touch!</a></li>
+                <li class="small">(This is assuming, yaknow. it's not a Scratch or Roblox game or something)</li>
             </ul></li>
 
             </ul>
 
             <h3 style="display: inline;">Unplanned:</h3>
             <ul class="left-aligned-ul">
-            <li>Miitomo/Tomodachi Life clothing/headgear</li>
             <li>Custom hairstyles or frankly custom anything</li>
-            <li>Miitopia makeup</li>
-            <li>BoTW/TOTK models... semi-Miis</li>
-            <li>Xbox Miis, Apple Miis, Samsung Miis, any other stupid ass bootleg Miis
+            <li>Miitopia makeup, or custom expressions (sorry)
+                <ul><li>Miitomo expressions are the only exception, since they're built into AFL (its version of FFL). <a target="_blank" href="/miis/image.png?data=AwBgMIJUICvpzY4vnWYVrXy7ikd01AAAWR1KAGEAcwBtAGkAbgBlAAAAAAAAABw3EhB7ASFuQxwNZMcYAAgegg0AMEGzW4JtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAML0&amp;expression=33">See?</a></li></ul>
+            </li>
+            <li>BoTW/TOTK models.. "semi-Miis"</li>
+            <li>Xbox Miis, Apple Miis, Samsung Miis, any other stupid bootleg Miis
             <ul>
                 <li>Never ask me for these 🤬</li>
             </ul></li>

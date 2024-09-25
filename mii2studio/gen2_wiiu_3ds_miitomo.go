@@ -645,7 +645,7 @@ func (this *Gen2Wiiu3dsMiitomo) GlassesVertical() (v int, err error) {
 	if (this._f_glassesVertical) {
 		return this.glassesVertical, nil
 	}
-	this.glassesVertical = int(((this.Glasses >> 11) & 15))
+	this.glassesVertical = int(((this.Glasses >> 11) & 31))
 	this._f_glassesVertical = true
 	return this.glassesVertical, nil
 }

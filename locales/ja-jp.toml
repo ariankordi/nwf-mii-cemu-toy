@@ -323,7 +323,7 @@ other = "必ず high を使用するべきですが、公式レンダーは midd
 other = "ライティングを無効にする:"
 
 [disable_lighting_note]
-other = "Miiスタンプを作成したい場合にのみ役立ちます（シェーダーを書くこともできます）"
+other = "Miiスタンプを作成したい場合にのみ役立ちます."
 
 [texture_resolution_label]
 other = "テクスチャの解像度:"
@@ -339,8 +339,6 @@ other = "StoreData CRC16検証を無効にする:"
 [disable_crc16_note]
 # proper: CRC16
 other = "データにCRC16チェックサムが含まれている場合、検証をスキップします。"
-[disable_crc16_note_bold]
-other = " 2024年8月現在、これはクライアント側のみであることに注意してください。"
 
 [disable_charinfo_verify_label]
 # proper: CharInfo

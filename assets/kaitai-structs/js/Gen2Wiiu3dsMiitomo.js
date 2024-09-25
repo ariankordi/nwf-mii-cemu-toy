@@ -361,7 +361,7 @@ var Gen2Wiiu3dsMiitomo = (function() {
     get: function() {
       if (this._m_glassesVertical !== undefined)
         return this._m_glassesVertical;
-      this._m_glassesVertical = ((this.glasses >>> 11) & 15);
+      this._m_glassesVertical = ((this.glasses >>> 11) & 31);
       return this._m_glassesVertical;
     }
   });

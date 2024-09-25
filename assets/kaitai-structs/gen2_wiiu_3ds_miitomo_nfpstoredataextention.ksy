@@ -178,7 +178,7 @@ instances:
   facial_hair_beard:
     value: beard & 7
   glasses_vertical:
-    value: glasses >> 11 & 15
+    value: glasses >> 11 & 31
   glasses_size:
     value: glasses >> 7 & 15
   glasses_color:

@@ -323,7 +323,7 @@ other = "Siempre debes usar high, pero los renders oficiales usan middle en caso
 other = "Desactivar iluminación:"
 
 [disable_lighting_note]
-other = "Solo útil si deseas hacer un sello Mii (también puedes escribir un shader para ello)"
+other = "Solo útil si deseas hacer un sello Mii."
 
 [texture_resolution_label]
 other = "Resolución de la textura:"
@@ -339,8 +339,6 @@ other = "Desactivar verificación CRC16 de StoreData:"
 [disable_crc16_note]
 # proper: CRC16
 other = "Omite la verificación de la suma de verificación CRC16 si tus datos tienen una."
-[disable_crc16_note_bold]
-other = " Nota que a partir de agosto de 2024, esto es solo del lado del cliente por ahora."
 
 [disable_charinfo_verify_label]
 # proper: CharInfo

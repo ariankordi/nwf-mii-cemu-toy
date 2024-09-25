@@ -325,7 +325,7 @@ other = "Vous devez toujours utiliser high, mais les rendus officiels utilisent 
 other = "Désactiver l'éclairage :"
 
 [disable_lighting_note]
-other = "Utile uniquement si vous voulez créer un tampon Mii (vous pouvez également écrire un shader pour cela)"
+other = "Utile uniquement si vous voulez créer un tampon Mii."
 
 [texture_resolution_label]
 other = "Résolution de la texture :"
@@ -341,8 +341,6 @@ other = "Désactiver la vérification CRC16 de StoreData :"
 [disable_crc16_note]
 # proper: CRC16
 other = "Ignore la vérification du checksum CRC16 si vos données en ont un."
-[disable_crc16_note_bold]
-other = " Notez qu'en août 2024, cela se fait uniquement côté client pour le moment."
 
 [disable_charinfo_verify_label]
 # proper: CharInfo

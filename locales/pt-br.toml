@@ -324,7 +324,7 @@ other = "Você deve sempre usar high, mas os renders oficiais usam middle caso v
 other = "Desativar iluminação:"
 
 [disable_lighting_note]
-other = "Útil apenas se você quiser fazer um Carimbo Mii (você também pode escrever um shader para isso)"
+other = "Útil apenas se você quiser fazer um Carimbo Mii."
 
 [texture_resolution_label]
 other = "Resolução da textura:"
@@ -340,8 +340,6 @@ other = "Desativar verificação CRC16 dos StoreData:"
 [disable_crc16_note]
 # proper: CRC16
 other = "Pula a verificação da soma de verificação CRC16 se seus dados tiverem uma."
-[disable_crc16_note_bold]
-other = " Note que a partir de agosto de 2024, isso é apenas no lado do cliente por enquanto."
 
 [disable_charinfo_verify_label]
 # proper: CharInfo

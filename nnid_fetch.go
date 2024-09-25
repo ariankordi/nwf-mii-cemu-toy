@@ -309,7 +309,7 @@ type ResponseData struct {
 	UserID        string `json:"user_id"`
 }
 
-func miiHandler(w http.ResponseWriter, r *http.Request) {
+func setCORSHeaders(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
 	header.Set("Access-Control-Allow-Private-Network", "true")
 	header.Set("Access-Control-Allow-Origin", "*")
@@ -319,113 +319,25 @@ func miiHandler(w http.ResponseWriter, r *http.Request) {
 		// do not return any text on OPTIONS and preflight headers were already sent
 		return
 	}
+}
 
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) != 3 || parts[2] == "" {
-		http.Error(w, "usage: /mii_data/(nnid here)", http.StatusBadRequest)
-		return
-	}
-	nnid := parts[2]
 
-	query := r.URL.Query()
-	apiID, _ := strconv.Atoi(query.Get("api_id"))
-	acceptsOctetStream := r.Header.Get("Accept") == "application/octet-stream"
-
-	var data ResponseData
-	var lastModified time.Time
-
-	// pointer (so we can check if null) to raw mii data in bytes
-	var miiDataBytes *[]byte
-	// base64 mii data will be stored in responsedata
-
-	if useNNIDToMiiMapForAPI0 && apiID == 0 {
-		nnid = normalizeDashUnderscoreDot(nnid)
-		var miiData NNIDToMiiDataMap
-		result := mdb.Model(&miiData).Where("normalized_nnid = ?", nnid).First(&miiData)
-		if result.Error != nil {
-			if result.Error == gorm.ErrRecordNotFound {
-				http.Error(w, "NNID not found in archive", http.StatusNotFound)
-			} else {
-				http.Error(w, result.Error.Error(), http.StatusInternalServerError)
-			}
-			return
-		}
-
-		// nnidtomiidatamap contains binary data
-		miiDataBytes = &miiData.Data
-		lastModified = miiData.LastModified
-
-		// only set other props if this is NOT simple octet stream
-		if !acceptsOctetStream {
-			data.StudioURLData = mii2studio.Map3DSStoreDataToStudioURLData(miiData.Data)
-
-			data.PID = miiData.PID
-			data.UserID = miiData.NNID
-
-			data.Name = utf16LESliceToString(miiData.Data[0x1a : 0x1a+0x14])
-		}
-	} else {
-		// force refresh is actually only applicable if not using archive
-		forceRefresh, _ := strconv.ParseBool(query.Get("force_refresh"))
-		pid, err := fetchNNIDToPID(nnid, apiID)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		}
-
-		miiResponse, err := fetchMii(pid, apiID, forceRefresh)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		// base64 mii data
-		data.Data = miiResponse.Miis[0].Data
-
-		// skip (poteeentially expeensivveeE???) studio encode step
-		// when it is accept octet stream where they are not even used
-		if !acceptsOctetStream {
-			// decode base64 mii
-			var storeData []byte
-			storeData, err = base64.StdEncoding.DecodeString(miiResponse.Miis[0].Data)
-			if err == nil {
-				data.StudioURLData = mii2studio.Map3DSStoreDataToStudioURLData(storeData)
-			}
-			//miiDataBytes = &storeData
-			// if we reach this we WILL be encoding base64 guaranteed
-
-			data.Name = miiResponse.Miis[0].Name
-			data.PID = miiResponse.Miis[0].PID
-			data.UserID = miiResponse.Miis[0].UserID
-		}
-	}
+func handleMiiDataResponse(w http.ResponseWriter, data ResponseData, miiDataBytes *[]byte, acceptsOctetStream bool, lastModified time.Time) {
+	header := w.Header()
 
 	// set last modified only if it is defined
 	if !lastModified.IsZero() {
 		header.Set("Last-Modified", lastModified.Format(http.TimeFormat))
 	}
-	// octet stream = need raw bytes
-	if acceptsOctetStream {
-		// decode mii data in bytes, from base64 data if we need it
-		if miiDataBytes == nil {
-			// if miiDataBytes is a nil pointer...
-			var err error
-			// ...then allocate it here, instead of dereferencing nil
-			var miiDataBytesTmp []byte
-			// note this could be done without any of the above
-			// if only this didn't return err too
-			miiDataBytesTmp, err = base64.StdEncoding.DecodeString(data.Data)
-			if err != nil {
-				http.Error(w, "Failed to decode base64 data", http.StatusInternalServerError)
-				return
-			}
-			miiDataBytes = &miiDataBytesTmp
 
-		}
+	if acceptsOctetStream {
+		// octet stream = need raw bytes
 		w.Write(*miiDataBytes)
 	} else {
 		if !lastModified.IsZero() {
 			data.Images.LastModified = &lastModified
 		} // otherwise it will be undefined/nil/excluded
+
 		// consuming base64 mii data...
 		// if there is no base64 data but there IS binary data...
 		if data.Data == "" && miiDataBytes != nil {
@@ -441,46 +353,133 @@ func miiHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func utf16LESliceToString(utf16Data []byte) string {
-	// Convert UTF-16 LE to a slice of uint16
-	u16s := make([]uint16, 10)
-	for i := 0; i < len(u16s); i++ {
-		u16s[i] = uint16(utf16Data[2*i]) | uint16(utf16Data[2*i+1])<<8
-	}
-	// Find the null terminator
-	nullIndex := -1
-	for i, v := range u16s {
-		if v == 0 {
-			nullIndex = i
-			break
+func retrieveMiiDataFromNNIDOrPID(w http.ResponseWriter, nnid string, pid int64, apiID int, acceptsOctetStream bool, forceRefresh bool) (ResponseData, *[]byte, time.Time, error) {
+	var data ResponseData
+	var lastModified time.Time
+	var miiDataBytes *[]byte
+
+	if useNNIDToMiiMapForAPI0 && apiID == 0 {
+		// Lookup by PID if it's provided (not -1), otherwise lookup by NNID
+		var miiData NNIDToMiiDataMap
+		if pid != -1 {
+			result := mdb.Model(&miiData).Where("pid = ?", pid).First(&miiData)
+			if result.Error != nil {
+				if result.Error == gorm.ErrRecordNotFound {
+					http.Error(w, "PID not found in archive", http.StatusNotFound)
+				} else {
+					http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+				}
+				return data, nil, lastModified, result.Error
+			}
+		} else {
+			nnid = normalizeDashUnderscoreDot(nnid)
+			result := mdb.Model(&miiData).Where("normalized_nnid = ?", nnid).First(&miiData)
+			if result.Error != nil {
+				if result.Error == gorm.ErrRecordNotFound {
+					http.Error(w, "NNID not found in archive", http.StatusNotFound)
+				} else {
+					http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+				}
+				return data, nil, lastModified, result.Error
+			}
+		}
+
+		// nnidtomiidatamap contains binary data
+		miiDataBytes = &miiData.Data
+		lastModified = miiData.LastModified
+
+		// only set other props if this is NOT simple octet stream
+		if !acceptsOctetStream {
+			data.StudioURLData = mii2studio.Map3DSStoreDataToStudioURLData(miiData.Data)
+			data.PID = miiData.PID
+			data.UserID = miiData.NNID
+			data.Name = utf16LESliceToString(miiData.Data[0x1a : 0x1a+0x14])
+		}
+	} else {
+		// Pass pid if it's not -1, otherwise lookup with nnid
+		var fetchedPID uint64
+		if pid == -1 {
+			fetchedPID, _ = fetchNNIDToPID(nnid, apiID)
+		} else {
+			fetchedPID = uint64(pid)
+		}
+
+		miiResponse, err := fetchMii(fetchedPID, apiID, forceRefresh)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return data, nil, lastModified, err
+		}
+
+		// base64 mii data
+		data.Data = miiResponse.Miis[0].Data
+
+		if !acceptsOctetStream {
+			// decode base64 mii
+			var storeData []byte
+			storeData, err = base64.StdEncoding.DecodeString(miiResponse.Miis[0].Data)
+			if err == nil {
+				data.StudioURLData = mii2studio.Map3DSStoreDataToStudioURLData(storeData)
+			}
+
+			data.Name = miiResponse.Miis[0].Name
+			data.PID = miiResponse.Miis[0].PID
+			data.UserID = miiResponse.Miis[0].UserID
 		}
 	}
-	// If null terminator is found, slice up to that point
-	if nullIndex != -1 {
-		u16s = u16s[:nullIndex]
-	}
-	// Convert UTF-16 to UTF-8
-	runes := utf16.Decode(u16s)
-	var utf8Buf bytes.Buffer
-	for _, r := range runes {
-		utf8Buf.WriteRune(r)
-	}
-	return utf8Buf.String()
+
+	return data, miiDataBytes, lastModified, nil
 }
 
-func randomMiiHandler(w http.ResponseWriter, r *http.Request) {
-	header := w.Header()
-	header.Set("Access-Control-Allow-Private-Network", "true")
-	header.Set("Access-Control-Allow-Origin", "*")
-	header.Set("Access-Control-Allow-Headers", "Accept")
-	if r.Method == "OPTIONS" {
+
+func miiHandler(w http.ResponseWriter, r *http.Request) {
+	setCORSHeaders(w, r)
+
+	parts := strings.Split(r.URL.Path, "/")
+	query := r.URL.Query()
+
+	// If a valid pid is provided, use it, otherwise -1
+	pid, err := strconv.ParseInt(query.Get("pid"), 10, 64)
+	if err != nil {
+		pid = -1
+	}
+
+	if len(parts) != 3 || parts[2] == "" && pid == -1 {
+		http.Error(w, "usage: /mii_data/(nnid)", http.StatusBadRequest)
+		return
+	}
+	nnid := parts[2]
+
+	apiID, _ := strconv.Atoi(query.Get("api_id"))
+	acceptsOctetStream := r.Header.Get("Accept") == "application/octet-stream"
+
+	// retrieve mii data based on nnid or pid
+	forceRefresh, _ := strconv.ParseBool(query.Get("force_refresh"))
+	data, miiDataBytes, lastModified, err := retrieveMiiDataFromNNIDOrPID(w, nnid, pid, apiID, acceptsOctetStream, forceRefresh)
+	if err != nil {
 		return
 	}
 
+	if acceptsOctetStream && miiDataBytes == nil {
+		var miiDataBytesTmp []byte
+		miiDataBytesTmp, err = base64.StdEncoding.DecodeString(data.Data)
+		if err != nil {
+			http.Error(w, "Failed to decode base64 data", http.StatusInternalServerError)
+			return
+		}
+		miiDataBytes = &miiDataBytesTmp
+	}
+
+	handleMiiDataResponse(w, data, miiDataBytes, acceptsOctetStream, lastModified)
+}
+
+
+func randomMiiHandler(w http.ResponseWriter, r *http.Request) {
+	setCORSHeaders(w, r)
+
 	// Set the headers to prevent caching
-	header.Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
-	header.Set("Pragma", "no-cache")
-	header.Set("Expires", "0")
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
 
 	query := r.URL.Query()
 	seedStr := query.Get("seed")
@@ -522,45 +521,47 @@ func randomMiiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	acceptsOctetStream := r.Header.Get("Accept") == "application/octet-stream"
-
 	var data ResponseData
 	var lastModified time.Time
-
 	lastModified = miiData.LastModified
 
 	// only set other props if this is NOT simple octet stream
 	if !acceptsOctetStream {
 		data.StudioURLData = mii2studio.Map3DSStoreDataToStudioURLData(miiData.Data)
-
 		data.PID = miiData.PID
 		data.UserID = miiData.NNID
-
 		data.Name = utf16LESliceToString(miiData.Data[0x1a : 0x1a+0x14])
 	}
 
-	// set last modified only if it is defined
-	if !lastModified.IsZero() {
-		header.Set("Last-Modified", lastModified.Format(http.TimeFormat))
+	handleMiiDataResponse(w, data, &miiData.Data, acceptsOctetStream, lastModified)
+}
+
+func utf16LESliceToString(utf16Data []byte) string {
+	// Convert UTF-16 LE to a slice of uint16
+	u16s := make([]uint16, 10)
+	for i := 0; i < len(u16s); i++ {
+		u16s[i] = uint16(utf16Data[2*i]) | uint16(utf16Data[2*i+1])<<8
 	}
-	// octet stream = need raw bytes
-	if acceptsOctetStream {
-		w.Write(miiData.Data)
-	} else {
-		if !lastModified.IsZero() {
-			data.Images.LastModified = &lastModified
+	// Find the null terminator
+	nullIndex := -1
+	for i, v := range u16s {
+		if v == 0 {
+			nullIndex = i
+			break
 		}
-		// consuming base64 mii data...
-		data.Data = base64.StdEncoding.EncodeToString(miiData.Data)
-		response, err := json.Marshal(data)
-		if err != nil {
-			http.Error(w, "Failed to marshal JSON", http.StatusInternalServerError)
-			return
-		}
-		header.Set("Content-Type", "application/json; charset=UTF-8")
-		w.Write(response)
 	}
+	// If null terminator is found, slice up to that point
+	if nullIndex != -1 {
+		u16s = u16s[:nullIndex]
+	}
+	// Convert UTF-16 to UTF-8
+	runes := utf16.Decode(u16s)
+	var utf8Buf bytes.Buffer
+	for _, r := range runes {
+		utf8Buf.WriteRune(r)
+	}
+	return utf8Buf.String()
 }
 
 /*
