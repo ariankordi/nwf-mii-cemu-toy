@@ -45,6 +45,10 @@ synchronizeInputs(document.getElementById('cameraXRotate'), document.getElementB
 synchronizeInputs(document.getElementById('cameraYRotate'), document.getElementById('cameraYRotate-slider'));
 synchronizeInputs(document.getElementById('cameraZRotate'), document.getElementById('cameraZRotate-slider'));
 
+synchronizeInputs(document.getElementById('characterXRotate'), document.getElementById('characterXRotate-slider'));
+synchronizeInputs(document.getElementById('characterYRotate'), document.getElementById('characterYRotate-slider'));
+synchronizeInputs(document.getElementById('characterZRotate'), document.getElementById('characterZRotate-slider'));
+
 // When the transparent-checkbox is checked, change the background color to #00ff00
 transparentCheckbox.addEventListener('change', function() {
   if(this.checked) {
@@ -215,6 +219,8 @@ function loadSpecifiedFieldsFromLocalStorage() {
   });
 }
 
+// iframe mode - do not submit to server but submit to outer frame
+const iframeMode = document.body.hasAttribute('data-iframe-mode');
 // assumes there is only ONE form on the page or at least the one we want is the first one
 const form = document.forms[0];
 const resultList = document.getElementById('results');
@@ -225,7 +231,7 @@ const submitButton = document.getElementById('submit');
 
 let formSubmitting = false;
 
-form.addEventListener('submit', function(event) {
+function onFormSubmit(event) {
   event.preventDefault(); // Prevent the default form submission via HTTP
   formSubmitting = true;
   submitButton.disabled = true; // Disable the button
@@ -402,7 +408,66 @@ form.addEventListener('submit', function(event) {
       saveSpecifiedFieldsToLocalStorage();
     };
   }
-});
+}
+
+if(!iframeMode) {
+  form.addEventListener('submit', onFormSubmit);
+} else {
+    // special form handler for iframe mode
+    form.addEventListener('submit', function(event) {
+      event.preventDefault(); // Prevent the default form submission via HTTP
+    formSubmitting = true;
+    submitButton.disabled = true; // Disable the button
+
+    const formData = new FormData(form);
+    const searchParams = new URLSearchParams([...formData.entries()]);
+    if(transparentCheckbox.checked)
+      searchParams.delete('bgColor');
+    searchParams.delete('erri');
+
+
+    const dataForConversion = formData.get('data-REAL');
+    if(dataForConversion)
+      // delete it so it is not sent to the server, only used for js
+      searchParams.delete('data-REAL');
+    let data = !dataForConversion ? formData.get('data') : dataForConversion
+    console.log('data input:', data);
+
+
+    const inputData = parseHexOrB64TextStringToUint8Array(data);
+
+    // run the function to convert the data from the image to raw studio data
+    const studioData = convertDataToType(inputData, studioFormat);
+    const studioURLData = encodeStudioToObfuscatedHex(studioData);
+    searchParams.append('studioData', studioURLData);
+
+    // iterate through elements with data-default-value attribute
+    // for each of these inputs, if the value matches the default...
+    // then they will be excluded from the search params to clean it up
+    document.querySelectorAll('[data-default-value]').forEach(function(element) {
+      const defaultValue = element.getAttribute('data-default-value');
+
+      let inputValue = element.value;
+      // if this is a checkbox, then the value is if it is checked
+      if(element.type === 'checkbox') inputValue = element.checked;
+
+      // double equals means that '0' will match 'disabled' (checkbox)
+      if(inputValue == defaultValue)
+          searchParams.delete(element.name);
+    });
+
+    const params = searchParams.toString();
+    // post to above iframe
+    window.top.postMessage(params, '*');
+
+  });
+  window.onmessage = function(event) {
+      if(event.data === 'releaseSubmit') {
+          formSubmitting = false;
+          submitButton.disabled = false;
+      }
+  };
+}
 
 const ACCEPT_OCTET_STREAM = false;
 
@@ -419,6 +484,10 @@ const pnidInput = document.getElementById('pnid');
 const pnidDataInput = document.getElementById('pnid-data');
 const pnidLoaded = document.getElementById('pnid-loaded');
 let pnidDebounceTimeout;
+
+// disable last modified display for google bc it shows that as the page
+// last modified date and that probably did not help seo whoooops
+const disableLastModified = /Googlebot/.test(navigator.userAgent);
 
 async function handleNNIDDataFetch(apiUrl, nnidInput, nnidLoaded, nnidDataInput, nnidLastModified) {
   const headers = ACCEPT_OCTET_STREAM ? { 'Accept': 'application/octet-stream' } : {};
@@ -468,7 +537,9 @@ async function handleNNIDDataFetch(apiUrl, nnidInput, nnidLoaded, nnidDataInput,
         displayNameFromSupportedType(decodedData, nnidLoaded, type, (checkResult === 2));
 
         // Show last modified date if available
-        if(data.lastModified && nnidLastModified) {
+        if(data.lastModified && nnidLastModified
+          && !disableLastModified
+        ) {
           nnidLastModified.style.display = '';
           nnidLastModified.firstElementChild.textContent = new Date(data.lastModified).toLocaleString();
         }
@@ -1012,29 +1083,37 @@ function setCookie(name, value, days) {
   document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/";
 }
 
+
 // when this script is loaded...
 const selectElement = document.getElementById('input-type');
-// Check if a value is already stored in localStorage
-const storedValue = getCookie('selectedInputType');//localStorage.getItem('selectedInputType');
-// set value to that (before updating the form)
-if (storedValue)
-    inputTypeSelect.value = storedValue;
+
+if(!iframeMode) {
+  // Check if a value is already stored in localStorage
+  const storedValue = getCookie('selectedInputType');//localStorage.getItem('selectedInputType');
+  // set value to that (before updating the form)
+  if (storedValue)
+      inputTypeSelect.value = storedValue;
+}
 
 // Initially call the function to set the correct state based on the preselected option
 updateVisibility();
 
+
 // Add an event listener to the select element to update visibility upon change
 inputTypeSelect.addEventListener('change', function() {
-  setCookie('selectedInputType', this.value, 7); // Cookie will last for 7 days
+  if(!iframeMode)
+    setCookie('selectedInputType', this.value, 7); // Cookie will last for 7 days
   //localStorage.setItem('selectedInputType', this.value);
   // before updating visibility
   updateVisibility();
 });
 
-// connect the error reporting sse channel when you first open the page
-connectErrorReportingSSE();
+if(!iframeMode) {
+  // connect the error reporting sse channel when you first open the page
+  connectErrorReportingSSE();
 
-loadSpecifiedFieldsFromLocalStorage();
+  loadSpecifiedFieldsFromLocalStorage();
+}
 
 function crc16(data) {
   let crc = 0;

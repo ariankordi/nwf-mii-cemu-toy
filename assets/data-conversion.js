@@ -27,7 +27,7 @@ window.supportedFormats = [{
     technicalName: 'nn::mii::CharInfo (Switch)',
     sizes: [88],
     version: 4,
-    encodeFunction: 'encodeKaitaiStructToUint8Array',
+    encodeFunction: 'encodeSwitchCharInfo',
     toVer3Function: 'convertVer4FieldsToVer3'
   },
   {
@@ -65,6 +65,9 @@ window.supportedFormats = [{
     postConvertToFunction: 'gen3studioDefineBeardFromFacialHairFields', // define beard from facialhair
   },
 ];
+
+// ig you could also make this "no name" like FFL does
+const DEFAULT_NAME_IF_NONE = 'Mii'; // blanco api sets mii studio miis' names to this
 
 // conversion methods for supportedFormats are defined here instead of window now
 let conversionMethods = {};
@@ -245,6 +248,30 @@ conversionMethods.encodeKaitaiStructToUint8Array = struct => {
   // ... apparently, in order to encode to hex it has to be an array anyway
 
 };
+// encodeSwitchCharInfo is mostly just a thunk using the
+// above function to encode to uint8array, but generating
+// a random create ID (in this kaitai called "unknownData") first
+conversionMethods.encodeSwitchCharInfo = struct => {
+  // if create id is not null, then fill it with randomness
+  if(!struct.unknownData || isArrayNull(struct.unknownData)) {
+    for(let i = 0; i < 16; i++) {
+      struct.unknownData[i] = Math.floor(Math.random() * 256);
+    }
+    // from miiport: These two leftmost bits must be 0b10 for the ID to be valid.
+    struct.unknownData[8] &= 0b10111111;  // Clear the 7th bit
+    struct.unknownData[8] |= 0b10000000;  // Set the 8th bit
+  }
+  // fill in mii name if it is null
+  if(!struct.miiName || isStringNull(struct.miiName))
+    struct.miiName = DEFAULT_NAME_IF_NONE;
+  // for whatever reason they do not want any characters
+  // to be in the name after the null terminator
+  struct.miiName =
+    removeEverythingAfterNullTerminator(struct.miiName);
+  // then thunk to encode kaitai function
+  return conversionMethods.encodeKaitaiStructToUint8Array(struct);
+}
+
 // the methods below remap inconsistently named fields in gen3_studio.ksy from the original mii2studio
 // as the fields usually prefixed "facialHair" in the other structs are instead prefixed "beard" here
 
@@ -380,6 +407,20 @@ const handleConvertDetailsToggle = event => {
     // property in options is null - but it is undefined
   }
 
+  const modelDownloadButtons = event.target.getElementsByClassName('model-download-button');
+  const imgSearchIfItExists = event.target.parentElement.getElementsByTagName('img');
+  if(modelDownloadButtons.length && imgSearchIfItExists.length) {
+    const linkButWithGlbInsteadOfPng = imgSearchIfItExists[0].src
+                          // switch shader has transparent faceline
+                          // texture which will look wrong here
+                          // so just remove it in order to avoid
+                          // ppl who use that and don't know that
+                                .replace('&shaderType=1', '')
+                                .replace('.png?', '.glb?');
+    modelDownloadButtons[0].setAttribute('action', // actually a form lmao
+                                    linkButWithGlbInsteadOfPng);
+  }
+
   // base name will be name if it is defined
   let fileBaseName = name;
   if(!fileBaseName) {
@@ -467,7 +508,7 @@ conversionMethods.encodeVer3StoreData = (dataStruct, forQRCode) => {
   // NOTE: NOTE: this is what the Coral account API returns
   // in its Mii data, along with random IDs, I assume they forge it from studio data
   if(!dataStruct.miiName || isStringNull(dataStruct.miiName))
-    dataStruct.miiName = 'Mii'; // blanco api sets mii studio miis' names to this
+    dataStruct.miiName = DEFAULT_NAME_IF_NONE;
   // setting system id and client id here are NOT necessary, but they can be randomized
   //origMii.systemId = [0, 0, 0, 0, 0, 0, 0, 0];
   // mii id on the other hand cannot be null
@@ -753,6 +794,21 @@ const base64ToUint8Array = base64 => Uint8Array.from(atob(base64), c => c.charCo
 */
 // used to check if a string is all zeroes, which are seen in kaitai structs
 const isStringNull = string => string.split('').every(char => char === '\u0000');
+// take a null terminated string, and remove everything
+// after the null terminator by replacing the rest with zeroes
+// switch mii formats need this i think
+const removeEverythingAfterNullTerminator = string => {
+  let nullIndex = string.indexOf('\0'); // find null terminator in string
+  if(nullIndex !== -1) { // if it is found...
+    // .. we want to replace everything after it with nothing
+    // however this is simply overwriting everything else with zeroes
+    const beforeNull = string.slice(0, nullIndex + 1);
+    // create padding to put after the null
+    let padding = '\u0000'.repeat(string.length - beforeNull.length);
+    return beforeNull + padding;
+  }
+  return string; // if no null terminator??? then return input
+}
 // likewise used to check if an array is null
 const isArrayNull = array => array.every(i => i === 0);
 

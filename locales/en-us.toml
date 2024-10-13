@@ -325,7 +325,7 @@ other = "You should always use high, but official renders all use middle in case
 other = "Disable lighting:"
 
 [disable_lighting_note]
-other = "Only useful if you want to make a Mii Stamp (you can also write a shader for it)"
+other = "Only useful if you want to make a Mii Stamp, or something."
 
 [texture_resolution_label]
 other = "Texture resolution:"
@@ -341,8 +341,6 @@ other = "Disable StoreData CRC16 verification:"
 [disable_crc16_note]
 # proper: CRC16
 other = "Skips verifying the CRC16 checksum if your data has one."
-[disable_crc16_note_bold]
-other = " Note that as of August 2024, this is client-side only for now."
 
 [disable_charinfo_verify_label]
 # proper: CharInfo
