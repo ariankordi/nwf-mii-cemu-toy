@@ -32,5 +32,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/kevinpollet/nego v0.0.0-20211010160919-a65cd48cee43 // indirect
 	github.com/mattn/go-sqlite3 v1.14.17 // indirect
+	github.com/natefinch/lumberjack v2.0.0+incompatible // indirect
+	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	golang.org/x/net v0.21.0 // indirect
 )

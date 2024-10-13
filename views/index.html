@@ -23,6 +23,11 @@
         })(window,document,'script','dataLayer','{{.GTMContainerID}}');</script>
         <!-- End Google Tag Manager -->
     {{end}}
+    {{if .CloudflareAnalyticsToken != ""}}
+        <!-- Cloudflare Web Analytics -->
+            <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "{{.CloudflareAnalyticsToken}}"}'></script>
+        <!-- End Cloudflare Web Analytics -->
+    {{end}}
 
     <!-- NOTE: both of the above run before any
     error handling handler is bound so they will not show errors -->
@@ -319,7 +324,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
                     <li>Find an app that scans and lets you export amiibo files on your phone.
                         <ul>
                         <li>The following worked on my iPhone: <a target="_blank" href="https://apps.apple.com/us/app/amiiboss/id1579972834">AmiiBoss</a>, <a target="_blank" href="https://apps.apple.com/us/app/tagmiibo-write-nfc-tags/id1578966288">Tagmiibo</a>, <a target="_blank" href="https://apps.apple.com/us/app/amiibox-identify-write-nfc/id1580281187">Amiibox</a></li>
-                        <li>For Android, I haven’t looked into this <b>(TODO TODO: Use my work phone to test this)</b></li>
+                        <li>For Android, <a target="_blank" href="https://play.google.com/store/apps/details?id=com.hiddenramblings.tagmo.eightbit">TagMo</a> will work but there are probably more out there.</li>
                         </ul>
                     </li>
                     <li>Install it and open it…
@@ -332,7 +337,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
                     <li>Scan your amiibo figure. Then, export it to a file.
                         <ul>
                         <li>AmiiBoss and Tagmiibo have a bar at the bottom letting you see what figures you’ve scanned, then you can hit share on them.</li>
-                        <li><b>(Android apps TBD)</b></li>
+                        <li><i>(No instructions for TagMo or other Android apps right now, sorry)</i></li>
                         </ul>
                     </li>
                     <li>Upload it here. It should be 540 or 532 bytes.</li>
@@ -438,40 +443,40 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
 
 
         <!--
-        <label>Background color opacity: <input name="bgColorOpacity" type="range" min="0" max="255" value="0">
+        <label>{{T("background_color_opacity")}}: <input name="bgColorOpacity" type="range" min="0" max="255" value="0">
         <span class="small">0</span>
         </label>
         <br>
         -->
-        <label>Clothes color: <select class="parameter" name="clothesColor" data-default-value="default">
-            <option value="default">Default</option>
-            <option value="red">Red</option>
-            <option value="orange">Orange</option>
-            <option value="yellow">Yellow</option>
-            <option value="yellowgreen">Light green</option>
-            <option value="green">Dark green</option>
-            <option value="blue">Dark blue</option>
-            <option value="skyblue">Light blue</option>
-            <option value="pink">Pink</option>
-            <option value="purple">Purple</option>
-            <option value="brown">Brown</option>
-            <option value="white">White</option>
-            <option value="black">Black</option>
+        <label>{{T("clothes_color")}}: <select class="parameter" name="clothesColor" data-default-value="default">
+            <option value="default">{{T("default")}}</option>
+            <option value="red">{{T("red")}}</option>
+            <option value="orange">{{T("orange")}}</option>
+            <option value="yellow">{{T("yellow")}}</option>
+            <option value="yellowgreen">{{T("light_green")}}</option>
+            <option value="green">{{T("dark_green")}}</option>
+            <option value="blue">{{T("dark_blue")}}</option>
+            <option value="skyblue">{{T("light_blue")}}</option>
+            <option value="pink">{{T("pink")}}</option>
+            <option value="purple">{{T("purple")}}</option>
+            <option value="brown">{{T("brown")}}</option>
+            <option value="white">{{T("white")}}</option>
+            <option value="black">{{T("black")}}</option>
         </select>
         </label>
 
         <details id="rotation-controls-details" data-save data-default-value="0">
-            <summary>Rotation controls</summary>
+            <summary>{{T("rotation_controls")}}</summary>
             <div style="font-size: 14px;">
-                <label for="characterXRotate">Character X rotation:</label>
+                <label for="characterXRotate">{{T("character_x_rotation_label")}}</label>
                 <input id="characterXRotate-slider" type="range" min="0" max="360" value="0" data-default-value="0">
                 <input class="short-number" name="characterXRotate" id="characterXRotate" type="number" value="0" data-default-value="0">
                 <br>
-                <label for="characterYRotate">Character Y rotation:</label>
+                <label for="characterYRotate">{{T("character_y_rotation_label")}}</label>
                 <input id="characterYRotate-slider" type="range" min="0" max="360" value="0">
                 <input class="short-number" name="characterYRotate" id="characterYRotate" type="number" value="0" data-default-value="0">
                 <br>
-                <label for="characterZRotate">Character Z rotation:</label>
+                <label for="characterZRotate">{{T("character_z_rotation_label")}}</label>
                 <input id="characterZRotate-slider" type="range" min="0" max="360" value="0">
                 <input class="short-number" name="characterZRotate" id="characterZRotate" type="number" value="0" data-default-value="0">
 
@@ -490,9 +495,9 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
                 <input class="short-number" name="cameraZRotate" id="cameraZRotate" type="number" value="0" data-default-value="0">
                 <details>
                     <summary>
-                        <h4 style="margin: 0; display: inline;">How are character and camera rotation different?</h4>
+                        <h4 style="margin: 0; display: inline;">{{T("rotation_difference_explanation")}}</h4>
                     </summary>
-                <div>Subtle differences can be seen when <s>combining axises</s> (this doesn't combine them the same way as Mii Studio), in X and Z rotation, <s>and more notably in lighting</s> (in comparison to Mii Studio the lighting is the same currently)</div>
+                    <div>{{T("rotation_explanation_detail")}}</div>
                 </details>
             </div>
         </details>
@@ -513,23 +518,95 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             </select><br>
             <div class="smaller">{{T("resource_type_note")}}</div>
 
-            <label for="modelType">Head model type:</label>
+            <label for="expression2">Miitomo expression:</label>
+
+            <select id="expression2" data-override="expression" data-default-value="">
+                <option value="">(Use original expression)</option>
+                <!-- AFL/Miitomo expressions -->
+                <option value="19">Bored</option>
+                <option value="20">Bored open mouth</option>
+                <option value="21">Sigh mouth straight</option>
+                <option value="22">Sigh</option>
+                <option value="23">Disgusted mouth straight</option>
+                <option value="24">Disgusted</option>
+                <option value="25">Love</option>
+                <option value="26">Love mouth open</option>
+                <option value="27">Determined mouth straight</option>
+                <option value="28">Determined</option>
+                <option value="29">Cry mouth straight</option>
+                <option value="30">Cry</option>
+                <option value="31">Big smile mouth straight</option>
+                <option value="32">Big smile</option>
+                <option value="33">Cheeky</option>
+                <!-- <option value="34">Cheeky duplicate</option> -->
+                <option value="35">Resolve eyes funny mouth</option>
+                <option value="36">Resolve eyes funny mouth open</option>
+                <option value="37">Smug</option>
+                <option value="38">Smug mouth open</option>
+                <option value="39">Resolve</option>
+                <option value="40">Resolve mouth open</option>
+                <option value="41">Unbelievable</option>
+                <!-- <option value="42">Unbelievable duplicate</option> -->
+                <option value="43">Cunning</option>
+                <!-- <option value="44">Cunning duplicate</option> -->
+                <option value="45">Raspberry</option>
+                <!-- <option value="46">Raspberry duplicate</option> -->
+                <option value="47">Innocent</option>
+                <!-- <option value="48">Innocent duplicate</option> -->
+                <option value="49">Cat</option>
+                <!-- <option value="50">Cat duplicate</option> -->
+                <option value="51">Dog</option>
+                <!-- <option value="52">Dog duplicate</option> -->
+                <option value="53">Tasty</option>
+                <!-- <option value="54">Tasty duplicate</option> -->
+                <option value="55">Money mouth straight</option>
+                <option value="56">Money</option>
+                <option value="57">Spiral mouth straight</option>
+                <option value="58">Confused</option>
+                <option value="59">Cheerful mouth straight</option>
+                <option value="60">Cheerful</option>
+                <!-- <option value="61">Normal duplicate, maybe blank?</option> -->
+                <!-- <option value="62">Normal duplicate, maybe blank? duplicate</option> -->
+                <option value="63">Grumble mouth straight</option>
+                <option value="64">Grumble</option>
+                <option value="65">Moved mouth straight</option>
+                <option value="66">Moved (aka pleading face)</option>
+                <option value="67">Singing mouth small</option>
+                <option value="68">Singing</option>
+                <option value="69">Stunned</option>
+            </select>
+            <div class="smaller">
+            <details>
+                <summary>Not available with the middle resource. Selecting this will override the first expression choice. Click to reveal some slight inaccuracies with these.</summary>
+                <ul class="left-justified-compact">
+                    <li>Some expressions are supposed to set eyebrow colors, though I don't apply that and haven't found where that happens in libcocos2dcpp.so yet.</li>
+                    <li>The orientation of the eyes and the eye positions are flipped from Miitomo.
+                    <ul><li>However... this is actually a flaw with Miitomo in general.</li>
+                    <li>If you test the wink left and wink right expressions in FFL and in Mii Studio, you will see that they are flipped on the Mii Studio API.</li>
+                    <li>... However, I have specifically seen left defined as 12 and right defined as 13, in BOTH nn::mii and FFL enums, so between this and the other Miitomo expressions being flipped, AND the fact that some mask drawing routines were refactored in AFL...</li>
+                    <li>I think it's safe to say that Miitomo is the one that has incorrectly flipped them. And currently I'm not sure how to elegantly deal with this. (set a bit in modelFlag?)</li></ul></li>
+                    <li>The blank face expression is not working. I'm not sure how they do that, and I kind of inelegantly handle the case for cat/dog expressions removing the nose... bleh.</li>
+                    <li>Finally, I don't have a great way to verify that these are pixel perfect (especiallly the ones not choosable by the user), I'm just comparing by eye in the Miifoto editor, so...</li>
+                </ul>
+            </details></div>
+            <label for="modelType">{{T("head_model_type")}}:</label>
             <select name="modelType" id="modelType" data-default-value="normal">
                 <option value="normal" selected>FFL_MODEL_TYPE_NORMAL</option>
                 <option value="hat">FFL_MODEL_TYPE_HAT</option>
                 <option value="face_only">FFL_MODEL_TYPE_FACE_ONLY</option>
-            </select><br>
-            <div class="smaller">Not meant for icons, but in modeling or games. Optimized for e.g. hats, helmets (face only). Best combined with "partsTransform" in the JSON of an exported glTF.</div>
+            </select>
+            <label style="display: inline-block;" for="flattenNose">{{T("flatten_nose")}}</label>
+            <input type="checkbox" id="flattenNose" name="flattenNose" value="1" data-default-value="0">
+            <div class="smaller">{{T("model_type_note")}}</div>
 
-
-            <label for="drawStageMode">Draw stage mode:</label>
+            <label for="drawStageMode">{{T("draw_stage_mode")}}:</label>
             <select name="drawStageMode" id="drawStageMode" data-default-value="all">
-                <option value="all" selected>All</option>
-                <option value="opa_only">DrawOpa only</option>
-                <option value="xlu_only">DrawXlu only</option>
-                <option value="mask_only">Mask only</option>
+                <option value="all" selected>{{T("all")}}</option>
+                <option value="opa_only">{{T("draw_opa_only")}}</option>
+                <option value="xlu_only">{{T("draw_xlu_only")}}</option>
+                <option value="mask_only">{{T("mask_only")}}</option>
             </select><br>
-            <div class="smaller">Opa is the head without glasses or a face, Xlu is the face texture and glasses, and mask only is just the face texture. Uses for this are niche.</div>
+            <div class="smaller">{{T("draw_stage_note")}}</div>
 
 
             <label for="lightEnable">{{T("disable_lighting_label")}}</label>
@@ -573,7 +650,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
 -->
         <input id="submit" type="submit" data-value="{{T("submit_button_text")}}">
     </form>
-    <hr>
+    <hr class="hide-iframe-mode">
     <h3>{{T("outputs_section_heading")}}</h3>
     <ul id="results" class="results hide-iframe-mode">
 
@@ -611,7 +688,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
 
                 <form class="model-download-button" method="POST" style="display: inline;">
                     <button type="submit">
-                        Download a model of this Mii head in glTF (.glb)
+                        {{T("download_model")}}
                     </button>
                 </form>
                 </li>
@@ -631,7 +708,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
                     {{T("download_prefix")}}.ffsd
                     </button>
                 </li>
-                <li><a class="mii-instructions-link" target="_blank" href="https://miiinstructions.sticksweb.site/?data=">See instructions for how to recreate on the Switch</a></li>
+                <li><a class="mii-instructions-link" target="_blank" href="https://miiinstructions.sticksweb.site/?data=">{{T("see_instructions")}}</a></li>
                 <li>{{T("post_convert_fflstoredata_label")}}<code class="ver3storedata code-block"></code></li>
                 <!-- TODO 2024-08-25: IMPLEMENT THIS ASAP IF YOU WANT WII MIIS TO SCAN ON 3DS SYSTEMS ..........
                 <li>
@@ -657,7 +734,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             <br>
         </li>
     </ul>
-    <hr>
+    <hr class="hide-iframe-mode">
     <h3>{{T("samples_section_heading")}}</h3>
     <ul id="samples" class="results entire-width hide-iframe-mode">
         <li>
@@ -739,7 +816,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             'color: lightskyblue; font-size: 40px;');
     </script>
 
-    <hr>
+    <hr class="hide-iframe-mode">
 
     <h2>{{T("welcome_to_site_header")}}</h2>
     <ul class="left-aligned-ul hide-iframe-mode">
@@ -826,12 +903,12 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
                 <a href="https://github.com/educastellano/qr.js">qr.js (encoder)</a>
             </li>
         </ul></li>
-        <li class="small">Gab if you are reading this, this is where I would credit you for the Portuguese translation but since I was in a rush I completely threw away your translation and all of the old ones I had before and did not feel like asking you to translate hundreds of strings by hand so. just did them with machine translation this time 😭 😭 😭 </li>
+        <li class="small">(Translations for the site are machine translated. Please reach out if you want to improve them!)</li>
     </ul>
     </section>
 
     <br class="hide-iframe-mode"><br class="hide-iframe-mode">
-    <hr>
+    <hr class="hide-iframe-mode">
     <h3>🌎 {{T("change_language")}}</h3>
 
     <form method="GET" class="hide-iframe-mode">
@@ -846,6 +923,9 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
         </select>
         <input type="submit">
     </form>
+
+    <br class="hide-iframe-mode"><hr class="hide-iframe-mode">
+    <p>This project is not associated with Nintendo.</p>
 
     <meta itemprop="arianhandler-html-path" content="/{{asset("assets/warioland3/complicated.html")}}">
 

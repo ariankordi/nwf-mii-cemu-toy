@@ -454,5 +454,89 @@ other = "Télécharger "
 [auto_submit_label]
 other = "Soumission automatique :"
 
-[camera_controls_label]
-other = "Commandes de la caméra"
+[background_color_opacity]
+other = "Opacité de la couleur d'arrière-plan"
+[clothes_color]
+other = "Couleur des vêtements"
+
+[default]
+other = "Par défaut"
+[red]
+other = "Rouge"
+[orange]
+other = "Orange"
+[yellow]
+other = "Jaune"
+[light_green]
+other = "Vert clair"
+[dark_green]
+other = "Vert foncé"
+[dark_blue]
+other = "Bleu foncé"
+[light_blue]
+other = "Bleu clair"
+[pink]
+other = "Rose"
+[purple]
+other = "Violet"
+[brown]
+other = "Marron"
+[white]
+other = "Blanc"
+[black]
+other = "Noir"
+
+[rotation_controls]
+other = "Contrôles de rotation"
+
+[character_x_rotation_label]
+other = "Rotation du personnage sur l'axe X :"
+[character_y_rotation_label]
+other = "Rotation du personnage sur l'axe Y :"
+[character_z_rotation_label]
+other = "Rotation du personnage sur l'axe Z :"
+
+[rotation_difference_explanation]
+other = "Quelle est la différence entre la rotation du personnage et celle de la caméra ?"
+
+[rotation_explanation_detail]
+other = "Des différences subtiles peuvent être observées lors de la combinaison des axes, mais cela ne les combine pas de la même manière que le studio Mii, dans les rotations X et Z, et plus particulièrement dans l'éclairage - sauf que, par rapport au studio Mii, l'éclairage est actuellement le même."
+
+[head_model_type]
+other = "Type de modèle de tête"
+[model_type_note]
+# proper: face only, partsTransform, JSON, glTF
+other = "Pas conçu pour les icônes, mais pour le modélisme ou les jeux. Optimisé par exemple pour les chapeaux, casques (visage uniquement). Mieux combiné avec \"partsTransform\" dans le JSON d'un glTF exporté."
+
+[draw_stage_mode]
+other = "Mode de dessin de la scène"
+
+[all]
+other = "Tous"
+
+[draw_opa_only]
+# proper: DrawOpa
+other = "DrawOpa uniquement"
+
+[draw_xlu_only]
+# proper: DrawXlu
+other = "DrawXlu uniquement"
+
+[mask_only]
+# proper: mask
+other = "Masque uniquement"
+
+[draw_stage_note]
+# proper: Opa, Xlu, mask
+other = "Opa est la tête sans lunettes ni visage, Xlu est la texture du visage et les lunettes, et le masque uniquement est juste la texture du visage. Les utilisations sont rares."
+
+[download_model]
+# proper: Mii, glTF, .glb
+other = "Télécharger un modèle de cette tête Mii en glTF (.glb)"
+
+[see_instructions]
+# proper: Switch
+other = "Voir les instructions pour la recréer sur la Switch"
+
+[flatten_nose]
+other = "Aplatir le nez :"

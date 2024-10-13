@@ -454,3 +454,83 @@ other = "自動送信:"
 
 [camera_controls_label]
 other = "カメラ制御"
+
+[background_color_opacity]
+other = "背景色の不透明度"
+[clothes_color]
+other = "服の色"
+
+[default]
+other = "デフォルト"
+[red]
+other = "赤"
+[orange]
+other = "オレンジ"
+[yellow]
+other = "黄色"
+[light_green]
+other = "ライトグリーン"
+[dark_green]
+other = "ダークグリーン"
+[dark_blue]
+other = "ダークブルー"
+[light_blue]
+other = "ライトブルー"
+[pink]
+other = "ピンク"
+[purple]
+other = "紫"
+[brown]
+other = "茶色"
+[white]
+other = "白"
+[black]
+other = "黒"
+
+[rotation_controls]
+other = "回転操作"
+
+[character_x_rotation_label]
+other = "キャラクターのX回転："
+[character_y_rotation_label]
+other = "キャラクターのY回転："
+[character_z_rotation_label]
+other = "キャラクターのZ回転："
+
+[rotation_difference_explanation]
+other = "キャラクターの回転とカメラの回転はどのように異なりますか？"
+
+[rotation_explanation_detail]
+other = "軸を組み合わせると微妙な違いが見られますが、これはMii Studioと同じようにX軸とZ軸の回転を組み合わせていません。特に照明に関しては、現在のところMii Studioと同じです。"
+
+[head_model_type]
+other = "頭部モデルタイプ"
+[model_type_note]
+other = "アイコンではなく、モデリングやゲームで使用します。例えば、帽子やヘルメット（face only）に最適です。エクスポートされたglTFのJSON内の「partsTransform」と組み合わせるのが最適です。"
+
+[draw_stage_mode]
+other = "ステージモードを描画"
+
+[all]
+other = "すべて"
+
+[draw_opa_only]
+other = "DrawOpaのみ"
+
+[draw_xlu_only]
+other = "DrawXluのみ"
+
+[mask_only]
+other = "マスクのみ"
+
+[draw_stage_note]
+other = "Opaはメガネや顔のない頭、Xluは顔のテクスチャとメガネ、mask onlyは顔のテクスチャのみです。これらの使用は特殊です。"
+
+[download_model]
+other = "このMii頭のモデルをglTF（.glb）でダウンロード"
+
+[see_instructions]
+other = "Switchでの再現方法の説明を参照"
+
+[flatten_nose]
+other = "鼻を平らにする："

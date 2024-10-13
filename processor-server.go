@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"log"
+	"net" // purely for unix sockets
 
 	// to cleanup on exit
 	"os"
@@ -22,6 +23,7 @@ import (
 	"crypto/tls"
 
 	"github.com/CloudyKit/jet/v6"
+	"github.com/natefinch/lumberjack"
 	"github.com/pelletier/go-toml/v2"
 	"golang.org/x/text/language"
 
@@ -187,28 +189,49 @@ func loadTemplates(templatesDir string, opts []jet.Option) {
 	views.AddGlobalFunc("asset", assetURLWithTimestampJet)
 }
 
-const localesDir = "locales"
+const (
+	localesDir                 = "locales"
+
+	nnidLookupHandlerPrefix    = "/mii_data/"
+	cmocLookupHandlerPrefix    = "/cmoc_lookup/"
+	miitomoLookupHandlerPrefix = "/miitomo_get_player_data/"
+)
 
 var handler http.Handler = http.DefaultServeMux
 
-const gltfPath = "/miis/image.glb"
-
-var gtmContainerID, sentryDSN string
+var gtmContainerID, cloudflareAnalyticsToken, sentryDSN string
 var sentryInitialized, isDevelopment bool
+var lumberjackLogger *lumberjack.Logger
 func main() {
-	var port, certFile, keyFile, hostnamesSniAllowArg string
+	var port, unixSocket, certFile, keyFile, hostnamesSniAllowArg, assetsDir string
 	var sentryEnableTracing bool
 	//var isDevelopment bool
 	flag.StringVar(&port, "port", ":8080", "http port to listen to, OR https if you specify cert and key")
+	flag.StringVar(&unixSocket, "unix-socket", "", "unix socket to listen on, overrides port")
 	flag.StringVar(&certFile, "cert", "", "TLS certificate file")
 	flag.StringVar(&keyFile, "key", "", "TLS key file")
 	flag.StringVar(&hostnamesSniAllowArg, "hostnames", "", "Allowlist of hostnames for TLS SNI")
 	flag.BoolVar(&isDevelopment, "live-reloading", false, "Live reload locales and HTML")
+	flag.StringVar(&assetsDir, "assets-dir", "assets", "Set directory for assets")
 
 	// analytics
 	flag.StringVar(&gtmContainerID, "gtm-container-id", "", "Google Tag Manager container ID - passing this will enable it")
+	flag.StringVar(&cloudflareAnalyticsToken, "cloudflare-analytics-token", "", "Cloudflare Analytics Token (for if you choose the JS snippet option, rather than automatic setup) - passing this will enable it")
 	flag.StringVar(&sentryDSN, "sentry-dsn", "", "Sentry (or other compatible platform) DSN")
 	flag.BoolVar(&sentryEnableTracing, "sentry-enable-tracing", false, "Enable performance tracing for Sentry")
+
+	// lumberjack logging
+	var enableLumberjack, compressLogs bool
+	var logFile string
+	var maxSize, maxBackups, maxAge int
+	flag.BoolVar(&enableLumberjack, "enable-logging", false, "Enable lumberjack logging to a file")
+	// TODO: CHANGE THIS IF I CHANGE PROJECT NAME (also change dash to underscore or vice versa/???????)
+	flag.StringVar(&logFile, "log-file", "processor-go.log", "Log file name (used if logging is enabled)")
+	flag.IntVar(&maxSize, "log-max-size", 10, "Maximum size of log file in MB before rotation")
+	flag.IntVar(&maxBackups, "log-max-backups", 3, "Maximum number of old log files to retain")
+	flag.IntVar(&maxAge, "log-max-age", 28, "Maximum number of days to retain old log files")
+	flag.BoolVar(&compressLogs, "log-compress", false, "Compress old log files")
+
 
 	var (
 		// cache db connection string
@@ -238,6 +261,19 @@ func main() {
 
 	flag.Parse()
 
+	// // Configure logging
+	if enableLumberjack {
+		log.Println("Lumberjack logging enabled with file:", logFile)
+		lumberjackLogger = &lumberjack.Logger{
+			Filename:   logFile,
+			MaxSize:    maxSize,    // megabytes
+			MaxBackups: maxBackups, // number of old logs to keep
+			MaxAge:     maxAge,     // days
+			Compress:   compressLogs, // compress the old log files
+		}
+		log.SetOutput(lumberjackLogger)
+	}
+
 	if sentryDSN != "" {
 		log.Println("Sentry enabled, client and server - DSN:", sentryDSN)
 		clientOptions := sentry.ClientOptions{
@@ -259,6 +295,9 @@ func main() {
 	if gtmContainerID != "" {
 		log.Println("Google Tag Manager enabled - container ID:", gtmContainerID)
 	}
+	if cloudflareAnalyticsToken != "" {
+		log.Println("Cloudflare Analytics enabled - token:", cloudflareAnalyticsToken)
+	}
 
 	jetOpts := []jet.Option{}
 	if isDevelopment {
@@ -275,7 +314,7 @@ func main() {
 
 		// Use the Handle() method as a middleware
 		handler = reloader.Handle(handler)
-		log.Println("Live reloading enabled.")
+		log.Println("Live reloading enabled")
 	}
 
 	if *upstreamAddrs != "" {
@@ -314,26 +353,21 @@ func main() {
 		}
 	}
 	initNNIDFetchDatabases(nnasCacheDBConn, nnidToMiiMapDBConn)
-	http.HandleFunc("/mii_data/", miiHandler)
-	http.HandleFunc("/mii_data_random", randomMiiHandler)
-
+	// nnid lookups
+	// TODO: YOU MAY WANT TO RENAME THESE TO BE MORE CONCISELY FOR NNID
+	http.HandleFunc(nnidLookupHandlerPrefix, nnidLookupHandler) // mii_data
+	http.HandleFunc("/mii_data_random", randomNNIDHandler)
+	// cmoc and miitomo lookups
+	http.HandleFunc(cmocLookupHandlerPrefix, cmocLookupHandler)
+	http.HandleFunc(miitomoLookupHandlerPrefix, miitomoLookupHandler)
 
 	http.HandleFunc("/error_reporting", sseErrorHandler)
-
-	if sentryInitialized {
-		http.HandleFunc("/miis/image.png", logRequest(sentryHandler.HandleFunc(renderImage)).ServeHTTP)
-		http.HandleFunc(gltfPath, logRequest(sentryHandler.HandleFunc(renderImage)).ServeHTTP)
-
-	} else {
-		http.HandleFunc("/miis/image.png", logRequest(http.HandlerFunc(renderImage)).ServeHTTP)
-		http.HandleFunc(gltfPath, logRequest(http.HandlerFunc(renderImage)).ServeHTTP)
-	}
-
 
 	http.HandleFunc("/render.png", miisImagePngRedirectHandler)
 
 	// add frontend
-	http.Handle("/assets/", http.StripPrefix("/assets/", gzipped.FileServer(gzipped.Dir("assets"))))
+	http.Handle("/assets/", http.StripPrefix("/assets/", gzipped.FileServer(gzipped.Dir(assetsDir))))
+	http.Handle("/.well-known/", http.StripPrefix("/.well-known/", http.FileServer(http.Dir(assetsDir + "/.well-known/"))))
 
 	// Load locale files
 	if err := loadLocaleFiles(localesDir); err != nil {
@@ -353,8 +387,41 @@ func main() {
 
 	// index = /index.html
 	http.HandleFunc("/", endpointsHandler)
-	log.Println("now listening")
+
+	// do not log these annoying ass paths to see in my logs
+	ignoredPaths := []string{"/assets/", "/favicon.",
+		// my paths
+		"/error_reporting"}
+	handler = logRequest(handler, ignoredPaths)
+
+	if sentryInitialized {
+		handler = sentryHandler.Handle(handler)
+	}
+
+	http.HandleFunc("/miis/image.png", renderImage)
+	http.HandleFunc("/miis/image.glb", renderImage)
+
 	var err error
+
+	var udsListener *net.Listener
+	if unixSocket != "" {
+		os.Remove(unixSocket)
+		/*if _, err := os.Stat(unixSocket); err == nil {
+			os.Remove(unixSocket)
+		}*/
+		var udsListenerNew net.Listener
+		udsListenerNew, err = net.Listen("unix", unixSocket)
+		if err != nil {
+			log.Fatalln("cannot listen on unix socket:", err)
+		}
+		udsListener = &udsListenerNew
+		defer (*udsListener).Close()
+		os.Chmod(unixSocket, 0666)
+		log.Println("listening on unix socket path:", unixSocket)
+	} else {
+		log.Println("now listening on", port)
+	}
+
 	if certFile != "" && keyFile != "" {
 		hostnamesSniAllow := strings.Split(hostnamesSniAllowArg, ",")
 		// Create a custom TLS configuration (default)
@@ -381,10 +448,20 @@ func main() {
 			TLSConfig: tlsConfig,
 			Handler:   handler,
 		}
-		err = server.ListenAndServeTLS(certFile, keyFile)
+		if udsListener != nil {
+			// listen on unix socket
+			err = server.ServeTLS(*udsListener, certFile, keyFile)
+		} else {
+			err = server.ListenAndServeTLS(certFile, keyFile)
+		}
 	} else {
 		// no handler because we defined HandleFunc
-		err = http.ListenAndServe(port, handler)
+		if udsListener != nil {
+			// listen on unix socket
+			err = http.Serve(*udsListener, handler)
+		} else {
+			err = http.ListenAndServe(port, handler)
+		}
 	}
 	// this will only be reached when either function returns
 	log.Fatalln(err)
@@ -451,6 +528,7 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		// analytics, optional
 		"GTMContainerID": gtmContainerID,
+		"CloudflareAnalyticsToken": cloudflareAnalyticsToken,
 		"SentryDSN": sentryDSN,
 
 		"IframeMode": r.URL.Query().Has("iframeMode"),

@@ -3,33 +3,28 @@
         <p>Current goals are to perfectly reproduce Wii U Mii Maker/NNID renders, Mii Studio/Miitomo renders, and Switch icon renders.</p>
         <ul class="left-aligned-ul">
             <li>
-            ❌ NO PANTS COLORS
+            ❌ No pants colors / they are the same color as the body
             <ul>
-                <li>Wii U Mii Maker draws the pants and torso separately but it's one model.</li>
-                <li>They are using the skeleton to separate those, so, it depends on this:</li>
+                <li>Wii U Mii Maker colors the pants by drawing them separately from the torso, they are two distinct models in the bfres.</li>
+                <li>Currently what's being used is a single mesh that combines both and is pre-rigged. Using the bfres depends on this:</li>
             </ul>
             </li>
             <li>
-            ❌ Body is not scaled using bone weights from skeleton
+            ❌ Body is not scaled properly using the skeleton
             <ul>
                 <li>This is why the body's arms may look a little wonky and unnatural.</li>
-                <li>Need to use the skeleton from MiiBodyMiddle.bfres (MK8/Wii U Mii Maker)
-                <li class="small">So I need to find something that extracts these from the bfres. The <a href="https://github.com/nw4f/G3d">NW4F G3d decomp</a> has no documentation and needs a major refactor to work on 64-bit, the only other thing I can find is Switch Toolbox which is in C#.</li>
+                <li>Need to use the body model MiiBodyMiddle.bfres from Wii U Mii Maker, which isn't exactly the most straightforward thing.</li>
+                <li>(October 2024) At this point I was able to export the model and animations to a more workable format, but... can't quite get the scaling to work right.</li>
+                <li class="small">I clearly don't understand skeletal rigging enough to make this work at the moment so if you do, <a href="#contact">maybe I can use your help?</a></li>
             </ul>
             </li>
             <li>
-            ⚠️ Default portrait view isn't accurate to Wii U Mii Maker
+            ⚠️ Need to find whole body camera views for Wii U Mii Maker and Miitomo/Mii Studio
             <ul>
-                <li>Initialization is done here in ffl_app.rpx:</li>
-                <li>FFLUtility: <code>FUN_0210a9b4</code> (I think)</li>
-                <li>Wii U Mii Maker, US latest ver: <code>FUN_02086e9</code></li>
-                <li class="small">Side note: I think this is very similar to the one Mii Studio is using, except it uses it for face AND face only. Comparison: <a href="https://web.archive.org/web/20170521213000im_/https://cdn-mii.accounts.nintendo.com/1.0.0/miis/8ed7ef7660b3b2cf/image/1dd84ae2a599e70f-ebcc0c4f725b6b02.png?type=face&expression=normal&width=512&instanceCount=1&instanceRotationMode=model">Mii Maker/NNID/cdn-mii 1.0.0 (all the same)</a> vs <a href="https://cdn-mii.accounts.nintendo.com/2.0.0/miis/8ed7ef7660b3b2cf/image/1dd84ae2a599e70f-ebcc0c4f725b6b02.png?type=face&expression=normal&width=512&instanceCount=1&instanceRotationMode=model">cdn-mii 2.0.0/Mii Studio</a></li>
-            </ul>
-            </li>
-            <li>
-            ⚠️ Need to find whole body camera view for Wii U Mii Maker and potentially Miitomo (Mii Studio)
-            <ul>
-                <li>Unfortunately it isn't as easy as grabbing the MVP uniforms from Cemu as they do some optimization on the shaders that shuffles uniforms.</li>
+                <li>And also translate the entire model to the same position.</li>
+                <li>For Wii U they are hiding in JpgPoseCam.bfres, which I can't read at the moment.</li>
+                <li>For Mii Studio/Miitomo this is TBD but I assume it's hiding in the game files too.</li>
+                <li>I'm personally deferring this to when the above item is complete though...</li>
             </ul>
             <details>
                 <summary>🚩 Missing a few parameters to be fully compatible with the Mii Studio API (read more...)</summary>
@@ -48,7 +43,12 @@
                         <li>I did attempt this at some point but couldn't wrap my head around getting it right.. I'll probably try it again soon.</li>
                     </ul>
                     <li>splitMode, splitDepthOffset(??)
-                    <ul><li>Feel like splitDepthOffset doesn't do anything? It maaaay have done something on cdn-mii 1.0.0 though...??</li></ul></li>
+                    <ul>
+                        <li>Feel like splitDepthOffset doesn't do anything? It maaaay have done something on cdn-mii 1.0.0 though...??</li>
+                        <li>I've tried to implement splitMode a handful of times using glDepthRange but did not do anything at all...</li>
+                        <li>Either using the shader or clipping the projection matrix's far plane may work but, there has to be a better way to do this...</li>
+                        <li>...Not a huge priority now. Is it for you? Please <a href="#contact">contact me</a> and that'll put some pressure on me to add this once and for all.</li>
+                    </ul></li>
                     <li>lightXDirection, lightYDirection, lightZDirection, lightDirectionMode(??)
                     <ul>
                         <li>I officially don't like the light direction parameters, I legitimately don't think anyone uses it right.</li>
@@ -68,15 +68,12 @@
             <h3 style="display: inline;">Planned &amp; Unplanned: <span class="small">click to expand</span></h3>
             </summary>
             <ul class="left-aligned-ul">
-            <li>❔At the moment I don't have the Switch and Miitomo body models, I believe they would once again require skeletal animation to be implemented..</li>
+            <li>❔At the moment I don't have the Switch and Miitomo body models, I believe they would once again require skeletal posing to be implemented..</li>
 
             <li>❔Poses from the Wii U Mii Maker are planned as soon as skeletal animations work.
                 <ul>
                     <li>Every pose is just a single-frame animation from MiiAnim.bfres, same source as everything else.</li>
-                    <li>Something I'm worried about is, I'm not sure where the camera view is coming from, because the angle is clearly changed.
-                        <ul><li>I've seen that it maayy be in the binary...</li>
-                        <li>If so, that will SUCK because I've had a reeeeally really hard time navating ffl_app.rpx 😭😭😭</li></ul>
-                    </li>
+                    <li>I'm pretty sure the camera positions are in JpgPoseCam.bfres, but Switch Toolbox cannot open it, so... not sure what I'm going to do about that.</li>
                 </ul>
             <details>
                 <summary>❔Need to reverse the Tomodachi Life and Miitopia QR code formats. Miitomo codes are planned as soon as Kaerutomo properly implements them.</summary>
@@ -115,7 +112,20 @@
             <ul>
                 <li>Don't expect any of these any time soon, especially clothing and wigs.</li>
                 <li>Do keep in mind that these body models are different from the Wii U/Switch models and therefore the clothing may not work on those.</li>
-            </ul></li>
+            </ul>
+
+            <details>
+                <summary>❔Fully rendering Miis in the browser is a longterm goal of mine. I can't promise anything, but I am steadily working towards it.</summary>
+                <ul>
+                    <li>I did get FFL-Testing building with Emscripten in August, and if I handle it just right, it is able to fully render a Mii head, albehit without hair and many WebGL errors...</li>
+                    <li>So what else is left? For starters, the assets need a more efficient compression method instead of zlib. I'm thinking of using Draco for meshes, and then ASTC for textures. As of writing, neither are implemented yet.</li>
+                    <li>An interface will need to be made to bridge the C exports of FFL to be callable from JS, and then make a shader callback implementation in JS using WebGL or three.js.</li>
+                    <li>So I haven't gone that far with this, and have not yet connected FFL in WASM to JS. But...</li>
+                    <li>As of October 2024, I have <a href="https://jsfiddle.net/arian_/8gvynrdu/6/">a little jsfiddle here</a> that will read a Mii exported to glTF from my site, and render it with the Wii U shader! Isn't that nice?</li>
+                    <li>Now, once this is properly implemented and working, I can't even begin to think about the possibilities. At the minimum, this site could go serverless, and services using Miis may not even need to render and store icons on their side. Woo.</li>
+                    <li>As usual, if you want to help or put pressure on me to work on this with more haste, <a href="#contact">ping me.</a></li>
+                </ul>
+            </details></li>
 
             <li>❔I've thought about making a Mii Maker-like app with the FFL decomp, but... don't get your hopes up too far about this.</li>
             <ul>
@@ -132,7 +142,7 @@
             <li>Miitopia makeup, or custom expressions (sorry)
                 <ul><li>Miitomo expressions are the only exception, since they're built into AFL (its version of FFL). <a target="_blank" href="/miis/image.png?data=AwBgMIJUICvpzY4vnWYVrXy7ikd01AAAWR1KAGEAcwBtAGkAbgBlAAAAAAAAABw3EhB7ASFuQxwNZMcYAAgegg0AMEGzW4JtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAML0&amp;expression=33">See?</a></li></ul>
             </li>
-            <li>BoTW/TOTK models.. "semi-Miis"</li>
+            <li>BoTW/TOTK models, or "semi-Miis"</li>
             <li>Xbox Miis, Apple Miis, Samsung Miis, any other stupid bootleg Miis
             <ul>
                 <li>Never ask me for these 🤬</li>

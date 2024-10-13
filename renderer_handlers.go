@@ -41,7 +41,7 @@ var (
 type RenderRequest struct {
 	Data              [96]byte
 	DataLength        uint16
-	ModelType         uint8
+	ModelFlag         uint8
 	ExportAsGLTF      bool
 	Resolution        uint16
 	TexResolution     int16
@@ -117,18 +117,6 @@ func isConnectionRefused(err error) bool {
 		errors.Is(err, syscall.Errno(10061))
 }
 
-func handleConnectionRefused(err error) {
-	if !isConnectionRefused(err) {
-		return
-	}
-
-	// send to webhook if it is there
-	/*if eventID := sentry.CaptureException(err); eventID != nil {
-		log.Print("(Event ID: "+*eventID+")")
-	}
-	*/
-}
-
 // if a socket response starts with this it
 // is always read out to the api response
 const socketErrorPrefix = "ERROR: "
@@ -147,7 +135,7 @@ func sendRenderRequest(request RenderRequest) ([]byte, error) {
 	if rr != nil {
 		// Use round-robin balancer
 		nextServer := rr.Next().Host
-		log.Println("using this upstream:", nextServer)
+		//log.Println("using this upstream:", nextServer)
 		conn, err = net.Dial("tcp", nextServer)
 		if err != nil {
 			log.Println("\033[1;31mURGENT: Failed to connect to "+nextServer+". The upstream may be down:\033[0m", err)
@@ -231,9 +219,6 @@ func streamRenderRequest(w http.ResponseWriter, request RenderRequest, outFileNa
 	initialBuffer := make([]byte, 1024)
 	n, err := io.ReadFull(conn, initialBuffer)
 	if err != nil {
-		/*if err == io.EOF {
-			return fmt.Errorf("connection closed prematurely after reading %d bytes", n)
-		}*/
 		return initialBuffer, err
 	}
 
@@ -260,9 +245,8 @@ func streamRenderRequest(w http.ResponseWriter, request RenderRequest, outFileNa
 
 var encoder = png.Encoder{CompressionLevel: png.BestSpeed}
 
-// renderImage handles the /render.png endpoint
+// renderImage handles the /miis/image.png endpoint
 func renderImage(ow http.ResponseWriter, r *http.Request) {
-	// NOTE: permissive config here is somewhat temporary
 	header := ow.Header()
 	header.Set("Access-Control-Allow-Private-Network", "true")
 	header.Set("Access-Control-Allow-Origin", "*")
@@ -330,7 +314,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	}
 
 
-	exportAsGLTF := r.URL.Path == gltfPath
+	exportAsGLTF := strings.HasSuffix(r.URL.Path, ".glb")
 
 	var storeData []byte
 	var err error
@@ -503,6 +487,12 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		return
 	}
 	*/
+	flattenNose := query.Get("flattenNose") != ""
+
+	modelFlag := (1 << modelType)
+	if flattenNose {
+		modelFlag |= (1 << 3)
+	}
 
 	drawStageModeStr := query.Get("drawStageMode")
 	if drawStageModeStr == "" {
@@ -692,7 +682,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	renderRequest := RenderRequest{
 		Data:            [96]byte{},
 		DataLength:      uint16(len(storeData)),
-		ModelType:       uint8(modelType),
+		ModelFlag:       uint8(modelFlag),
 		ExportAsGLTF:    exportAsGLTF,
 		Resolution:      uint16(width),
 		TexResolution:   int16(texResolution),

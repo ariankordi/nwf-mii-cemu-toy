@@ -454,5 +454,90 @@ other = "Download "
 [auto_submit_label]
 other = "Auto-Submit:"
 
-[camera_controls_label]
-other = "Camera controls"
+
+[background_color_opacity]
+other = "Background color opacity"
+[clothes_color]
+other = "Clothes color"
+
+[default]
+other = "Default"
+[red]
+other = "Red"
+[orange]
+other = "Orange"
+[yellow]
+other = "Yellow"
+[light_green]
+other = "Light green"
+[dark_green]
+other = "Dark green"
+[dark_blue]
+other = "Dark blue"
+[light_blue]
+other = "Light blue"
+[pink]
+other = "Pink"
+[purple]
+other = "Purple"
+[brown]
+other = "Brown"
+[white]
+other = "White"
+[black]
+other = "Black"
+
+[rotation_controls]
+other = "Rotation controls"
+
+[character_x_rotation_label]
+other = "Character X rotation:"
+[character_y_rotation_label]
+other = "Character Y rotation:"
+[character_z_rotation_label]
+other = "Character Z rotation:"
+
+[rotation_difference_explanation]
+other = "How are character and camera rotation different?"
+
+[rotation_explanation_detail]
+other = "Subtle differences can be seen when combining axes - but this doesn't combine them the same way as Mii Studio, in X and Z rotation, and more notably in lighting - except in comparison to Mii Studio the lighting is the same currently"
+
+[head_model_type]
+other = "Head model type"
+[model_type_note]
+# proper: face only, partsTransform, JSON, glTF
+other = "Not meant for icons, but in modeling or games. Optimized for e.g. hats, helmets (face only). Best combined with \"partsTransform\" in the JSON of an exported glTF."
+
+[draw_stage_mode]
+other = "Draw stage mode"
+
+[all]
+other = "All"
+
+[draw_opa_only]
+# proper: DrawOpa
+other = "DrawOpa only"
+
+[draw_xlu_only]
+# proper: DrawXlu
+other = "DrawXlu only"
+
+[mask_only]
+# proper: mask
+other = "Mask only"
+
+[draw_stage_note]
+# proper: Opa, Xlu, mask
+other = "Opa is the head without glasses or a face, Xlu is the face texture and glasses, and mask only is just the face texture. Uses for this are niche."
+
+[download_model]
+# proper: Mii, glTF, .glb
+other = "Download a model of this Mii head in glTF (.glb)"
+
+[see_instructions]
+# proper: Switch
+other = "See instructions for how to recreate on the Switch"
+
+[flatten_nose]
+other = "Flatten nose:"
