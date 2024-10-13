@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"errors"
 	"math/rand"
 	"net/http"
 
@@ -159,10 +160,19 @@ func initNNIDFetchDatabases(cache gorm.Dialector, n2mm gorm.Dialector) {
 	}
 }
 
+
+var (
+	errNNIDAPIIDNotRecognized   = errors.New("API ID not in apiBases")
+	errNNIDNoNormalizationFunc  = errors.New("no normalization function defined in normalizationFuncs for this API ID")
+	errNNIDDoesNotExist     = errors.New("NNID does not exist")
+	errNNIDNoMiiDataFound       = errors.New("no Mii data found")
+)
+
+
 func nnasHTTPRequest(endpoint string, apiID int) ([]byte, error) {
 	base, exists := apiBases[apiID]
 	if !exists {
-		return nil, fmt.Errorf("API ID %d not recognized", apiID)
+		return nil, errNNIDAPIIDNotRecognized
 	}
 
 	client := &http.Client{Transport: nnasRequestTransport}
@@ -185,13 +195,14 @@ func nnasHTTPRequest(endpoint string, apiID int) ([]byte, error) {
 	return io.ReadAll(resp.Body)
 }
 
+
 func fetchNNIDToPID(nnid string, apiID int) (uint64, error) {
 	var mapping NNIDToPID
 
 	// Select the appropriate normalization function based on API ID
 	normalizeNNIDFunc, exists := normalizationFuncs[apiID]
 	if !exists {
-		err := fmt.Errorf("Normalization function not defined for API ID %d", apiID)
+		err := errNNIDNoNormalizationFunc
 		log.Println(err)
 		return 0, err
 	}
@@ -217,7 +228,7 @@ func fetchNNIDToPID(nnid string, apiID int) (uint64, error) {
 	}
 
 	if len(response.MappedIDs) == 0 || response.MappedIDs[0].OutID == "" {
-		return 0, fmt.Errorf("NNID does not exist")
+		return 0, errNNIDDoesNotExist
 	}
 
 	pid, _ := strconv.ParseUint(response.MappedIDs[0].OutID, 10, 64)
@@ -226,6 +237,7 @@ func fetchNNIDToPID(nnid string, apiID int) (uint64, error) {
 
 	return pid, nil
 }
+
 
 func fetchMii(pid uint64, apiID int, forceRefresh bool) (MiisResponse, error) {
 	now := time.Now()
@@ -274,7 +286,7 @@ func fetchMii(pid uint64, apiID int, forceRefresh bool) (MiisResponse, error) {
 	// returns an error like 404 or 410 that indicates acc deleted among others
 	if len(result) > 0 {
 		// TODO: should this be nested? i am doing it to preserve
-		// the exact same Errorf at the bottom
+		// the exact same error at the bottom
 		if result[0] == '{' { // Guessing it's JSON
 			if err := json.Unmarshal([]byte(result), &miiResponse); err != nil {
 				return miiResponse, err
@@ -293,7 +305,7 @@ func fetchMii(pid uint64, apiID int, forceRefresh bool) (MiisResponse, error) {
 		return miiResponse, nil
 	}
 
-	return miiResponse, fmt.Errorf("no Mii data found")
+	return miiResponse, errNNIDNoMiiDataFound
 }
 
 // inspired by NNIDLT, kind of
@@ -431,7 +443,7 @@ func retrieveMiiDataFromNNIDOrPID(w http.ResponseWriter, nnid string, pid int64,
 }
 
 
-func miiHandler(w http.ResponseWriter, r *http.Request) {
+func nnidLookupHandler(w http.ResponseWriter, r *http.Request) {
 	setCORSHeaders(w, r)
 
 	parts := strings.Split(r.URL.Path, "/")
@@ -444,7 +456,7 @@ func miiHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(parts) != 3 || parts[2] == "" && pid == -1 {
-		http.Error(w, "usage: /mii_data/(nnid)", http.StatusBadRequest)
+		http.Error(w, "usage: " + nnidLookupHandlerPrefix + "(nnid)", http.StatusBadRequest)
 		return
 	}
 	nnid := parts[2]
@@ -473,7 +485,7 @@ func miiHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func randomMiiHandler(w http.ResponseWriter, r *http.Request) {
+func randomNNIDHandler(w http.ResponseWriter, r *http.Request) {
 	setCORSHeaders(w, r)
 
 	// Set the headers to prevent caching
@@ -563,12 +575,3 @@ func utf16LESliceToString(utf16Data []byte) string {
 	}
 	return utf8Buf.String()
 }
-
-/*
-func main() {
-    initDB()
-    http.HandleFunc("/mii", miiHandler)
-    fmt.Println("Server started")
-    log.Fatal(http.ListenAndServe(":8069", nil))
-}
-*/

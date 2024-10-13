@@ -309,7 +309,18 @@ function onFormSubmit(event) {
 
     // double equals means that '0' will match 'disabled' (checkbox)
     if(inputValue == defaultValue)
-        searchParams.delete(element.name);
+      searchParams.delete(element.name);
+  });
+
+  // allow fields to override others if their value is not default
+  document.querySelectorAll('[data-override]').forEach(function(overridingElement) {
+    const overrideTargetName = overridingElement.getAttribute('data-override');
+    const overrideValue = overridingElement.value;
+    const overrideDefaultValue = overridingElement.getAttribute('data-default-value') || '';
+
+    if (overrideValue !== overrideDefaultValue)
+      // Set the override value, replacing any existing value for the target field
+      searchParams.set(overrideTargetName, overrideValue);
   });
 
   // data-REAL overrides the data for conversion
@@ -456,7 +467,7 @@ if(!iframeMode) {
           searchParams.delete(element.name);
     });
 
-    const params = searchParams.toString();
+    const params = Object.fromEntries(searchParams);
     // post to above iframe
     window.top.postMessage(params, '*');
 
@@ -466,6 +477,11 @@ if(!iframeMode) {
           formSubmitting = false;
           submitButton.disabled = false;
       }
+      /*
+      if(event.data === 'submitForm') {
+
+      }
+      */
   };
 }
 
@@ -1264,7 +1280,7 @@ function arianHandler() {
       const romUrl = div.querySelector('meta[name=' + romMetaName + ']').content;
 
       // Start fetching the ROM and store the promise in a global variable
-      window.romPromise = fetch(romUrl).then(response => response.arrayBuffer());
+      window['romPromise'] = fetch(romUrl).then(response => response.arrayBuffer());
 
       // Load the scripts defined in complicated.html
       const scripts = div.getElementsByTagName('script');

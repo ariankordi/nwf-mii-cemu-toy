@@ -455,3 +455,83 @@ other = "Auto-Enviar:"
 
 [camera_controls_label]
 other = "Controles da câmera"
+
+[background_color_opacity]
+other = "Opacidade da cor de fundo"
+[clothes_color]
+other = "Cor da roupa"
+
+[default]
+other = "Padrão"
+[red]
+other = "Vermelho"
+[orange]
+other = "Laranja"
+[yellow]
+other = "Amarelo"
+[light_green]
+other = "Verde claro"
+[dark_green]
+other = "Verde escuro"
+[dark_blue]
+other = "Azul escuro"
+[light_blue]
+other = "Azul claro"
+[pink]
+other = "Rosa"
+[purple]
+other = "Roxo"
+[brown]
+other = "Marrom"
+[white]
+other = "Branco"
+[black]
+other = "Preto"
+
+[rotation_controls]
+other = "Controles de rotação"
+
+[character_x_rotation_label]
+other = "Rotação X do personagem:"
+[character_y_rotation_label]
+other = "Rotação Y do personagem:"
+[character_z_rotation_label]
+other = "Rotação Z do personagem:"
+
+[rotation_difference_explanation]
+other = "Como a rotação do personagem e da câmera são diferentes?"
+
+[rotation_explanation_detail]
+other = "Diferenças sutis podem ser vistas ao combinar eixos - mas isso não os combina da mesma forma que Mii Studio, nas rotações X e Z, e mais notavelmente na iluminação - exceto que em comparação com Mii Studio, a iluminação é atualmente a mesma."
+
+[head_model_type]
+other = "Tipo de modelo de cabeça"
+[model_type_note]
+other = "Não é destinado a ícones, mas sim para modelagem ou jogos. Otimizado para, por exemplo, chapéus, capacetes (face only). Melhor combinado com \"partsTransform\" no JSON de um glTF exportado."
+
+[draw_stage_mode]
+other = "Modo de desenho de palco"
+
+[all]
+other = "Tudo"
+
+[draw_opa_only]
+other = "Apenas DrawOpa"
+
+[draw_xlu_only]
+other = "Apenas DrawXlu"
+
+[mask_only]
+other = "Apenas máscara"
+
+[draw_stage_note]
+other = "Opa é a cabeça sem óculos ou rosto, Xlu é a textura do rosto e óculos, e mask only é apenas a textura do rosto. As utilizações para isso são limitadas."
+
+[download_model]
+other = "Baixar um modelo desta cabeça Mii em glTF (.glb)"
+
+[see_instructions]
+other = "Veja as instruções sobre como recriar isso no Switch"
+
+[flatten_nose]
+other = "Achatar nariz:"

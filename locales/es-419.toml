@@ -454,3 +454,83 @@ other = "Auto-Enviar:"
 
 [camera_controls_label]
 other = "Controles de la cámara"
+
+[background_color_opacity]
+other = "Opacidad del color de fondo"
+[clothes_color]
+other = "Color de la ropa"
+
+[default]
+other = "Predeterminado"
+[red]
+other = "Rojo"
+[orange]
+other = "Naranja"
+[yellow]
+other = "Amarillo"
+[light_green]
+other = "Verde claro"
+[dark_green]
+other = "Verde oscuro"
+[dark_blue]
+other = "Azul oscuro"
+[light_blue]
+other = "Azul claro"
+[pink]
+other = "Rosa"
+[purple]
+other = "Morado"
+[brown]
+other = "Marrón"
+[white]
+other = "Blanco"
+[black]
+other = "Negro"
+
+[rotation_controls]
+other = "Controles de rotación"
+
+[character_x_rotation_label]
+other = "Rotación X del personaje:"
+[character_y_rotation_label]
+other = "Rotación Y del personaje:"
+[character_z_rotation_label]
+other = "Rotación Z del personaje:"
+
+[rotation_difference_explanation]
+other = "¿En qué se diferencian la rotación del personaje y la de la cámara?"
+
+[rotation_explanation_detail]
+other = "Se pueden ver diferencias sutiles al combinar ejes, pero esto no los combina de la misma manera que Mii Studio en las rotaciones X y Z, y notablemente en la iluminación. Sin embargo, en comparación con Mii Studio, la iluminación es actualmente la misma."
+
+[head_model_type]
+other = "Tipo de modelo de cabeza"
+[model_type_note]
+other = "No está diseñado para íconos, sino para modelado o juegos. Optimizado para, por ejemplo, sombreros, cascos (face only). Mejor combinado con \"partsTransform\" en el JSON de un glTF exportado."
+
+[draw_stage_mode]
+other = "Modo de dibujo de escena"
+
+[all]
+other = "Todo"
+
+[draw_opa_only]
+other = "Solo DrawOpa"
+
+[draw_xlu_only]
+other = "Solo DrawXlu"
+
+[mask_only]
+other = "Solo máscara"
+
+[draw_stage_note]
+other = "Opa es la cabeza sin gafas ni rostro, Xlu es la textura del rostro y las gafas, y mask only es solo la textura del rostro. Los usos para esto son muy específicos."
+
+[download_model]
+other = "Descargar un modelo de esta cabeza Mii en glTF (.glb)"
+
+[see_instructions]
+other = "Ver las instrucciones para recrearlo en la Switch"
+
+[flatten_nose]
+other = "Aplanar nariz:"

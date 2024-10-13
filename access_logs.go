@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -43,26 +45,47 @@ func getClientIP(r *http.Request) string {
 	return host
 }
 
-// responseWriter is a custom http.ResponseWriter that captures the status code
-type responseWriter struct {
+// captureStatusCodeResponseWriter is a custom http.ResponseWriter that captures the status code
+type captureStatusCodeResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 }
 
-// newResponseWriter creates a new responseWriter
-func newResponseWriter(w http.ResponseWriter) *responseWriter {
-	return &responseWriter{w, http.StatusOK}
+// websocket doesn't work without this
+func (u *captureStatusCodeResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return u.ResponseWriter.(http.Hijacker).Hijack()
+}
+// just for good measure
+func (u *captureStatusCodeResponseWriter) Flush() {
+	u.ResponseWriter.(http.Flusher).Flush()
+}
+func (u *captureStatusCodeResponseWriter) Push(target string, opts *http.PushOptions) error {
+	return u.ResponseWriter.(http.Pusher).Push(target, opts)
+}
+
+// newResponseWriter creates a new captureStatusCodeResponseWriter
+func newResponseWriter(w http.ResponseWriter) *captureStatusCodeResponseWriter {
+	return &captureStatusCodeResponseWriter{w, http.StatusOK}
 }
 
 // WriteHeader captures the status code
-func (rw *responseWriter) WriteHeader(code int) {
+func (rw *captureStatusCodeResponseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
 }
 
 // logRequest logs each request in Apache/Nginx standard format with ANSI colors
-func logRequest(handler http.Handler) http.Handler {
+func logRequest(handler http.Handler, ignoredPaths []string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check if the request path should be ignored
+		for _, ignoredPath := range ignoredPaths {
+			if strings.HasPrefix(r.URL.Path, ignoredPath) {
+				// If path matches one of the ignored paths, just serve the request without logging
+				handler.ServeHTTP(w, r)
+				return
+			}
+		}
+
 		start := time.Now()
 		rw := newResponseWriter(w)
 		handler.ServeHTTP(rw, r)
@@ -71,7 +94,8 @@ func logRequest(handler http.Handler) http.Handler {
 		latency := time.Since(start)
 		clientIP := getClientIP(r)
 
-		if isColorTerminal() {
+		log.SetFlags(log.Flags() &^ (log.Ldate | log.Ltime))
+		if isColorTerminal() || lumberjackLogger == nil {
 			statusColor := ANSIGreen
 
 			// Determine the status color
@@ -95,7 +119,7 @@ func logRequest(handler http.Handler) http.Handler {
 			queryColored := colorQueryParameters(query)
 
 			// so many colors.....
-			fmt.Println(clientIPColor + clientIP + ANSIReset +
+			log.Println(clientIPColor + clientIP + ANSIReset +
 				" - - [" + start.Format("02/Jan/2006:15:04:05 -0700") + "] \"" +
 				ANSIGreen + r.Method + " " + r.URL.Path + queryColored + " " + ANSIReset +
 				ANSIFaint + r.Proto + ANSIReset + "\" " +
@@ -106,12 +130,13 @@ func logRequest(handler http.Handler) http.Handler {
 				latencyColor + fmt.Sprint(latency) + ANSIReset)
 		} else {
 			// apache/nginx request format with latency at the end
-			fmt.Println(clientIP + " - - [" + start.Format("02/Jan/2006:15:04:05 -0700") + "] \"" +
+			log.Println(clientIP + " - - [" + start.Format("02/Jan/2006:15:04:05 -0700") + "] \"" +
 				r.Method + " " + r.RequestURI + " " + r.Proto + "\" " +
 				fmt.Sprint(status) + " " + fmt.Sprint(r.ContentLength) + " \"" +
 				r.Referer() + "\" \"" + r.UserAgent() + "\" " +
 				fmt.Sprint(latency))
 		}
+		log.SetFlags(0)
 	})
 }
 
