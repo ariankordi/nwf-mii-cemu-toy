@@ -1,0 +1,28 @@
+[Unit]
+Description=processor-go (working directory %i)
+After=network.target mariadb.service
+Wants=network.target mariadb.service
+
+[Service]
+User=arian
+WorkingDirectory=/home/arian/Downloads/%I
+ExecStart=/home/arian/Downloads/%I/processor-go \
+    -key /home/arian/Downloads/nso-reverse2/nintendo-net.key \
+    -cert /home/arian/Downloads/nso-reverse2/nintendo-net.pem \
+    -port :8443 \
+    -hostnames debian.local,mii-unsecure.ariankordi.net \
+    -nnid-to-mii-map-db "miis:miis@unix(/home/arian/Downloads/2024-06-04-mii-data-map-database-again-mysql/mysql.sock)/miis?parseTime=true" \
+    -use-x-forwarded-for \
+    #-gtm-container-id "GTM-MCZPMNTW" \
+    -sentry-dsn "https://7e7b415ae28e437080dc60cd311ede19@app.glitchtip.com/7845" \
+    #-sentry-enable-tracing \
+    -cloudflare-analytics-token e432a6e92dd94ca89bd9819b52ec6c52 \
+    -upstreams localhost:31100,localhost:31101,localhost:31102,localhost:31103,localhost:31104,localhost:31105,localhost:31106,localhost:31107,localhost:31108,localhost:31109,localhost:31110 \
+    -enable-logging \
+    -log-max-backups 10 \
+    -log-compress
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

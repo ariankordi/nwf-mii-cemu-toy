@@ -36,3 +36,7 @@ node_modules
 *swp
 .DS_Store
 .fuse_hidden*
+
+# local
+*.log
+assets-dev

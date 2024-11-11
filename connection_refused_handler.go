@@ -1,4 +1,4 @@
-// +build !arian-email-handler
+// +build !arian
 
 package main
 

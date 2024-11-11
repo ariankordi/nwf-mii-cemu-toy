@@ -456,9 +456,9 @@ other = "Auto-Enviar:"
 other = "Controles de la cámara"
 
 [background_color_opacity]
-other = "Opacidad del color de fondo"
+other = "Opacidad del color de fondo:"
 [clothes_color]
-other = "Color de la ropa"
+other = "Color de la ropa:"
 
 [default]
 other = "Predeterminado"

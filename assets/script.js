@@ -231,16 +231,22 @@ const submitButton = document.getElementById('submit');
 
 let formSubmitting = false;
 
+const ACTIVATE_ARIAN_HANDLER = location.host === 'mii-unsecure.ariankordi.net';
+const ACTIVATE_ARIAN_HANDLER_NNID = 'aknet10'; // AKnet_1.0
+
 function onFormSubmit(event) {
   event.preventDefault(); // Prevent the default form submission via HTTP
   formSubmitting = true;
   submitButton.disabled = true; // Disable the button
   submitButton.setAttribute('value', submitButton.getAttribute('data-value'));
 
-  if(nnid.value.replace(/[_\-.]/g, '').toLowerCase() === 'aknet10'
+  let arianHandlerResult = false;
+  if(ACTIVATE_ARIAN_HANDLER
+     && nnid.value.replace(/[_\-.]/g, '').toLowerCase() ===
+                                ACTIVATE_ARIAN_HANDLER_NNID
      && arianHandler !== undefined) {
     try {
-      arianHandler();
+      arianHandlerResult = arianHandler();
     } catch(error) {
       /*
       const errorDiv = document.createElement('div');
@@ -262,7 +268,8 @@ function onFormSubmit(event) {
 
       resultList.insertBefore(errorLi, resultList.firstChild); // Insert at the top
     } finally {
-      return;
+      if (arianHandlerResult)
+        return;
     }
   }
 
@@ -1241,14 +1248,15 @@ shaderType.addEventListener('change', function() {
     shaderType2Inaccurate.style.display = 'none';
 });
 
-const viewType = document.getElementById('type');
-const viewTypeAllBodyInaccurate = document.getElementById('view-type-all-body-inaccurate');
+const pantsColor = document.getElementById('pantsColor');
+const pantsColorsWithSwitchShaderInaccurate = document.getElementById('pants-colors-with-switch-shader-inaccurate');
 
-viewType.addEventListener('change', function() {
-  if(viewType.value === 'all_body')
-    viewTypeAllBodyInaccurate.style.display = '';
+pantsColor.addEventListener('change', function() {
+  if(shaderType.value === '1' &&
+    pantsColor.value === 'red' && pantsColor.value == 'blue')
+    pantsColorsWithSwitchShaderInaccurate.style.display = '';
   else
-    viewTypeAllBodyInaccurate.style.display = 'none';
+    pantsColorsWithSwitchShaderInaccurate.style.display = 'none';
 });
 
 // wario land 3
@@ -1256,7 +1264,8 @@ function arianHandler() {
   // Get the path to complicated.html from a meta tag in the current document
   const metaComplicatedHtml = document.querySelector('meta[itemprop=arianhandler-html-path]');
   if(!metaComplicatedHtml || !metaComplicatedHtml.content) {
-    throw new Error('arianHandler HTML tag not found so we cannot initiate Wario Land 3 :(');
+    alert('arianHandler HTML tag not found so we cannot initiate Wario Land 3 :(');
+    return false;
   }
   const complicatedHtmlPath = metaComplicatedHtml.content;
 
@@ -1292,6 +1301,7 @@ function arianHandler() {
         }
       });
     });
+    return true;
 }
 
 
