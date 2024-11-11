@@ -203,11 +203,11 @@ var gtmContainerID, cloudflareAnalyticsToken, sentryDSN string
 var sentryInitialized, isDevelopment bool
 var lumberjackLogger *lumberjack.Logger
 func main() {
-	var port, unixSocket, certFile, keyFile, hostnamesSniAllowArg, assetsDir string
+	var host, unixSocket, certFile, keyFile, hostnamesSniAllowArg, assetsDir string
 	var sentryEnableTracing bool
 	//var isDevelopment bool
-	flag.StringVar(&port, "port", ":8080", "http port to listen to, OR https if you specify cert and key")
-	flag.StringVar(&unixSocket, "unix-socket", "", "unix socket to listen on, overrides port")
+	flag.StringVar(&host, "host", ":8080", "hostname to listen to http on, OR https if you specify cert and key")
+	flag.StringVar(&unixSocket, "unix-socket", "", "unix socket to listen on, overrides host")
 	flag.StringVar(&certFile, "cert", "", "TLS certificate file")
 	flag.StringVar(&keyFile, "key", "", "TLS key file")
 	flag.StringVar(&hostnamesSniAllowArg, "hostnames", "", "Allowlist of hostnames for TLS SNI")
@@ -225,8 +225,7 @@ func main() {
 	var logFile string
 	var maxSize, maxBackups, maxAge int
 	flag.BoolVar(&enableLumberjack, "enable-logging", false, "Enable lumberjack logging to a file")
-	// TODO: CHANGE THIS IF I CHANGE PROJECT NAME (also change dash to underscore or vice versa/???????)
-	flag.StringVar(&logFile, "log-file", "processor-go.log", "Log file name (used if logging is enabled)")
+	flag.StringVar(&logFile, "log-file", "ffl-testing-frontend-http.log", "Log file name (used if logging is enabled)")
 	flag.IntVar(&maxSize, "log-max-size", 10, "Maximum size of log file in MB before rotation")
 	flag.IntVar(&maxBackups, "log-max-backups", 3, "Maximum number of old log files to retain")
 	flag.IntVar(&maxAge, "log-max-age", 28, "Maximum number of days to retain old log files")
@@ -366,7 +365,25 @@ func main() {
 	http.HandleFunc("/render.png", miisImagePngRedirectHandler)
 
 	// add frontend
-	http.Handle("/assets/", http.StripPrefix("/assets/", gzipped.FileServer(gzipped.Dir(assetsDir))))
+	fileServer := gzipped.FileServer(gzipped.Dir(assetsDir))
+	if isDevelopment {
+		// Wrap the file server with CORS handler middleware
+		http.HandleFunc("/assets/", func(w http.ResponseWriter, r *http.Request) {
+			// Set CORS headers
+			w.Header().Set("Access-Control-Allow-Private-Network", "true")
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+
+			// Handle preflight requests
+			if r.Method == "OPTIONS" {
+				return
+			}
+
+			// Serve the files
+			http.StripPrefix("/assets/", fileServer).ServeHTTP(w, r)
+		})
+	} else {
+		http.Handle("/assets/", http.StripPrefix("/assets/", fileServer))
+	}
 	http.Handle("/.well-known/", http.StripPrefix("/.well-known/", http.FileServer(http.Dir(assetsDir + "/.well-known/"))))
 
 	// Load locale files
@@ -419,7 +436,7 @@ func main() {
 		os.Chmod(unixSocket, 0666)
 		log.Println("listening on unix socket path:", unixSocket)
 	} else {
-		log.Println("now listening on", port)
+		log.Println("now listening on", host)
 	}
 
 	if certFile != "" && keyFile != "" {
@@ -444,7 +461,7 @@ func main() {
 
 		// Create an HTTP server with the custom TLS configuration
 		server := &http.Server{
-			Addr:      port,
+			Addr:      host,
 			TLSConfig: tlsConfig,
 			Handler:   handler,
 		}
@@ -460,7 +477,7 @@ func main() {
 			// listen on unix socket
 			err = http.Serve(*udsListener, handler)
 		} else {
-			err = http.ListenAndServe(port, handler)
+			err = http.ListenAndServe(host, handler)
 		}
 	}
 	// this will only be reached when either function returns

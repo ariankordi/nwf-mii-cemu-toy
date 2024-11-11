@@ -456,9 +456,9 @@ other = "Auto-Submit:"
 
 
 [background_color_opacity]
-other = "Background color opacity"
+other = "Background color opacity:"
 [clothes_color]
-other = "Clothes color"
+other = "Clothes color:"
 
 [default]
 other = "Default"

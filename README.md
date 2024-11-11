@@ -1,45 +1,32 @@
-# nwf-mii-cemu-toy
-Locally hosted Mii renderer using Nintendo Web Framework's Mii extension.
+## Arian's Mii Renderer (REAL) frontend (as of late 2024)
+* Looking for the old rusty method of running a Mii renderer with Cemu? See the master branch: https://github.com/ariankordi/nwf-mii-cemu-toy/tree/master
+* This branch is meant to integrate with [my FFL-Testing renderer-server-prototype branch](https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype), serving as the frontend of https://mii-unsecure.ariankordi.net.
+* It provides: the localized frontend/JS, NNID fetch API, and load balancing.
 
-Not recommended for actual use as of now. Actual Mii renderer is planned soon using the [FFL decomp](https://github.com/ariankordi/FFL-Testing).
-## unfinished
-This project has been at a standstill since I realized some of its conceptual flaws and pretty much didn't feel like working on it any further, at least for the backend - the frontend I'll still update.
-### directions
-Don't expect support from me for any part of this process, but here's a brief tutorial on how to get this up.
-* Craft a NWF app, copying `index.html` and `js` from `nwf-app` into your game's `content/app` folder.
-* In order for this to work, you **need** an app with the following extensions:
-    - `jsextension_ext-mii-private.rpl` (Mii renderer, essential)
-        * The Mii extension won't work without FFLRes files in `0005001B10056000`, or the `content/assets/ffl` folder.
-    - `jsextension_ext-amiibo.rpl` (mechanism in which to quickly receive Mii data)
-        * You can probably rework this to not require the amiibo extension, but it would have to be through something crazy, like, constantly polling `nn::act::GetMiiEx` with an arbitrary slot or something since this is already using out-of-tree Cemu mods.
-    - `jsextension_ext-fileio.rpl` and `jsextension_ext-eval.rpl` are both required for the JS REPL, which you may or may not use.
-        * While `eval` is required for running custom code, file-based communication is our only form of data in or out. However, if you can get networking functioning, that can be another option along with OSConsole via nwf.utils.log().
-    - All extensions need to be copied to `code` and then they need an entry in `config.xml` in order to be enabled.
-        * If JS stops working after you try to sideload an extension, then, that extension is probably incompatible with the SDK version of your game.
 
-You can use the following game as a base, as it contains the first two extensions and should be all you need: `00050000101CFA00` (Word Puzzles by POWGI)
+### (Impromptu) API documentation...
+**/mii_data/{nnid} - fetches mii data for an NNID**
 
-You can extract the eval and fileio extensions from `00050000101E7900` (SPLASHY DUCK)
+response is json representing nnid data including the mii data as FFSD, if you request with `Accept: application/octet-stream` the response will be the FFSD data as binary
 
-If you want to experiment with extensions, please make sure the `nwf:version` matches in the game/s `content/app/config.xml` (v33 is the latest), and the SDK versions match by viewing the strings (1.9.5 is the last)
-* Compile Cemu, applying the patches in `2024-03-23-cemu.diff` to your tree.
-    - Cemu has build instructions here: https://github.com/cemu-project/Cemu/blob/main/BUILD.md
-    - You also need to add `processor-go/ipc.h` to `Cemu/src/Cafe/HW/Latte/Renderer/Vulkan/` before compiling.
-    - If there's conflicts while merging, try to use older Git revisions of Cemu from around the time these commits were made to this repo. This hasn't been tested with the latest Cemu revisions as of writing this.
-* Run Cemu and the game, which should show some black text on a white background.
-    - Make sure that your MLC has all files necessary for working with Miis. In other words, if games like New Super Mario Bros. U or anything else that uses Miis crashes, this will pretend to work but won't work.
-* If you want to play with the REPL, open `python playground/repl3.py`, using the game's `/user/common/temp/` folder (only exists when it is open), and try typing some JS commands after you've initialized it.
-* Compile and run `processor-go` by going into the directory, running `go build`, and then `./processor-go`.
-    - This is the main web server for this service.
-    - It only supports one request at a time.
+query parameters:
+* api_id: set this to 1 for pretendo (was originally designed in mind for multiple nnid servers)
+* pid: in absence of an nnid, you can set this to search for a pid instead (numeric, internal nnid identifier)
 
-Example request: `/render.png?type=face&expression=normal&width=512&scale=2&bgColor=%2300ff00&data=data=AwFAMJoQIAAdfpgjULENrXILeXYnoAAAARxKAGEAcwBtAGkAbgBlAAAAAAAAABMhEwB7ASFuQxoNNMcWAAYSwgwAACmzU0hQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALs%2B`
+**/miitomo_get_player_data/{player id} - fetches kaerutomo player own_mii and stock_mii information**
 
-You should be able to see the frontend if you head to / on the web server.
+you can find your player id by copying your friend request invite link, it's the 16 character hex string after "friend_code/"
 
-Usually Cemu will consume an excessive amount of CPU if you're not on Windows. The program should automatically suspend and unsuspend the Cemu process, making it look frozen when it's really not (it may also suspend Cemu while it's loading the game, so load it first and then open the server). As of writing, this suspending mechanism doesn't quite work on Windows - the process is able to be suspended but not unsuspended...
+query parameters:
+* target_player_id: optional, but if you specify this multiple times you will be able to search for multiple users
+* namespace: optional with default of own_mii and stock_mii, you can set this multiple times, this is the miitomo player information namespace... if you set this to own_mii, you will get that player's mii, if you set to stock_mii you will see that player's sidekick miis, if you set it to mii_face_image you will get the render that player's app uploaded, though this is not defined by me.
 
-### Localization Credits!!!
-Thanks to @GabIsAwesome for the Portuguese (Brazil) translation.
+**/cmoc_fetch/{cmoc id} - fetches RFLStoreData wii mii data from the wiilink cmoc api**
 
-~~All other translations are AI-generated.~~
+the cmoc id is the same format you see on the site: 1234-5678-9123
+
+returns RFLStoreData in base64, or in binary if you set `Accept: application/octet-stream` header
+
+no query parameters
+
+**This documentation does not include the /miis/image.(png, glb, tga?) API because I'm tired.**

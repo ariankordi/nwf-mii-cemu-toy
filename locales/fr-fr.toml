@@ -455,9 +455,9 @@ other = "Télécharger "
 other = "Soumission automatique :"
 
 [background_color_opacity]
-other = "Opacité de la couleur d'arrière-plan"
+other = "Opacité de la couleur d'arrière-plan :"
 [clothes_color]
-other = "Couleur des vêtements"
+other = "Couleur des vêtements :"
 
 [default]
 other = "Par défaut"

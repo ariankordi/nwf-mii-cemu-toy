@@ -3,16 +3,12 @@
         <p>Current goals are to perfectly reproduce Wii U Mii Maker/NNID renders, Mii Studio/Miitomo renders, and Switch icon renders.</p>
         <ul class="left-aligned-ul">
             <li>
-            ❌ No pants colors / they are the same color as the body
-            <ul>
-                <li>Wii U Mii Maker colors the pants by drawing them separately from the torso, they are two distinct models in the bfres.</li>
-                <li>Currently what's being used is a single mesh that combines both and is pre-rigged. Using the bfres depends on this:</li>
-            </ul>
+            ❌ Not using correct body model for Switch and Miitomo
             </li>
             <li>
-            ❌ Body is not scaled properly using the skeleton
+            ❌ Body is not scaled uniformly using vertex groups/bone indices
             <ul>
-                <li>This is why the body's arms may look a little wonky and unnatural.</li>
+                <li>This is why the body's hands and legs may look a little wonky and unnatural.</li>
                 <li>Need to use the body model MiiBodyMiddle.bfres from Wii U Mii Maker, which isn't exactly the most straightforward thing.</li>
                 <li>(October 2024) At this point I was able to export the model and animations to a more workable format, but... can't quite get the scaling to work right.</li>
                 <li class="small">I clearly don't understand skeletal rigging enough to make this work at the moment so if you do, <a href="#contact">maybe I can use your help?</a></li>
@@ -21,7 +17,6 @@
             <li>
             ⚠️ Need to find whole body camera views for Wii U Mii Maker and Miitomo/Mii Studio
             <ul>
-                <li>And also translate the entire model to the same position.</li>
                 <li>For Wii U they are hiding in JpgPoseCam.bfres, which I can't read at the moment.</li>
                 <li>For Mii Studio/Miitomo this is TBD but I assume it's hiding in the game files too.</li>
                 <li>I'm personally deferring this to when the above item is complete though...</li>
@@ -35,7 +30,6 @@
                         <li>Legitimately not sure why that is. Camera rotation rotates the view matrix and character rotation moves the model matrix, so, don't know.</li>
                         <li>If you use multiple rotation axises, with our camera rotation it matches Mii Studio's character rotation, and combining axises with our character rotation matches Mii Studio's camera rotation...??????????? I can't wrap my head around all of this...</li>
                     </ul></li>
-                    <li><s>clothesColor</s> (still need pantsColor tho)</li>
                     <li>instanceCount, instanceRotationMode</li>
                     <ul>
                         <li>Many ways to approach doing this efficiently.  glDrawElementsInstanced?</li>
@@ -68,7 +62,7 @@
             <h3 style="display: inline;">Planned &amp; Unplanned: <span class="small">click to expand</span></h3>
             </summary>
             <ul class="left-aligned-ul">
-            <li>❔At the moment I don't have the Switch and Miitomo body models, I believe they would once again require skeletal posing to be implemented..</li>
+            <li>❔At the moment I don't have the Switch and Miitomo body models..</li>
 
             <li>❔Poses from the Wii U Mii Maker are planned as soon as skeletal animations work.
                 <ul>

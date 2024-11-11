@@ -456,9 +456,9 @@ other = "自動送信:"
 other = "カメラ制御"
 
 [background_color_opacity]
-other = "背景色の不透明度"
+other = "背景色の不透明度:"
 [clothes_color]
-other = "服の色"
+other = "服の色:"
 
 [default]
 other = "デフォルト"

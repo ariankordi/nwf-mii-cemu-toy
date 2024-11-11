@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/rand"
 	"net/http"
+	"os"
 
 	"encoding/json"
 	"encoding/xml"
@@ -24,9 +25,10 @@ import (
 
 	// PURELY just for nnid cache
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"bytes"
-	"processor-go/mii2studio"
+	"ffl-testing-frontend-http/mii2studio"
 	"unicode/utf16"
 )
 
@@ -43,6 +45,9 @@ var apiBases = map[int]string{
 	1: "https://account.pretendo.cc/v1/api",
 	// Add additional APIs as needed
 }
+
+const apiID0IsDisabled = true // Disable fetching NNIDs from NNAS since it is shut down
+
 // strategy to normalize nnids
 type normalizationFunc func(string) string
 var normalizationFuncs = map[int]normalizationFunc {
@@ -136,9 +141,21 @@ var nnasRequestTransport = &http.Transport{
 
 var useNNIDToMiiMapForAPI0 bool
 
+var gormLogger = logger.New(
+	log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+	logger.Config{
+		SlowThreshold:             time.Second,   // Slow SQL threshold
+		LogLevel:                  logger.Silent, // Log level
+		IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
+	},
+)
+var gormConfig = gorm.Config{
+	Logger: gormLogger,
+}
+
 func initNNIDFetchDatabases(cache gorm.Dialector, n2mm gorm.Dialector) {
 	var err error
-	cdb, err = gorm.Open(cache, &gorm.Config{})
+	cdb, err = gorm.Open(cache, &gormConfig)
 	if err != nil {
 		log.Fatalln("Failed to connect cache database:", err)
 	}
@@ -151,7 +168,7 @@ func initNNIDFetchDatabases(cache gorm.Dialector, n2mm gorm.Dialector) {
 		// then it is used in place of fetching api 0
 		useNNIDToMiiMapForAPI0 = true
 
-		mdb, err = gorm.Open(n2mm, &gorm.Config{})
+		mdb, err = gorm.Open(n2mm, &gormConfig)
 		if err != nil {
 			log.Fatalln("Failed to connect NNID to Mii mapping database:", err)
 			// fatal = database will not be used
@@ -163,8 +180,9 @@ func initNNIDFetchDatabases(cache gorm.Dialector, n2mm gorm.Dialector) {
 
 var (
 	errNNIDAPIIDNotRecognized   = errors.New("API ID not in apiBases")
+	errNNIDAPIID0IsDisabled     = errors.New("nintendo shut down their nnid api in may 2024 so this will not work unless you set up the nnid archive, view the nwf-mii-cemu-toy ffl-renderer-proto-integrate README for more information")
 	errNNIDNoNormalizationFunc  = errors.New("no normalization function defined in normalizationFuncs for this API ID")
-	errNNIDDoesNotExist     = errors.New("NNID does not exist")
+	errNNIDDoesNotExist         = errors.New("NNID does not exist")
 	errNNIDNoMiiDataFound       = errors.New("no Mii data found")
 )
 
@@ -202,14 +220,17 @@ func fetchNNIDToPID(nnid string, apiID int) (uint64, error) {
 	// Select the appropriate normalization function based on API ID
 	normalizeNNIDFunc, exists := normalizationFuncs[apiID]
 	if !exists {
-		err := errNNIDNoNormalizationFunc
-		log.Println(err)
-		return 0, err
+		log.Println("no normalization func for api id ", apiID)
+		return 0, errNNIDNoNormalizationFunc
 	}
 
 	normalizedNNID := normalizeNNIDFunc(nnid)
 	if result := cdb.Where("nnid = ? AND api_id = ?", normalizedNNID, apiID).First(&mapping); result.Error == nil {
 		return mapping.PID, result.Error
+	}
+
+	if apiID == 0 && apiID0IsDisabled { // nintendo nnid fetch disabled
+		return 0, errNNIDAPIID0IsDisabled
 	}
 
 	body, err := nnasHTTPRequest("/admin/mapped_ids?input_type=user_id&output_type=pid&input="+nnid, apiID)
@@ -224,6 +245,9 @@ func fetchNNIDToPID(nnid string, apiID int) (uint64, error) {
 		err = xml.Unmarshal(body, &response)
 	}
 	if err != nil {
+		if err.Error() == encodingXMLErrorThrownWhenAccountWSReturnsHTML {
+			return 0, fmt.Errorf("i think the account server is returning html instead of data: %v", err)
+		}
 		return 0, err
 	}
 
@@ -239,7 +263,7 @@ func fetchNNIDToPID(nnid string, apiID int) (uint64, error) {
 }
 
 
-func fetchMii(pid uint64, apiID int, forceRefresh bool) (MiisResponse, error) {
+func fetchMiiFromPID(pid uint64, apiID int, forceRefresh bool) (MiisResponse, error) {
 	now := time.Now()
 	var cache CachedResult
 
@@ -248,7 +272,7 @@ func fetchMii(pid uint64, apiID int, forceRefresh bool) (MiisResponse, error) {
 	// NOTE: this IGNORES ERRORS
 	var whereClause *gorm.DB
 	// TODO: MAKE LESS HACKY!!! BUT ALWAYS USE NNAS CACHE FOR NINTENDO
-	if apiID == 0 {
+	if apiID == 0 && apiID0IsDisabled { // fetch nnid miis from all time
 		whereClause = cdb.Where("pid = ? AND api_id = ?"/* AND date_last_latest > ?"*/, pid, apiID /*now.AddDate(0, -1, 0)*/)
 	} else {
 		whereClause = cdb.Where("pid = ? AND api_id = ? AND date_last_latest > ?", pid, apiID, now.AddDate(0, -1, 0))
@@ -260,6 +284,10 @@ func fetchMii(pid uint64, apiID int, forceRefresh bool) (MiisResponse, error) {
 
 	var result string
 	if shouldFetch {
+		if apiID == 0 && apiID0IsDisabled { // nintendo nnid fetch disabled
+			return MiisResponse{}, errNNIDAPIID0IsDisabled
+		}
+
 		// Fetch from HTTP and update cache
 		body, err := nnasHTTPRequest(fmt.Sprintf("/miis?pids=%d", pid), apiID)
 		if err != nil {
@@ -293,6 +321,10 @@ func fetchMii(pid uint64, apiID int, forceRefresh bool) (MiisResponse, error) {
 			}
 		} else {
 			if err := xml.Unmarshal([]byte(result), &miiResponse); err != nil {
+				if err.Error() == encodingXMLErrorThrownWhenAccountWSReturnsHTML {
+					return MiisResponse{},
+					fmt.Errorf("i think the account server is returning html instead of data: %v", err)
+				}
 				return miiResponse, err
 			}
 		}
@@ -333,6 +365,7 @@ func setCORSHeaders(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+const encodingXMLErrorThrownWhenAccountWSReturnsHTML = "expected element type <miis> but have <html>"
 
 func handleMiiDataResponse(w http.ResponseWriter, data ResponseData, miiDataBytes *[]byte, acceptsOctetStream bool, lastModified time.Time) {
 	header := w.Header()
@@ -373,7 +406,7 @@ func retrieveMiiDataFromNNIDOrPID(w http.ResponseWriter, nnid string, pid int64,
 	if useNNIDToMiiMapForAPI0 && apiID == 0 {
 		// Lookup by PID if it's provided (not -1), otherwise lookup by NNID
 		var miiData NNIDToMiiDataMap
-		if pid != -1 {
+		if pid != -1 { // look up PID in archive
 			result := mdb.Model(&miiData).Where("pid = ?", pid).First(&miiData)
 			if result.Error != nil {
 				if result.Error == gorm.ErrRecordNotFound {
@@ -383,7 +416,7 @@ func retrieveMiiDataFromNNIDOrPID(w http.ResponseWriter, nnid string, pid int64,
 				}
 				return data, nil, lastModified, result.Error
 			}
-		} else {
+		} else { // look up NNID in archive
 			nnid = normalizeDashUnderscoreDot(nnid)
 			result := mdb.Model(&miiData).Where("normalized_nnid = ?", nnid).First(&miiData)
 			if result.Error != nil {
@@ -407,18 +440,23 @@ func retrieveMiiDataFromNNIDOrPID(w http.ResponseWriter, nnid string, pid int64,
 			data.UserID = miiData.NNID
 			data.Name = utf16LESliceToString(miiData.Data[0x1a : 0x1a+0x14])
 		}
-	} else {
+	} else { // look up NNID without database
 		// Pass pid if it's not -1, otherwise lookup with nnid
 		var fetchedPID uint64
+		var err error
 		if pid == -1 {
-			fetchedPID, _ = fetchNNIDToPID(nnid, apiID)
+			fetchedPID, err = fetchNNIDToPID(nnid, apiID)
 		} else {
 			fetchedPID = uint64(pid)
 		}
-
-		miiResponse, err := fetchMii(fetchedPID, apiID, forceRefresh)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "error resolving nnid to pid: "+err.Error(), http.StatusInternalServerError)
+			return data, nil, lastModified, err
+		}
+
+		miiResponse, err := fetchMiiFromPID(fetchedPID, apiID, forceRefresh)
+		if err != nil {
+			http.Error(w, "error fetching mii after resolving pid: "+err.Error(), http.StatusInternalServerError)
 			return data, nil, lastModified, err
 		}
 

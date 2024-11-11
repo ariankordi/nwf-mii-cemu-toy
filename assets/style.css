@@ -294,7 +294,7 @@ input[type=color] {
 body[data-iframe-mode] h1,
 body[data-iframe-mode] h2,
 body[data-iframe-mode] h3,
-body[data-iframe-mode] hr,
+/*body[data-iframe-mode] hr,*/
 body[data-iframe-mode] .hide-iframe-mode {
   display: none;
 }

@@ -376,8 +376,15 @@ const handleConvertDetailsToggle = event => {
   const studioCode = [...studioData].map(byteToHex).join('');
   studioCodeElement.textContent = studioCode;
 
+  // TODO 2024-11-04: while the mii instructions site accepts studio
+  // data as well as charinfo which would be more convenient... for
+  // the time being charinfo will be used
+  /*
+  const switchCharInfoData = convertDataToType(inputData, supportedFormats.find(f => f.className === 'Gen3Switchgame'));
+  const switchCharInfoHex = [...switchCharInfoData].map(byteToHex).join('');
+  */
   const miiInstructionsLinkElement = event.target.getElementsByClassName('mii-instructions-link')[0];
-  miiInstructionsLinkElement.href += studioCode;
+  miiInstructionsLinkElement.href += studioCode; //switchCharInfoHex;
 
   const studioURLData = encodeStudioToObfuscatedHex(studioData);
   const studioURLRender = studioImageElement.getAttribute('data-src') + studioURLData;
