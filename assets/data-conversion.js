@@ -120,15 +120,16 @@ conversionMethods.convertVer4FieldsToVer3 = data => {
   const ToVer3GlassColorTable = [0, 1, 1, 1, 5, 1, 1, 4, 0, 5, 1, 1, 3, 5, 1, 2, 3, 4, 5, 4, 2, 2, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5];
   const ToVer3FacelineColorTable = [0, 1, 2, 3, 4, 5, 0, 1, 5, 5];
 
-  data.glassesType = ToVer3GlassTypeTable[data.glassesType];
+  data.faceColor = ToVer3FacelineColorTable[data.faceColor];
   data.hairColor = ToVer3HairColorTable[data.hairColor];
+  data.eyeColor = ToVer3EyeColorTable[data.eyeColor];
+  data.eyebrowColor = ToVer3HairColorTable[data.eyebrowColor];
+  data.mouthColor = ToVer3MouthColorTable[data.mouthColor];
   // NOTE: even though the rest of the beard fields are named differently
   // in Gen3Studio, this one for beard color is the same there and in all
   data.facialHairColor = ToVer3HairColorTable[data.facialHairColor];
-  data.eyeColor = ToVer3EyeColorTable[data.eyeColor];
-  data.mouthColor = ToVer3MouthColorTable[data.mouthColor];
   data.glassesColor = ToVer3GlassColorTable[data.glassesColor];
-  data.faceColor = ToVer3FacelineColorTable[data.faceColor];
+  data.glassesType = ToVer3GlassTypeTable[data.glassesType];
 };
 
 // apply extra "extension" fields at the end of this struct
@@ -450,8 +451,8 @@ const handleConvertDetailsToggle = event => {
 
   const ffsdDownloadButton = event.target.getElementsByClassName('download-ffsd')[0];
   ffsdDownloadButton.setAttribute('data-data', ver3StoreDataB64);
-  studioDataDownloadButton.setAttribute('data-filename',
-                                        fileBaseName + '.ffsd');
+  ffsdDownloadButton.setAttribute('data-filename',
+                                  fileBaseName + '.ffsd');
 
 
   // mark as revealed at the end, i.e. do NOT RUN THE HANDLER ANYMORE
@@ -505,7 +506,10 @@ conversionMethods.encodeVer3StoreData = (dataStruct, forQRCode) => {
   dataStruct.unknown1 = 0x03; // ALWAYS constant 100% of the time
   // 3ds version mii, will scan as a qr code on 3ds and wii u
   // may already be set so using defineProperty on it
-  if(forQRCode)
+  if(forQRCode ||
+    // there is no birth platform corresponding to 0 (1 is wii)
+    dataStruct.version === undefined || dataStruct.version < 1
+  )
     Object.defineProperty(dataStruct, 'version', {
       value: 3
     });

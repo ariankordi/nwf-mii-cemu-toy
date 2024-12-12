@@ -431,64 +431,65 @@ function onFormSubmit(event) {
 if(!iframeMode) {
   form.addEventListener('submit', onFormSubmit);
 } else {
-    // special form handler for iframe mode
-    form.addEventListener('submit', function(event) {
-      event.preventDefault(); // Prevent the default form submission via HTTP
-    formSubmitting = true;
-    submitButton.disabled = true; // Disable the button
+  // special form handler for iframe mode
+  form.addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent the default form submission via HTTP
+  formSubmitting = true;
+  submitButton.disabled = true; // Disable the button
 
-    const formData = new FormData(form);
-    const searchParams = new URLSearchParams([...formData.entries()]);
-    if(transparentCheckbox.checked)
-      searchParams.delete('bgColor');
-    searchParams.delete('erri');
-
-
-    const dataForConversion = formData.get('data-REAL');
-    if(dataForConversion)
-      // delete it so it is not sent to the server, only used for js
-      searchParams.delete('data-REAL');
-    let data = !dataForConversion ? formData.get('data') : dataForConversion
-    console.log('data input:', data);
+  const formData = new FormData(form);
+  const searchParams = new URLSearchParams([...formData.entries()]);
+  if(transparentCheckbox.checked)
+    searchParams.delete('bgColor');
+  searchParams.delete('erri');
 
 
+  const dataForConversion = formData.get('data-REAL');
+  if(dataForConversion)
+    // delete it so it is not sent to the server, only used for js
+    searchParams.delete('data-REAL');
+  let data = !dataForConversion ? formData.get('data') : dataForConversion
+  console.log('data input:', data);
+
+  if(data) { // not empty, null, or undefined
     const inputData = parseHexOrB64TextStringToUint8Array(data);
 
     // run the function to convert the data from the image to raw studio data
     const studioData = convertDataToType(inputData, studioFormat);
     const studioURLData = encodeStudioToObfuscatedHex(studioData);
     searchParams.append('studioData', studioURLData);
+  }
 
-    // iterate through elements with data-default-value attribute
-    // for each of these inputs, if the value matches the default...
-    // then they will be excluded from the search params to clean it up
-    document.querySelectorAll('[data-default-value]').forEach(function(element) {
-      const defaultValue = element.getAttribute('data-default-value');
+  // iterate through elements with data-default-value attribute
+  // for each of these inputs, if the value matches the default...
+  // then they will be excluded from the search params to clean it up
+  document.querySelectorAll('[data-default-value]').forEach(function(element) {
+    const defaultValue = element.getAttribute('data-default-value');
 
-      let inputValue = element.value;
-      // if this is a checkbox, then the value is if it is checked
-      if(element.type === 'checkbox') inputValue = element.checked;
+    let inputValue = element.value;
+    // if this is a checkbox, then the value is if it is checked
+    if(element.type === 'checkbox') inputValue = element.checked;
 
-      // double equals means that '0' will match 'disabled' (checkbox)
-      if(inputValue == defaultValue)
-          searchParams.delete(element.name);
-    });
+    // double equals means that '0' will match 'disabled' (checkbox)
+    if(inputValue == defaultValue)
+        searchParams.delete(element.name);
+  });
 
-    const params = Object.fromEntries(searchParams);
-    // post to above iframe
-    window.top.postMessage(params, '*');
+  const params = Object.fromEntries(searchParams);
+  // post to above iframe
+  window.top.postMessage(params, '*');
 
   });
   window.onmessage = function(event) {
-      if(event.data === 'releaseSubmit') {
-          formSubmitting = false;
-          submitButton.disabled = false;
-      }
-      /*
-      if(event.data === 'submitForm') {
+    if(event.data === 'releaseSubmit') {
+        formSubmitting = false;
+        submitButton.disabled = false;
+    }
+    /*
+    if(event.data === 'submitForm') {
 
-      }
-      */
+    }
+    */
   };
 }
 

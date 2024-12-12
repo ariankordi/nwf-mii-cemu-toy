@@ -202,7 +202,7 @@ other = "Waiting for QrScanner.scanImage() 10s timeout..."
 other = "Loaded Mii: "
 
 [qr_status_no_qr]
-other = "No QR code found."
+other = "No QR code found. Please try scanning this image file with a camera."
 
 [qr_status_error]
 other = "Error: "

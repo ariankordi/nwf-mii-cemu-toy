@@ -17,7 +17,8 @@
             <li>
             ⚠️ Need to find whole body camera views for Wii U Mii Maker and Miitomo/Mii Studio
             <ul>
-                <li>For Wii U they are hiding in JpgPoseCam.bfres, which I can't read at the moment.</li>
+                <li>For Wii U they are hiding in JpgPoseCam.bfres, which I can't read at the moment.
+                <ul><li>... And they also move the camera closer/further depending on height (shorter = closer). Haven't found where this happens yet.</li></ul></li>
                 <li>For Mii Studio/Miitomo this is TBD but I assume it's hiding in the game files too.</li>
                 <li>I'm personally deferring this to when the above item is complete though...</li>
             </ul>
@@ -59,7 +60,7 @@
 
         <details id="planned">
             <summary>
-            <h3 style="display: inline;">Planned &amp; Unplanned: <span class="small">click to expand</span></h3>
+            <h3 style="display: inline;">More Planned Items/Issues: <span class="small">click to expand</span></h3>
             </summary>
             <ul class="left-aligned-ul">
             <li>❔At the moment I don't have the Switch and Miitomo body models..</li>
@@ -68,6 +69,7 @@
                 <ul>
                     <li>Every pose is just a single-frame animation from MiiAnim.bfres, same source as everything else.</li>
                     <li>I'm pretty sure the camera positions are in JpgPoseCam.bfres, but Switch Toolbox cannot open it, so... not sure what I'm going to do about that.</li>
+                    <li>Either way, I'm continuing to delay and hold off on this until getting body scaling perfect. Sigh.</li>
                 </ul>
             <details>
                 <summary>❔Need to reverse the Tomodachi Life and Miitopia QR code formats. Miitomo codes are planned as soon as Kaerutomo properly implements them.</summary>
@@ -83,39 +85,40 @@
                     <li>(If you are a Kaeru dev reading this, <a href="#contact">PLEEEASEEEE get in touch!!!</a> 😭)</li>
                 </ul>
             </details></li>
-            <li>❔Need to match the texture filtering/mipmap options.
+            <li>❔Extremely minor: the mask texture is transformed slightly differently between the FFL decomp and real FFL/AFL/nn::mii.
             <ul>
-                <li>I feel that the clarity of the face texture doesn't match Wii U or Miitomo, I don't know.</li>
-                <li>Some face features are hard to make out at low resolutions like 96x96.</li>
-                <li>Will need to take a long hard look at this one day...</li>
+                <li>This is probably one of the last things left to achieve pixel-per-pixel perfection.</li>
+                <li>This is the Mii I usually use for testing this: <a target="_blank" href="https://studio.mii.nintendo.com/miis/image.png?type=face&width=512&data=67767d0916252c3230434a5359606f7083989fa4aab1b7bebdc0c7d4dce3b6bdc0c7ccdfe0e7f6fefa050c0d0c141d&bgColor=00000000">Mii Studio version</a>, <a target="_blank" href="/miis/image.png?data=67767d0916252c3230434a5359606f7083989fa4aab1b7bebdc0c7d4dce3b6bdc0c7ccdfe0e7f6fefa050c0d0c141d&type=face&width=512&shaderType=2&pantsColor=gray&bgColor=00000000">my render</a></li>
+                <li>It's not obvious what is wrong here, as many functions look identical in Ghidra.</li>
+                <li>Note that this is only with the mask texture (not shape), and FFL 1.3.10/AFL/nn::mii do this correctly, all have symbols.</li>
             </ul>
 
             <details>
                 <summary>❔Replicating 3DS and Wii renders has been considered but isn't easy or a priority.</summary>
                 <ul>
                     <li>This requires extracting the meshes (and textures? but those can be downscaled from the new ones) from CFL_Res.dat, but its header hasn't been reversed.</li>
-                    <li>In a pinch RFL_Res.dat could work, but 3DS/Wii U hair styles, textures etc. wouldn't work, and while there's an RFL decomp, I can't find the source code for <a target="_blank" href="https://wiki.tockdom.com/wiki/RFL_Res.dat_Editor">the one RFL_Res.dat editor everyone uses.</a></li>
-                    <li>Now, I could try making an extractor for the RFL_Res.dat format using the RFL decomp for structures, and then see how far I can apply that to CFL_Res.dat.</li>
-                    <li>... But if it doesn't work, well I'm not familiar with many games that have symbols for CFL (or even how to look at 3DS binaries in Ghidra), and frankly don't care enough to put a lot of time into it. Sorry, 3DS Mii render fans.</li>
+                    <li>As of October 2024, the Kadokawa leak includes debug versions of niconico with DWARF information for CFL - Contains all of the structures needed to extract the resource. Cool, right?</li>
+                    <li>I think it would be nice to have an extractor for CFL and RFL resources (since they are so similar), especially since <a target="_blank" href="https://wiki.tockdom.com/wiki/RFL_Res.dat_Editor">the one RFL_Res.dat editor everyone uses</a> both isn't open source and I have also heard that the creator lost the source code.</li>
+                    <li>This is not something I have gotten around to doing, though if you <a href="#contact">contact me</a>, I would love to elaborate on all of this and give details.</li>
 
-                    <li>Second obstacle is shaders, neither of these consoles use GLSL-compatible shaders. This can probably be worked around (or remade since it's very basic) but is still annoying.</li>
+                    <li>Aside from that obstacle is shaders, neither of the Wii or 3DS use GLSL-compatible shaders. This can probably be worked around (or remade since it's very basic) but is still annoying and just one more reason not to do it.</li>
                 </ul>
             </details></li>
 
             <li>❔Miitomo/Tomodachi Life clothing/headgear/wigs may be planned.
             <ul>
-                <li>Don't expect any of these any time soon, especially clothing and wigs.</li>
+                <li>Don't expect any of these any time soon, especially clothing.</li>
                 <li>Do keep in mind that these body models are different from the Wii U/Switch models and therefore the clothing may not work on those.</li>
             </ul>
 
             <details>
                 <summary>❔Fully rendering Miis in the browser is a longterm goal of mine. I can't promise anything, but I am steadily working towards it.</summary>
                 <ul>
-                    <li>I did get FFL-Testing building with Emscripten in August, and if I handle it just right, it is able to fully render a Mii head, albehit without hair and many WebGL errors...</li>
+                    <li>As of October 2024, the FFL-Testing master branch fully builds with Emscripten and works on WebGL 2.0, and I even have a Mii rendering sample in C and raylib that works on WebGL 1.0 (contact me if you want this)</li>
                     <li>So what else is left? For starters, the assets need a more efficient compression method instead of zlib. I'm thinking of using Draco for meshes, and then ASTC for textures. As of writing, neither are implemented yet.</li>
                     <li>An interface will need to be made to bridge the C exports of FFL to be callable from JS, and then make a shader callback implementation in JS using WebGL or three.js.</li>
                     <li>So I haven't gone that far with this, and have not yet connected FFL in WASM to JS. But...</li>
-                    <li>As of October 2024, I have <a href="https://jsfiddle.net/arian_/8gvynrdu/6/">a little jsfiddle here</a> that will read a Mii exported to glTF from my site, and render it with the Wii U shader! Isn't that nice?</li>
+                    <li>As of October 2024, I have <a href="https://jsfiddle.net/arian_/8gvynrdu/7/">a little jsfiddle here</a> that will read a Mii exported to glTF from my site, and render it with the Wii U shader! Isn't that nice?</li>
                     <li>Now, once this is properly implemented and working, I can't even begin to think about the possibilities. At the minimum, this site could go serverless, and services using Miis may not even need to render and store icons on their side. Woo.</li>
                     <li>As usual, if you want to help or put pressure on me to work on this with more haste, <a href="#contact">ping me.</a></li>
                 </ul>
@@ -126,7 +129,7 @@
                 <li>However, if you like the sound of this...</li>
                 <li>... and you're either working on something like this right now and it just needs Mii heads, OR you'd want to design the UI for this and let me add the rendering logic, <a href="#contact">do get in touch!</a></li>
                 <li class="small">(This is assuming, yaknow. it's not a Scratch or Roblox game or something)</li>
-            </ul></li>
+            </ul>
 
             </ul>
 
