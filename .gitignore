@@ -2,13 +2,9 @@
 *.raw
 
 # binaries
-processor-go
-processor-go.exe
+ffl-testing-frontend-http
 # dlv debug
 __debug_*
-# old versions
-#*-2024-03*
-OLD VERSIONS/
 
 # sqlite databases
 *.db
