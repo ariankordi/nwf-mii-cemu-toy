@@ -417,6 +417,7 @@ func main() {
 
 	http.HandleFunc("/miis/image.png", renderImage)
 	http.HandleFunc("/miis/image.glb", renderImage)
+	http.HandleFunc("/miis/image.tga", renderImage)
 
 	var err error
 

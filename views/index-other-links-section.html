@@ -1,0 +1,88 @@
+    <h2>Other Mii Resources</h2>
+    <div id="other-sites" class="hide-iframe-mode">
+    <p>You may like these other Mii creations. If you want me to shout out another project, <a href="#contact">ask me</a> and I will add it if I think it's cool.</p>
+    <ul class="left-aligned-ul">
+
+        <li>
+            <b><a target="_blank" href="https://mii.nxw.pw">Mii Creator</a> by <a target="_blank" href="https://github.com/datkat21">kat21</a></b> - web app that lets you create, import, edit, and even make full body renders with poses. Best non-console Mii editor right now.
+            <ul>
+                <li><a target="_blank" href="https://github.com/datkat21/mii-creator">Open source,</a> powered by three.js, TypeScript, and my API (it is currently server-based). Development is far more active, feel free to help them out!</li>
+                <li>You may even consider it a successor to my tool, since progress has been slow recently. I helped the author out with the shaders, though I hope I can make my own Mii Maker-like app in the not too distant future. I really hope you enjoy kat's site.</li>
+            </ul>
+        </li>
+
+
+        <li>
+            <b><a href="https://jsfiddle.net/u/arian_/fiddles/" target="_blank">My JSFiddles</a></b> - Yes, a bit of self-promotion, but notably I wrote snippets for: rendering Mii GLTF &amp; shader in three.js, en/decoding Mii QRs with game extra data, Mii to Studio format converter in JS without a server, a Switch Mii color reference... I occasionally add more too.
+        </li>
+        <!-- TODO: FFL samples in C - Shows you how to use the FFL decomp in any OpenGL game engine, this example using Raylib. This could even be helpful for porting FFL to other languages entirely, or even using it through JS/WASM. -->
+        <!-- TODO TODO TODO: POINT OUT MY NNID DATABASE. if you are lurking the html its here:
+        * MariaDB database: https://mega.nz/file/HWJh2BrA#qoJ4Vn_Sdy7b1vWJqjGR9uVvs-yYRQJLaPmu2g2nMdE
+        * Original dump and scripts should be here too: https://mega.nz/file/SboWHRrK#_5vuSzFAkyvz9lGy7RBqwAh3CN0OHCRQ9AbYn-Kd09s
+        -->
+        </ul>
+        <details>
+            <summary>
+            <h3 style="margin: 0; display: inline;">See Even More Resources</h3>
+            </summary>
+            <p>Sorry if I didn't put your favorite tool above, I didn't want to add an endless amount to scroll through. I'm prioritizing what I think is coolest and most recent. Here is more to explore:</p>
+            <ul class="left-aligned-ul">
+                <li>
+                    <b><a target="_blank" href="https://github.com/ariankordi/ffl/blob/nsmbu-win-port-linux64/tools/FFLResource.py">FFLResource.py extractor</a></b> - Originally by Abood, this tool exports and import shapes and textures from FFL resources, and my fork can also do AFL/Miitomo resources. <b>If you currently use mii-assets by jaames, stop, and use this</b> - This script labels and extracts all resource data (vtx normals, transforms, deswizzling) unlike mii-assets.
+                </li>
+                <li>
+                    <b><a href="https://pf2m.com/tools/mii" target="_blank">PF2M Mii Renderer</a></b> - You probably already know about this, but it uses the Mii Studio API that may provide a little bit more accuracy (until I get my stuff together and fix body model/scaling), and it doesn't need self-hosting. I won't blame you if you prefer this at all!
+                    <ul>
+                        <li>
+                            Resources to interface with Mii Studio: <a href="https://github.com/PretendoNetwork/mii-js" target="_blank">mii-js</a> by <a href="https://github.com/jonbarrow" target="_blank">Jon Pretendo</a> (TypeScript), <a href="https://github.com/HEYimHeroic/mii2studio" target="_blank">mii2studio</a> (Python), my <a target="_blank" href="/assets/data-conversion.js">Kaitai-based conversion code on this site</a> (JavaScript again), my <a target="_blank" href="https://github.com/ariankordi/nwf-mii-cemu-toy/blob/master/processor-go/mii2studio/mii2studio.go">3DS->Studio implementation</a> and <a target="_blank" href="https://github.com/WiiLink24/MiiContestChannelServer/blob/main/mii/studio.go">WiiLink's Studio conversion</a> (both in Go)
+                        </li>
+                        <li>Note that my API is (mostly) compatible with Mii Studio as well.</li>
+                    </ul>
+                </li>
+                <li>
+                    <b><a href="https://www.wiilink24.com/extras/mii/" target="_blank">My Avatar Editor</a></b> (WiiLink archive) - Old Wii-era Flash Mii editor. If it works, it works, right? The .mae files it exports are compatible with this site (same as .rcd)
+                </li>
+                <!-- this is not wii homebrew lmao...
+                <li>
+                    <b><a href="https://wii.brewology.com/downloads/download.php?id=2414&mcid=3" target="_blank">MiiTransfer Wii homebrew</a></b> - Reads Mii files from a Wii Remote. Note that I have not used this and don't actually know if it works lol
+                    <ul>
+                        <li>If someone tries it and it works or doesn't work, <a href="#contact">please let me know</a> - I will remove this message once one person confirms its function.</li>
+                    </ul>
+                </li>
+                -->
+                <li>
+                    <a href="https://github.com/HEYimHeroic" target="_blank">HEYimHeroic's</a> <b><a target="_blank" href="https://new.miilibrary.com">Mii Library</a></b> and <b><a target="_blank" href="https://github.com/HEYimHeroic/MiiDataFiles">MiiDataFiles</a></b> - Resources for Miis in various consoles, games, etc., in many formats.
+                </li>
+
+                <li>
+                    <b><a href="https://miicontest.wiilink.ca/" target="_blank">WiiLink CMOC Viewer</a></b> - Browser for their Check Mii Out Channel revival, with thousands of Miis to explore and download.
+                    <ul>
+                        <li>At some point I tried to add this to my site, <a href="/cmoc_lookup/" target="_blank">implemented an API for this</a>, and gave up. Anyone want to implement it for me????</li>
+                    </ul>
+                </li>
+
+                <li>
+                    <b><a href="https://github.com/Genwald/MiiPort" target="_blank">MiiPort</a></b> - Lets you import and export Miis from a homebrewed Switch.
+                    <ul>
+                        <li>The source is also a great resource for Mii structures and Switch color conversion tables.</li>
+                    </ul>
+                </li>
+
+                <li>
+                    <b><a href="https://kazuki-4ys.github.io/web_apps/MiiInfoEditorCTR/" target="_blank">MiiInfoEditorCTR</a></b> - Can edit fields in your 3DS/Wii U Mii data.
+                    <ul>
+                        <li>Other tools by Kazuki: <a href="https://github.com/kazuki-4ys/Mii-Importer" target="_blank">Mii-Importer</a>, <a href="https://github.com/kazuki-4ys/Mii-Dumper" target="_blank">Mii-Dumper</a> for 3DS databases.</li>
+                    </ul>
+                </li>
+
+                <li>I actually don't know if there are any tools for reading Wii U Mii Maker databases (FFL_ODB.dat). <a href="https://gist.github.com/ariankordi/ea0ab58269d62ba8c18d1953d0f567b9" target="_blank">Unless this counts.</a></li>
+
+                <li>
+                    Mii Blender resources: <a target="_blank" href="https://mii2umiitomofan.gumroad.com/l/riggv">Mii2U Blender Mii Maker</a>, <a target="_blank" href="https://github.com/PicelBoi/pvr-model-extractor">pvr-model-extractor by jaames/PicelBoi fork</a>, <a target="_blank" href="https://www.youtube.com/watch?v=MZJcZwCPN0o">Yodakiller3000 Miitomo rip tutorial</a>
+                    <ul>
+                        <li>Note that I have used literally none of these. I just hope they will be helpful.</li>
+                    </ul>
+                </li>
+            </ul>
+        </details>
+    </div>

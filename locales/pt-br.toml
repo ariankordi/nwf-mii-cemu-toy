@@ -5,10 +5,10 @@ other = "Cor de fundo:"
 other = "Abrir arquivo de amiibo"
 
 [contact_info_label]
-other = "Para comentários, perguntas, preocupações, ajuda com este ou qualquer outro assunto relacionado a Mii, etc... POR FAVOR, não hesite em me contatar!"
+other = "Para comentários, perguntas, preocupações, ajuda com este ou qualquer outro assunto relacionado a Mii, etc... Por favor, não HESITE em me contatar!"
 
 [contact_info_post]
-other = "Eu recebo qualquer pessoa nova, estou aberto para discutir qualquer coisa, mesmo que não tenha a ver com o projeto :)"
+other = "Eu recebo qualquer pessoa nova, estou aberto para discutir qualquer coisa, mesmo que não tenha a ver com esse projeto :)"
 
 [data_placeholder]
 # proper: hex, base64
@@ -79,11 +79,11 @@ other = "Piscar (olho direito e boca abertos)"
 # Fim das expressões
 
 [force_refresh_description]
-other = "Esta opção atualizará seu Mii se continuarmos mostrando uma versão antiga. Não resolverá outros problemas."
+other = "Esta opção atualizará seu Mii se continuarmos mostrando uma versão antiga dele."
 
 [force_refresh_label]
 # proper: NNID
-other = "Forçar atualização do NNID sem cache"
+other = "Forçar atualização do Mii desta NNID (sem usar cache)"
 
 [github_prefix]
 # proper: GitHub
@@ -99,7 +99,7 @@ other = "Tipo de entrada do Mii:"
 other = "pt-BR"
 
 [load_error_message]
-other = "A imagem abaixo falhou ao carregar!! (Você provavelmente vai querer abrir a imagem em uma nova aba para ver o que deu errado)"
+other = "A imagem abaixo falhou ao carregar! (Você provavelmente vai querer abrir a imagem em uma nova aba para ver o que deu errado)"
 
 [nnid_placeholder]
 # proper: Nintendo Network ID, Wii U, 3DS
@@ -128,7 +128,7 @@ other = "Os ícones acima foram renderizados completamente por este site!"
 other = "Saídas"
 
 [page_title]
-other = "Renderizador de Mii (REAL)"
+other = "Renderizador de Mii (É SÉRIO!)"
 
 [resolution_label]
 other = "Resolução:"
@@ -147,7 +147,7 @@ other = "Desativar supersampling 2x:"
 
 [scale_label_small]
 # NOTE
-other = "Pode acelerar a renderização em altas resoluções. Note que a escala é feita na CPU e não na GPU no momento devido a problemas que tive com vazamento de alfa."
+other = "Pode acelerar a renderização em altas resoluções. Note que a escala é feita na CPU e não na GPU no momento devido a problemas internos."
 
 [submit_button_text]
 other = "Renderizando..."
@@ -165,7 +165,7 @@ other = "Tipo de visualização:"
 other = "Pretendo Network ID"
 
 [option_data]
-other = "Dados Mii/Arquivo/Código de Estúdio"
+other = "Dados Mii/Arquivo/Código do Studio"
 
 [option_qrcode]
 other = "Escanear Código QR do Mii"
@@ -202,7 +202,7 @@ other = "Aguardando o timeout de QrScanner.scanImage() de 10s..."
 other = "Mii carregado: "
 
 [qr_status_no_qr]
-other = "Nenhum código QR encontrado."
+other = "Nenhum código QR encontrado. Por favor, tente escanear este arquivo de imagem com uma câmera."
 
 [qr_status_error]
 other = "Erro: "
@@ -217,10 +217,10 @@ other = "Nenhuma câmera encontrada, ou permissões não foram concedidas."
 other = "Pretendo Network ID criado em pretendo.network."
 
 [label_force_refresh_pnid]
-other = "Forçar atualização do PNID sem cache"
+other = "Forçar atualização do Mii desta PNID (sem usar cache)"
 
 [pretendo_network_description]
-other = "Pretendo Network é um renascimento dos serviços Nintendo Network e Miiverse para o Wii U e 3DS. Confira aqui: "
+other = "Pretendo Network é uma recriação dos serviços da Nintendo Network e Miiverse para o Wii U e 3DS. Confira aqui: "
 
 [mii_data_field_description]
 other = "Este campo aceita dados Mii de 96 bytes regulares em Base64 que você pode encontrar em account.nintendo.net ou na API do Miiverse."
@@ -241,7 +241,7 @@ other = "Não reconhecemos o tipo destes dados do Mii. Verifique a lista de tipo
 other = "Estes dados têm uma soma de verificação CRC16 inválida."
 
 [data_error_size_0]
-other = "Os dados estão vazios. Opa!"
+other = "Os dados estão vazios. Vixe!"
 
 [miis_from_nnids_prior_notice]
 other = "Isso mostrará apenas Miis de NNIDs como eram antes de 8 de abril de 2024."
@@ -249,7 +249,7 @@ other = "Isso mostrará apenas Miis de NNIDs como eram antes de 8 de abril de 20
 [welcome_to_site_header]
 other = "Bem-vindo ao meu site!"
 [contact_me_header]
-other = "Contate-me"
+other = "Fale comigo!"
 [credits_header]
 other = "Créditos"
 
@@ -261,7 +261,7 @@ other = "NNID Aleatório"
 other = "Última modificação: "
 
 [error_container_title]
-other = "😭 Erro de JavaScript!! 😭"
+other = "😭 Erro no JavaScript!! 😭"
 
 [crc16_failed]
 other = " (FALHA NA SOMA DE VERIFICAÇÃO CRC16)"
@@ -318,13 +318,13 @@ other = "Opções avançadas"
 other = "Tipo de recurso:"
 
 [resource_type_note]
-other = "Você deve sempre usar high, mas os renders oficiais usam middle caso você queira combiná-los. Observe que middle não tem novos óculos ou expressões."
+other = "Você deve sempre usar \"high\", mas os renders oficiais usam \"middle\" caso você queira combiná-los. Observe que middle não tem os novos óculos ou expressões (que foram adicionados no Switch/Miitomo)."
 
 [disable_lighting_label]
 other = "Desativar iluminação:"
 
 [disable_lighting_note]
-other = "Útil apenas se você quiser fazer um Carimbo Mii."
+other = "Útil apenas se você quiser fazer algo diferente com o seu Mii, sei lá."
 
 [texture_resolution_label]
 other = "Resolução da textura:"
@@ -357,20 +357,20 @@ other = "Rotação Z da câmera:"
 
 
 [miitomo_shader_inaccurate_note_pre_link]
-other = "Por favor, note que este "
+other = "Por favor, note que esta opção "
 [miitomo_shader_inaccurate_note_link]
 # proper: Mii Studio
 other = "não usa o modelo de corpo do Mii Studio"
 [miitomo_shader_inaccurate_note_post_link]
-other = " no momento, então vai parecer diferente desses renders."
+other = " no momento, então vai parecer diferente das renderizações oficiais."
 [miitomo_shader_inaccurate_note_small]
 # proper: Switch
-other = "Para ser justo, a opção do Switch também não usa o modelo de corpo do Switch, mas a diferença é menor lá."
+other = "Para ser justo, a opção do Switch também não usa o modelo de corpo do Switch, mas a diferença é bem menor lá."
 
 [view_type_all_body_inaccurate_note]
-other = "Não há muito sentido na visualização de corpo inteiro porque é uma visualização estimada, e o corpo em si não está escalado corretamente e as calças não têm cor separada. É fornecida principalmente como uma demonstração técnica."
+other = "A visualização de corpo inteiro é uma visualização bem simples, e o corpo em si não está escalado corretamente e as calças não têm cor separada diferente dos servidores oficiais. É fornecida apenas como uma demonstração técnica por agora."
 [view_type_all_body_inaccurate_note_small]
-other = "Também é apenas quadrado por enquanto devido à maneira como tudo está escrito E eu nem conheço a visualização all_body do Mii Studio hhhhhhh"
+other = "Também é apenas quadrado por enquanto devido à maneira como tudo está escrito E eu nem conheço a visualização all_body do Mii Studio direito, affff"
 
 # seção de comparação
 
@@ -386,7 +386,7 @@ other = "(Wii U + recurso médio + sem AA / Switch + sem AA / Miitomo)"
 
 [under_studio_render_small]
 # proper: domain name, cdn-mii, Miitomol
-other = "(Ou seja, studio.mii.nintendo.com/cdn-mii 2.0.0, mesmo visual/sombreado/óculos erroneamente grandes como Miitomo)"
+other = "(Ou seja, studio.mii.nintendo.com/cdn-mii versão 2.0.0, mesmo visual/sombreado/óculos erroneamente grandes como no Miitomo)"
 [studio_render_right_side_note]
 other = "Site/API Mii Studio."
 
@@ -398,7 +398,7 @@ other = "Render nn:mii::VariableIconBody do Switch."
 
 [under_mii_maker_render_small]
 # proper: NNID, Miiverse, cdn-mii
-other = "(Igual a: servidor NNID, Miiverse, cdn-mii 1.0.0)"
+other = "(Igual a: Imagens de Miis da Nintendo Network, Miiverse, cdn-mii versão 1.0.0)"
 [mii_maker_right_side_note]
 other = "Aplicativo Mii Maker do Wii U."
 
@@ -409,7 +409,7 @@ other = "Leia uma explicação dos tipos de visualização aqui."
 other = "Clique aqui para revelar meu tutorial sobre como extrair seu próprio amiibo para um arquivo."
 [shader_lighting_type_above]
 # proper: Miitomo, Mii Studio
-other = "Escolha Miitomo aqui para obter uma aparência como Mii Studio:"
+other = "Escolha Miitomo aqui para obter uma aparência como a do Mii Studio (ou seja, Miis renderizados em accounts.nintendo.com):"
 
 [copied]
 # as in: (Copied )x times
@@ -507,7 +507,7 @@ other = "Diferenças sutis podem ser vistas ao combinar eixos - mas isso não os
 [head_model_type]
 other = "Tipo de modelo de cabeça"
 [model_type_note]
-other = "Não é destinado a ícones, mas sim para modelagem ou jogos. Otimizado para, por exemplo, chapéus, capacetes (face only). Melhor combinado com \"partsTransform\" no JSON de um glTF exportado."
+other = "Não é destinado a ícones, mas sim para modelagem ou jogos. Otimizado para, por exemplo, chapéus, capacetes (suporta apenas o rosto do Mii). Melhor combinado com \"partsTransform\" no JSON de um glTF exportado."
 
 [draw_stage_mode]
 other = "Modo de desenho de palco"
@@ -525,13 +525,75 @@ other = "Apenas DrawXlu"
 other = "Apenas máscara"
 
 [draw_stage_note]
-other = "Opa é a cabeça sem óculos ou rosto, Xlu é a textura do rosto e óculos, e mask only é apenas a textura do rosto. As utilizações para isso são limitadas."
+other = "\"Opa\" é a cabeça sem óculos ou rosto, Xlu é a textura do rosto e óculos, e mask only é apenas a textura do rosto. As utilizações para isso são limitadas."
 
 [download_model]
-other = "Baixar um modelo desta cabeça Mii em glTF (.glb)"
+other = "Baixar um modelo desta cabeça desse Mii em glTF (.glb)"
 
 [see_instructions]
 other = "Veja as instruções sobre como recriar isso no Switch"
 
 [flatten_nose]
 other = "Achatar nariz:"
+
+[englishonly_label]
+other = "essa parte estará apenas disponível em inglês por enquanto :("
+
+# this was supposed to have links, for now the links are not present here. 
+[welcome_to_site_text1]
+other = "Esse site é um Renderizador de Miis que é basicamente suportado pela library oficial da Nintendo, FFL (usada para renderizar Miis no Wii U), decompilada por %sAboodXD%s"
+# this was supposed to have links, for now the links are not present here. 
+[welcome_to_site_text1_githublink]
+other = "Se quiser, veja no GitHub: %sariankordi/FFL-Testing (renderer-server-prototype branch)%s"
+
+[welcome_to_site_text2]
+other = "Este renderizador tem novos shaders, suporte para todos os tipos de Mii data*, e também suporta Miis usados no Switch, e também é hospedado por mim mesmo! Se você quer usar ícones de Miis em seu site, agora você pode renderiza-los em seu próprio servidor!"
+
+[welcome_to_site_text2_exceptions]
+other = "*Algumas exceções: DS (basicamente Miis do Wii, mas em LE), qualquer formato que não seja oficial, formatos específicos de jogos ou qualquer outro que eu não esteja ciente de sua existência."
+
+[welcome_to_site_text2_github]
+other = "Veja o link do GitHub acima se quiser saber de mais detalhes."
+
+[welcome_to_site_interested]
+other = "Está interessado? Clique aqui para ler mais..."
+
+[welcome_to_site_interested1]
+other = "Esse site está rodando no código mencionado acima. E eu tentei fazer a API ser compatível com a API oficial do Mii Studio."
+
+# this was supposed to have links, for now the links are not present here.
+[welcome_to_site_interested_subtopic]
+other = "Este site funciona como uma forma de substituir a API já existente oficial do Mii Studio. Mas, se não estiver funcionando para você, %sentre em contato comigo!%s"
+
+[welcome_to_site_interested_subtopic2]
+other = "Sinta-se a vontade para usar isso onde quiser! Mas, não dependa que o site fique no ar o tempo todo, %sPELO AMOR DE DEUS!!%s"
+
+[welcome_to_site_interested_subtopic3]
+other = "Você pode apagar alguns parâmetros desnecessários dos URLs também. O parâmetro %serri%s não é necessário."
+
+[welcome_to_site_interested2]
+other = "Graças ao AboodXD, o renderizador oficial de Miis no Wii U, chamado de FFL (Cafe Face Library), foi decompilado e portado para OpenGL 3.3."
+
+[welcome_to_site_interested3]
+other = "%sFFL-Testing%s é o programa que ele fez para testar: tudo que este programa faz é rodar cabeças de Miis em uma janela."
+
+[welcome_to_site_interested4]
+other = "O shader do Wii U foi decompilado como FFLShader.vert/frag, e os \"uniforms\" necessários para utilizá-lo estão em src/Shader.cpp. Fique a vontade para usar isso em outros projetos, se desejar."
+
+[welcome_to_site_interested5]
+other = "A branch \"renderer-server-prototype\" contém as mesmas coisas para os shaders do Switch e do Miitomo."
+
+[welcome_to_site_interested6]
+other = "Acho que daria pra eu escrever mais coisas aqui, mas por agora é só isso..."
+
+[welcome_to_site_help]
+other = "%sVocê está interessado em me ajudar?%s Se quiser me dar uma mão com design frontend, ajuda com OpenGL/C++ ou portar para o WebGL, %scontate-me!%s"
+
+[contact_info_maintained]
+other = "Esse projeto e/ou site é mantido apenas por mim, Arian Kordi - sim, aquele lá, sabe?..."
+
+[contact_info_maintained_small]
+other = "Se você for entrar em contato, não me pergunte sobre o site que começa com \"Closed\", blz?"
+
+[not_associated_nin]
+other = "Este projeto não está de forma alguma associado com a Nintendo."

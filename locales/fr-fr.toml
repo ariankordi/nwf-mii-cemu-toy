@@ -202,7 +202,7 @@ other = "En attente de QrScanner.scanImage() temps d'attente de 10s..."
 other = "Mii chargé : "
 
 [qr_status_no_qr]
-other = "Aucun QR code trouvé."
+other = "Aucun code QR trouvé. Veuillez essayer de scanner ce fichier image avec un appareil photo."
 
 [qr_status_error]
 other = "Erreur : "

@@ -43,7 +43,7 @@ type RenderRequest struct {
 	Data                 [96]byte
 	DataLength           uint16
 	ModelFlag            uint8
-	ExportAsGLTF         bool
+	ResponseFormat       uint8   // rgba, gltf, tga
 	Resolution           uint16
 	TexResolution        int16
 	ViewType             uint8
@@ -318,7 +318,12 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		pantsColorStr = "red"
 	}
 
-	exportAsGLTF := strings.HasSuffix(r.URL.Path, ".glb")
+	var responseFormat uint8 = 0
+	if strings.HasSuffix(r.URL.Path, ".glb") {
+		responseFormat = 1 // output is gltf
+	} else if strings.HasSuffix(r.URL.Path, ".tga") {
+		responseFormat = 2 // flips Y, emits BGRA
+	}
 
 	var storeData []byte
 	var err error
@@ -548,7 +553,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	var expressionFlag uint32 = 0
 	// check for multiple expressions
 	// (only applies for glTF!!!!!!!)
-	if exportAsGLTF && query.Has("expression") && len(query["expression"]) > 1 {
+	if responseFormat == 1 && query.Has("expression") && len(query["expression"]) > 1 {
 		expressions := query["expression"]
 
 		// Multiple expressions provided, compose the expression flag
@@ -690,7 +695,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		Data:            [96]byte{},
 		DataLength:      uint16(len(storeData)),
 		ModelFlag:       uint8(modelFlag),
-		ExportAsGLTF:    exportAsGLTF,
+		ResponseFormat:  responseFormat,
 		Resolution:      uint16(width),
 		TexResolution:   int16(texResolution),
 		ViewType:        uint8(viewType),
@@ -728,7 +733,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 
 	fullReader := bufio.NewReader(io.MultiReader(bytes.NewReader(bufferData), reader)) // use bufio to allow discard
 
-	if exportAsGLTF {
+	if responseFormat == 1 { // gltf
 		// Read size from GLB header
 		var glbHeader GLBHeader
 		if err := binary.Read(bytes.NewReader(bufferData), binary.LittleEndian, &glbHeader); err != nil {
@@ -793,6 +798,34 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		// replace the image with the scaled version
 		img = scaledImg
 	}
+
+	if responseFormat == 2 { // tga
+		// change tga header to reflect img
+		tgaHeader.Width = int16(img.Rect.Dx())
+		tgaHeader.Height = int16(img.Rect.Dy())
+		tgaHeader.BitsPerPixel = 32 // NRGBA
+
+		// size is deterministic so set it
+		imageDataSize := int(img.Rect.Dx()) * int(img.Rect.Dy()) * 4 // NRGBA
+		size := imageDataSize + 18 // tga header size
+		header.Set("Content-Length", strconv.Itoa(size))
+		header.Set("Content-Type", "image/tga")
+
+		if err := binary.Write(w, binary.LittleEndian, &tgaHeader); err != nil {
+			http.Error(w, "failed to write out tga header: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		pixReader := bytes.NewReader(img.Pix)
+		_, err = io.Copy(w, pixReader)
+		if err != nil {
+			http.Error(w, "failed to write out tga data: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		return // done copying the tga response
+	}
+	// otherwise encode as png
 
 	// Sending the image as a PNG response
 	w.Header().Set("Content-Type", "image/png")
@@ -874,8 +907,8 @@ var clothesColorMap = map[string]int{
 
 var pantsColorMap = map[string]int{
 	"gray": 0,
-	"red":  1,
-	"blue": 2,
+	"blue": 1,
+	"red":  2,
 	"gold": 3,
 }
 
