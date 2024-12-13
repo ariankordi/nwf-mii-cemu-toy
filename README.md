@@ -28,7 +28,7 @@ I have made both my scrapes (in Python pickle format), as well as the MariaDB da
 </details>
 
 * though I should reeeeally really repost the scripts for doing this on GitHub Gist and also the dumps themselves on archive.org oh god I have forgotten to do this for moooooooonthhhhsssssssHHHHHHHHHHHHHHHHHHH
-   Due to the realization that the original dump was in April and these scripts still haven't been released, I have put these scripts in 
+   - Due to the realization that the original dump was in April and I still haven't gotten around to formally releasing these, I have put these scripts in `2024-06-nnid-scrape-scripts`. No instructions are provided, and they probably don't work either.
 
 
 ### (Impromptu) API documentation...
