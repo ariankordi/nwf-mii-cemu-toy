@@ -50,7 +50,7 @@ type RenderRequest struct {
 	ResourceType         uint8
 	ShaderType           uint8
 	Expression           uint8
-	ExpressionFlag       uint32  // used if there are multiple
+	ExpressionFlag       FFLAllExpressionFlag //uint32  // used if there are multiple
 	CameraRotate         [3]int16
 	ModelRotate          [3]int16
 	BackgroundColor      [4]uint8
@@ -67,6 +67,26 @@ type RenderRequest struct {
 	_                    [3]byte // padding for alignment
 	//SetLightDirection bool
 	//LightDirection    [3]int32
+}
+
+const FFL_EXPRESSION_LIMIT = 70
+type FFLAllExpressionFlag struct {
+	Flags [3]uint32 // 0-96
+}
+func SetExpressionFlagIndex(ef *FFLAllExpressionFlag, index int, set bool) {
+	if index < 0 || index >= FFL_EXPRESSION_LIMIT {
+		fmt.Printf("FFLSetExpressionFlagIndex: input out of range: %d\n", index)
+		return // Do not set anything.
+	}
+
+	part := index / 32       // Determine which 32-bit block
+	bitIndex := index % 32   // Determine which bit within the block
+
+	if set {
+		ef.Flags[part] |= (1 << bitIndex) // Set the bit
+	} else {
+		ef.Flags[part] &^= (1 << bitIndex) // Clear the bit
+	}
 }
 
 // TGAHeader is put in front of render responses.
@@ -550,14 +570,19 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var expressionFlag uint32 = 0
+	var expressionFlag FFLAllExpressionFlag //uint32 = 0
 	// check for multiple expressions
 	// (only applies for glTF!!!!!!!)
-	if responseFormat == 1 && query.Has("expression") && len(query["expression"]) > 1 {
-		expressions := query["expression"]
+	if responseFormat == 1 && query.Has("expression") {
+		expressionStr := query.Get("expression")
+		// Split the comma-separated expressions
+		expressions := strings.Split(expressionStr, ",")
 
-		// Multiple expressions provided, compose the expression flag
+		// Multiple expressions provided, compose the expression flag.
 		for _, expressionStr := range expressions {
+			// Trim spaces around each expression.
+			expressionStr = strings.TrimSpace(expressionStr)
+
 			// parse expression or use as an int
 			var expression int
 			expression, err = strconv.Atoi(expressionStr)
@@ -566,10 +591,13 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 				// this defaults to normal if it fails
 				expression = getExpressionInt(expressionStr)
 			}
+			// set expression flag
 			// Bitwise OR to combine all the flags
-			expressionFlag |= (1 << expression)
+			//expressionFlag |= (1 << expression)
+			SetExpressionFlagIndex(&expressionFlag, expression, true)
 		}
 	}
+
 
 	var clothesColor int
 	clothesColor, err = strconv.Atoi(clothesColorStr)
