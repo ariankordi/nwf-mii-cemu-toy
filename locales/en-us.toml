@@ -529,7 +529,7 @@ other = "Mask only"
 
 [draw_stage_note]
 # proper: Opa, Xlu, mask
-other = "Opa is the head without glasses or a face, Xlu is the face texture and glasses, and mask only is just the face texture. Uses for this are niche."
+other = "Opa is the head without glasses or a face, Xlu is the face texture and glasses (use the Depth version to overlay this above Xlu), and mask only is just the face texture. Uses for this are niche."
 
 [download_model]
 # proper: Mii, glTF, .glb
