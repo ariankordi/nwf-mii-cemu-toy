@@ -217,8 +217,8 @@ so how do you get the player id?
 this is in your friend request invite link
 it is the first 16 character hex string after "friend_code/"
 hope that helps - if it does, you can specify these query params:
-* target_player_id (multiple, can substitute path parameter)
-* namespace (multiple, e.g.: own_mii, stock_mii, mii_face_image)
+* target_player_id (comma separated, can substitute path parameter)
+* namespace (comma separated, e.g.: own_mii,stock_mii,mii_face_image)
 
 the endpoint this requests is: ` + getPlayerDataEndpoint
 
@@ -247,22 +247,31 @@ func miitomoLookupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 
-	// Extract target_player_id from query parameters
-	for _, id := range query["target_player_id"] {
-		if playerIDRegex.MatchString(id) {
-			targetPlayerIDs = append(targetPlayerIDs, id)
-		} else {
-			http.Error(w, fmt.Sprintf("%v: %s", errInvalidPlayerID, id), http.StatusBadRequest)
-			return
+	// Extract target_player_id from query parameters (comma-separated)
+	if ids, exists := query["target_player_id"]; exists && len(ids) > 0 {
+		// Split the comma-separated values and validate each ID
+		for _, id := range strings.Split(ids[0], ",") {
+			id = strings.TrimSpace(id) // Remove any leading or trailing spaces
+			if playerIDRegex.MatchString(id) {
+				targetPlayerIDs = append(targetPlayerIDs, id)
+			} else {
+				http.Error(w, fmt.Sprintf("%v: %s", errInvalidPlayerID, id), http.StatusBadRequest)
+				return
+			}
 		}
 	}
 
-	// Determine namespaces
+	// Determine namespaces (comma-separated)
 	namespaces := []string{"own_mii", "stock_mii"}
 	if ns, exists := query["namespace"]; exists && len(ns) > 0 {
-		// Override default namespaces with provided query parameters
-		namespaces = ns
+		// Split the comma-separated values and override default namespaces
+		namespaces = []string{}
+		for _, namespace := range strings.Split(ns[0], ",") {
+			namespace = strings.TrimSpace(namespace) // Remove any leading or trailing spaces
+			namespaces = append(namespaces, namespace)
+		}
 	}
+
 
 	// Create the request body
 	requestBody := map[string]interface{}{

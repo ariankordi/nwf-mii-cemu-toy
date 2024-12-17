@@ -46,11 +46,14 @@ var apiBases = map[int]string{
 	// Add additional APIs as needed
 }
 
+var defaultAPIID = 0 // Default API ID to use if not specified.
+
 const apiID0IsDisabled = true // Disable fetching NNIDs from NNAS since it is shut down
 
 // strategy to normalize nnids
 type normalizationFunc func(string) string
-var normalizationFuncs = map[int]normalizationFunc {
+
+var normalizationFuncs = map[int]normalizationFunc{
 	// nintendo normalization
 	0: normalizeDashUnderscoreDot,
 	// pnid normalization
@@ -78,14 +81,15 @@ var nnidToMiiDataTable string
 // alternative to fetching mii data, intended for nintendo
 type NNIDToMiiDataMap struct {
 	// NOTE: this value is int(11), signed in masscsv2db-june.py
-	PID            uint64    `gorm:"primaryKey;column:pid"`
+	PID uint64 `gorm:"primaryKey;column:pid"`
 	// nnid to search with
-	NormalizedNNID string    `gorm:"size:16;column:normalized_nnid;index:ix_normalized_nnid"`
-	NNID           string    `gorm:"size:16;column:nnid"`
+	NormalizedNNID string `gorm:"size:16;column:normalized_nnid;index:ix_normalized_nnid"`
+	NNID           string `gorm:"size:16;column:nnid"`
 	// FFSD / sizeof FFLStoreData
-	Data           []byte    `gorm:"size:96;not null"`
-	LastModified   time.Time `gorm:"not null;default:current_timestamp"`
+	Data         []byte    `gorm:"size:96;not null"`
+	LastModified time.Time `gorm:"not null;default:current_timestamp"`
 }
+
 func (NNIDToMiiDataMap) TableName() string {
 	// otherwise gorm will pluralize it and
 	// and it will be very wrong and cringe
@@ -117,7 +121,7 @@ type MappedIDsResponse struct {
 type MiisResponse struct {
 	XMLName xml.Name `xml:"miis" json:"-"`
 	// multiple mii objects
-	Miis    []struct {
+	Miis []struct {
 		// NOTE: NO "images"
 		// also excluding ID, Primary
 		Data   string `xml:"data" json:"data"`
@@ -127,16 +131,16 @@ type MiisResponse struct {
 	} `xml:"mii" json:"miis"`
 }
 
-
 // cache db
 var cdb *gorm.DB
+
 // nnid to mii data map db
 var mdb *gorm.DB
 
 var nnasRequestTransport = &http.Transport{
 	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	// forces http 1.1
-	TLSNextProto: map[string]func(string, *tls.Conn)http.RoundTripper{},
+	TLSNextProto: map[string]func(string, *tls.Conn) http.RoundTripper{},
 }
 
 var useNNIDToMiiMapForAPI0 bool
@@ -177,15 +181,18 @@ func initNNIDFetchDatabases(cache gorm.Dialector, n2mm gorm.Dialector) {
 	}
 }
 
-
 var (
 	errNNIDAPIIDNotRecognized   = errors.New("API ID not in apiBases")
 	errNNIDAPIID0IsDisabled     = errors.New("nintendo shut down their nnid api in may 2024 so this will not work unless you set up the nnid archive, view the nwf-mii-cemu-toy ffl-renderer-proto-integrate README for more information")
 	errNNIDNoNormalizationFunc  = errors.New("no normalization function defined in normalizationFuncs for this API ID")
 	errNNIDDoesNotExist         = errors.New("NNID does not exist")
 	errNNIDNoMiiDataFound       = errors.New("no Mii data found")
-)
+	errMultipleOctetStream      = errors.New("application/octet-stream is only supported for single lookup requests")
+	errInvalidPID               = errors.New("pid must be a number")
+	errInvalidAPIID             = errors.New("api_id must be a number")
+	errFailedLookupTemplate     = "failed looking up %s: %s"
 
+)
 
 func nnasHTTPRequest(endpoint string, apiID int) ([]byte, error) {
 	base, exists := apiBases[apiID]
@@ -212,7 +219,6 @@ func nnasHTTPRequest(endpoint string, apiID int) ([]byte, error) {
 
 	return io.ReadAll(resp.Body)
 }
-
 
 func fetchNNIDToPID(nnid string, apiID int) (uint64, error) {
 	var mapping NNIDToPID
@@ -262,7 +268,6 @@ func fetchNNIDToPID(nnid string, apiID int) (uint64, error) {
 	return pid, nil
 }
 
-
 func fetchMiiFromPID(pid uint64, apiID int, forceRefresh bool) (MiisResponse, error) {
 	now := time.Now()
 	var cache CachedResult
@@ -273,7 +278,7 @@ func fetchMiiFromPID(pid uint64, apiID int, forceRefresh bool) (MiisResponse, er
 	var whereClause *gorm.DB
 	// TODO: MAKE LESS HACKY!!! BUT ALWAYS USE NNAS CACHE FOR NINTENDO
 	if apiID == 0 && apiID0IsDisabled { // fetch nnid miis from all time
-		whereClause = cdb.Where("pid = ? AND api_id = ?"/* AND date_last_latest > ?"*/, pid, apiID /*now.AddDate(0, -1, 0)*/)
+		whereClause = cdb.Where("pid = ? AND api_id = ?" /* AND date_last_latest > ?"*/, pid, apiID /*now.AddDate(0, -1, 0)*/)
 	} else {
 		whereClause = cdb.Where("pid = ? AND api_id = ? AND date_last_latest > ?", pid, apiID, now.AddDate(0, -1, 0))
 	}
@@ -323,7 +328,7 @@ func fetchMiiFromPID(pid uint64, apiID int, forceRefresh bool) (MiisResponse, er
 			if err := xml.Unmarshal([]byte(result), &miiResponse); err != nil {
 				if err.Error() == encodingXMLErrorThrownWhenAccountWSReturnsHTML {
 					return MiisResponse{},
-					fmt.Errorf("i think the account server is returning html instead of data: %v", err)
+						fmt.Errorf("i think the account server is returning html instead of data: %v", err)
 				}
 				return miiResponse, err
 			}
@@ -342,8 +347,8 @@ func fetchMiiFromPID(pid uint64, apiID int, forceRefresh bool) (MiisResponse, er
 
 // inspired by NNIDLT, kind of
 type ResponseData struct {
-	Data          string `json:"data"`
-	Images        struct {
+	Data   string `json:"data"`
+	Images struct {
 		// this is only a pointer so that omitempty will work
 		LastModified *time.Time `json:"last_modified,omitempty"`
 	} `json:"images"`
@@ -351,6 +356,7 @@ type ResponseData struct {
 	PID           uint64 `json:"pid"`
 	StudioURLData string `json:"studio_url_data"`
 	UserID        string `json:"user_id"`
+	Error         string `json:"error,omitempty"`
 }
 
 func setCORSHeaders(w http.ResponseWriter, r *http.Request) {
@@ -367,7 +373,7 @@ func setCORSHeaders(w http.ResponseWriter, r *http.Request) {
 
 const encodingXMLErrorThrownWhenAccountWSReturnsHTML = "expected element type <miis> but have <html>"
 
-func handleMiiDataResponse(w http.ResponseWriter, data ResponseData, miiDataBytes *[]byte, acceptsOctetStream bool, lastModified time.Time) {
+func handleMiiDataResponse(w http.ResponseWriter, data interface{}, miiDataBytes []byte, acceptsOctetStream bool, lastModified time.Time) {
 	header := w.Header()
 
 	// set last modified only if it is defined
@@ -377,28 +383,31 @@ func handleMiiDataResponse(w http.ResponseWriter, data ResponseData, miiDataByte
 
 	if acceptsOctetStream {
 		// octet stream = need raw bytes
-		w.Write(*miiDataBytes)
-	} else {
-		if !lastModified.IsZero() {
-			data.Images.LastModified = &lastModified
-		} // otherwise it will be undefined/nil/excluded
-
-		// consuming base64 mii data...
-		// if there is no base64 data but there IS binary data...
-		if data.Data == "" && miiDataBytes != nil {
-			data.Data = base64.StdEncoding.EncodeToString(*miiDataBytes)
+		// Ensure that only single lookup is processed for octet-stream
+		switch data.(type) {
+		case ResponseData: // assuming miiDataBytes is not nil
+			w.Write(miiDataBytes)
+		case []ResponseData:
+			// For multiple lookups, octet-stream is not supported
+			http.Error(w, errMultipleOctetStream.Error(), http.StatusBadRequest)
+			return
+		default:
+			http.Error(w, "Invalid data type for octet-stream", http.StatusInternalServerError)
+			return
 		}
+	} else {
 		response, err := json.Marshal(data)
 		if err != nil {
-			http.Error(w, "Failed to marshal JSON", http.StatusInternalServerError)
+			http.Error(w, "Failed to marshal JSON: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		header.Set("Content-Type", "application/json; charset=UTF-8")
 		w.Write(response)
+		return
 	}
 }
 
-func retrieveMiiDataFromNNIDOrPID(w http.ResponseWriter, nnid string, pid int64, apiID int, acceptsOctetStream bool, forceRefresh bool) (ResponseData, *[]byte, time.Time, error) {
+func retrieveMiiDataFromNNIDOrPID(nnid string, pid int64, apiID int, acceptsOctetStream bool, forceRefresh bool) (ResponseData, *[]byte, time.Time, error) {
 	var data ResponseData
 	var lastModified time.Time
 	var miiDataBytes *[]byte
@@ -410,22 +419,20 @@ func retrieveMiiDataFromNNIDOrPID(w http.ResponseWriter, nnid string, pid int64,
 			result := mdb.Model(&miiData).Where("pid = ?", pid).First(&miiData)
 			if result.Error != nil {
 				if result.Error == gorm.ErrRecordNotFound {
-					http.Error(w, "PID not found in archive", http.StatusNotFound)
+					return data, nil, lastModified, errors.New("PID not found in archive")
 				} else {
-					http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+					return data, nil, lastModified, result.Error
 				}
-				return data, nil, lastModified, result.Error
 			}
 		} else { // look up NNID in archive
 			nnid = normalizeDashUnderscoreDot(nnid)
 			result := mdb.Model(&miiData).Where("normalized_nnid = ?", nnid).First(&miiData)
 			if result.Error != nil {
 				if result.Error == gorm.ErrRecordNotFound {
-					http.Error(w, "NNID not found in archive", http.StatusNotFound)
+					return data, nil, lastModified, errors.New("NNID not found in archive")
 				} else {
-					http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+					return data, nil, lastModified, result.Error
 				}
-				return data, nil, lastModified, result.Error
 			}
 		}
 
@@ -450,13 +457,13 @@ func retrieveMiiDataFromNNIDOrPID(w http.ResponseWriter, nnid string, pid int64,
 			fetchedPID = uint64(pid)
 		}
 		if err != nil {
-			http.Error(w, "error resolving nnid to pid: "+err.Error(), http.StatusInternalServerError)
+			//http.Error(w, "error resolving nnid to pid: "+err.Error(), http.StatusInternalServerError)
 			return data, nil, lastModified, err
 		}
 
 		miiResponse, err := fetchMiiFromPID(fetchedPID, apiID, forceRefresh)
 		if err != nil {
-			http.Error(w, "error fetching mii after resolving pid: "+err.Error(), http.StatusInternalServerError)
+			//http.Error(w, "error fetching mii after resolving pid: "+err.Error(), http.StatusInternalServerError)
 			return data, nil, lastModified, err
 		}
 
@@ -480,48 +487,241 @@ func retrieveMiiDataFromNNIDOrPID(w http.ResponseWriter, nnid string, pid int64,
 	return data, miiDataBytes, lastModified, nil
 }
 
-
 func nnidLookupHandler(w http.ResponseWriter, r *http.Request) {
 	setCORSHeaders(w, r)
 
 	parts := strings.Split(r.URL.Path, "/")
 	query := r.URL.Query()
 
-	// If a valid pid is provided, use it, otherwise -1
-	pid, err := strconv.ParseInt(query.Get("pid"), 10, 64)
-	if err != nil {
-		pid = -1
+	// Extract NNID from path if present
+	var pathNNIDs []string
+	if len(parts) >= 3 && parts[2] != "" {
+		pathNNIDs = append(pathNNIDs, parts[2])
 	}
 
-	if len(parts) != 3 || parts[2] == "" && pid == -1 {
-		http.Error(w, "usage: " + nnidLookupHandlerPrefix + "(nnid)", http.StatusBadRequest)
-		return
-	}
-	nnid := parts[2]
-
-	apiID, _ := strconv.Atoi(query.Get("api_id"))
-	acceptsOctetStream := r.Header.Get("Accept") == "application/octet-stream"
-
-	// retrieve mii data based on nnid or pid
-	forceRefresh, _ := strconv.ParseBool(query.Get("force_refresh"))
-	data, miiDataBytes, lastModified, err := retrieveMiiDataFromNNIDOrPID(w, nnid, pid, apiID, acceptsOctetStream, forceRefresh)
-	if err != nil {
-		return
+	// Extract NNIDs from query parameter 'nnid'
+	queryNNIDs := strings.Split(query.Get("nnid"), ",")
+	// Remove empty strings
+	var filteredQueryNNIDs []string
+	for _, nnid := range queryNNIDs {
+		nnid = strings.TrimSpace(nnid)
+		if nnid != "" {
+			filteredQueryNNIDs = append(filteredQueryNNIDs, nnid)
+		}
 	}
 
-	if acceptsOctetStream && miiDataBytes == nil {
-		var miiDataBytesTmp []byte
-		miiDataBytesTmp, err = base64.StdEncoding.DecodeString(data.Data)
+	// Combine NNIDs from path and query
+	allNNIDs := append(pathNNIDs, filteredQueryNNIDs...)
+
+	// Extract PIDs from query parameter 'pid'
+	queryPIDs := strings.Split(query.Get("pid"), ",")
+	var pids []int64
+	for _, pidStr := range queryPIDs {
+		pidStr = strings.TrimSpace(pidStr)
+		if pidStr != "" {
+			pid, err := strconv.ParseInt(pidStr, 10, 64)
+			if err != nil {
+				http.Error(w, errInvalidPID.Error(), http.StatusBadRequest)
+				return
+			}
+			pids = append(pids, pid)
+		}
+	}
+
+	// Extract API IDs
+	// Support both global and prefixed API IDs
+	globalAPIID := defaultAPIID
+	if apiIDStr := query.Get("api_id"); apiIDStr != "" {
+	parsedAPIID, err := strconv.Atoi(apiIDStr)
 		if err != nil {
-			http.Error(w, "Failed to decode base64 data", http.StatusInternalServerError)
+			http.Error(w, errInvalidAPIID.Error(), http.StatusBadRequest)
 			return
 		}
-		miiDataBytes = &miiDataBytesTmp
+		globalAPIID = parsedAPIID
 	}
 
-	handleMiiDataResponse(w, data, miiDataBytes, acceptsOctetStream, lastModified)
-}
 
+	// Similarly, extract prefixed API IDs (api_id_0, api_id_1, etc.)
+	apiIDs := make(map[int]int) // key: index, value: api_id
+	for key, values := range query {
+		if strings.HasPrefix(key, "api_id_") {
+			indexStr := strings.TrimPrefix(key, "api_id_")
+			index, err := strconv.Atoi(indexStr)
+			if err == nil {
+				apiID, err := strconv.Atoi(values[0])
+				if err == nil {
+					apiIDs[index] = apiID
+				}
+			}
+		}
+	}
+
+	// If globalAPIID is set, apply to all unless overridden by prefixed
+	// Similarly for force_refresh
+	var forceRefreshGlobal bool
+	forceRefreshStr := query.Get("force_refresh")
+	if forceRefreshStr != "" && forceRefreshStr != "0" {
+		forceRefreshGlobal = true
+	}
+
+	forceRefreshMap := make(map[int]bool)
+	for key, values := range query {
+		if !strings.HasPrefix(key, "force_refresh_") {
+			continue
+		}
+		indexStr := strings.TrimPrefix(key, "force_refresh_")
+		index, err := strconv.Atoi(indexStr)
+		if err == nil {
+			forceRefresh := values[0] != "" && forceRefreshStr != "0"
+				forceRefreshMap[index] = forceRefresh
+		}
+	}
+
+	// Extract Accept header
+	acceptsOctetStream := r.Header.Get("Accept") == "application/octet-stream"
+
+	// Combine all lookups: first NNIDs, then PIDs
+	type Lookup struct {
+		IsNNID       bool
+		NNID         string
+		PID          int64
+		APIID        int
+		ForceRefresh bool
+	}
+
+	var lookups []Lookup
+
+	// Add NNID lookups
+	for i, nnid := range allNNIDs {
+		apiID := globalAPIID
+		if val, exists := apiIDs[i]; exists {
+			apiID = val
+		}
+		forceRefresh := forceRefreshGlobal
+		if val, exists := forceRefreshMap[i]; exists {
+			forceRefresh = val
+		}
+		lookups = append(lookups, Lookup{
+			IsNNID:       true,
+			NNID:         nnid,
+			PID:          -1,
+			APIID:        apiID,
+			ForceRefresh: forceRefresh,
+		})
+	}
+
+	// Add PID lookups
+	for i, pid := range pids {
+		apiID := globalAPIID
+		if val, exists := apiIDs[i+len(allNNIDs)]; exists { // Continue indexing after NNIDs
+			apiID = val
+		}
+		forceRefresh := forceRefreshGlobal
+		if val, exists := forceRefreshMap[i+len(allNNIDs)]; exists {
+			forceRefresh = val
+		}
+		lookups = append(lookups, Lookup{
+			IsNNID:       false,
+			NNID:         "",
+			PID:          pid,
+			APIID:        apiID,
+			ForceRefresh: forceRefresh,
+		})
+	}
+
+	// If Accept is octet-stream and more than one lookup is requested, return error
+	if acceptsOctetStream && len(lookups) > 1 {
+		http.Error(w, errMultipleOctetStream.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if len(lookups) < 1 {
+		http.Error(w, `usage: /mii_data/(nnid)
+
+you can also use ?nnid= as a substitute for the path param or ?pid= to specify a pid
+you can specify multiple of each by comma separating the values
+use ?api_id=1 for pretendo`, http.StatusBadRequest)
+		return
+	}
+
+	// NOTE: queries could also be limited based on time or source
+	if len(lookups) > 200 { // should probably be less than this
+		http.Error(w, "too many queries", http.StatusBadRequest)
+		return
+	}
+
+	// Prepare response
+	var responseData []interface{} // usually ResponseData
+	var responseBytes [][]byte
+	var lastModifiedTimes []time.Time
+	var finalError error
+
+	for _, lookup := range lookups {
+		var data ResponseData
+		var miiDataBytes *[]byte
+		var lastModified time.Time
+
+		if lookup.IsNNID {
+			data, miiDataBytes, lastModified, finalError = retrieveMiiDataFromNNIDOrPID(lookup.NNID, lookup.PID, lookup.APIID, acceptsOctetStream, lookup.ForceRefresh)
+		} else {
+			data, miiDataBytes, lastModified, finalError = retrieveMiiDataFromNNIDOrPID("", lookup.PID, lookup.APIID, acceptsOctetStream, lookup.ForceRefresh)
+		}
+
+		if finalError != nil {
+			errorMessage := fmt.Sprintf(errFailedLookupTemplate,
+				func() string {
+					if lookup.IsNNID {
+						return fmt.Sprintf("nnid=%s", lookup.NNID)
+					}
+					return fmt.Sprintf("pid=%d", lookup.PID)
+				}(),
+				finalError.Error())
+
+
+			if acceptsOctetStream {
+				http.Error(w, errorMessage, http.StatusInternalServerError)
+				return
+			}
+
+
+			// Append error response with details
+			responseData = append(responseData, map[string]string{
+				"error": errorMessage,
+			})
+
+		} else if !acceptsOctetStream && data.Data == "" && miiDataBytes != nil {
+			// if there is no base64 data but there IS binary data...
+			data.Data = base64.StdEncoding.EncodeToString(*miiDataBytes)
+		}
+
+		if miiDataBytes != nil {
+			responseBytes = append(responseBytes, *miiDataBytes)
+		} else {
+			responseBytes = append(responseBytes, []byte{})
+		}
+
+		if finalError == nil {
+			lastModifiedTimes = append(lastModifiedTimes, lastModified)
+			if !lastModified.IsZero() {
+				data.Images.LastModified = &lastModified
+			} // otherwise it will be undefined/nil/excluded
+			responseData = append(responseData, data)
+		} else {
+			lastModifiedTimes = append(lastModifiedTimes, time.Time{})
+		}
+	}
+	// end of loop, send back data
+
+	if /*acceptsOctetStream &&*/ len(responseData) == 1 {
+		// return single
+		handleMiiDataResponse(w, responseData[0], responseBytes[0], acceptsOctetStream, lastModifiedTimes[0])
+	} else if acceptsOctetStream {
+		http.Error(w, "multiple responses were received but cannot return multiple for octet-stream", http.StatusInternalServerError)
+		return
+	} else {
+		handleMiiDataResponse(w, responseData, nil, acceptsOctetStream, time.Time{})
+	}
+}
 
 func randomNNIDHandler(w http.ResponseWriter, r *http.Request) {
 	setCORSHeaders(w, r)
@@ -553,7 +753,7 @@ func randomNNIDHandler(w http.ResponseWriter, r *http.Request) {
 	mdb.Raw("SELECT MIN(pid) FROM " + nnidToMiiDataTable).Scan(&minPID)
 	mdb.Raw("SELECT MAX(pid) FROM " + nnidToMiiDataTable).Scan(&maxPID)
 
-	randomPIDInput := int64(maxPID-minPID)
+	randomPIDInput := int64(maxPID - minPID)
 	var randomPIDPre int64
 	if seed != 0 {
 		// use seed if it is valid
@@ -584,12 +784,12 @@ func randomNNIDHandler(w http.ResponseWriter, r *http.Request) {
 		data.Name = utf16LESliceToString(miiData.Data[0x1a : 0x1a+0x14])
 	}
 
-	handleMiiDataResponse(w, data, &miiData.Data, acceptsOctetStream, lastModified)
+	handleMiiDataResponse(w, data, miiData.Data, acceptsOctetStream, lastModified)
 }
 
 func utf16LESliceToString(utf16Data []byte) string {
 	// Convert UTF-16 LE to a slice of uint16
-	u16s := make([]uint16, 10)
+	u16s := make([]uint16, len(utf16Data)/2)
 	for i := 0; i < len(u16s); i++ {
 		u16s[i] = uint16(utf16Data[2*i]) | uint16(utf16Data[2*i+1])<<8
 	}
