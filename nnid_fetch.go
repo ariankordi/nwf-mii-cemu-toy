@@ -778,7 +778,9 @@ func randomNNIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	// only set other props if this is NOT simple octet stream
 	if !acceptsOctetStream {
+		data.Data = base64.StdEncoding.EncodeToString(miiData.Data)
 		data.StudioURLData = mii2studio.Map3DSStoreDataToStudioURLData(miiData.Data)
+		data.Images.LastModified = &lastModified
 		data.PID = miiData.PID
 		data.UserID = miiData.NNID
 		data.Name = utf16LESliceToString(miiData.Data[0x1a : 0x1a+0x14])
