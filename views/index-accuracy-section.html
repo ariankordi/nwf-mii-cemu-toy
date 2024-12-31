@@ -3,17 +3,14 @@
         <p>Current goals are to perfectly reproduce Wii U Mii Maker/NNID renders, Mii Studio/Miitomo renders, and Switch icon renders.</p>
         <ul class="left-aligned-ul">
             <li>
-            ❌ Not using correct body model for Switch and Miitomo
-            </li>
-            <li>
             ❌ Body is not scaled uniformly using vertex groups/bone indices
             <ul>
                 <li>This is why the body's hands and legs may look a little wonky and unnatural.</li>
-                <li>Need to use the body model MiiBodyMiddle.bfres from Wii U Mii Maker, which isn't exactly the most straightforward thing.</li>
-                <li>(October 2024) At this point I was able to export the model and animations to a more workable format, but... can't quite get the scaling to work right.</li>
-                <li class="small">I clearly don't understand skeletal rigging enough to make this work at the moment so if you do, <a href="#contact">maybe I can use your help?</a></li>
+                <li>(Dec. 28, 2024) Status update: As of writing this, I have made major strides in this, as I now have a sample reversed from the nn::mii::VariableIconBody class that does this.</li>
+                <li>Meaning that now the process is: getting <a target="_blank" href="https://forum.pretendo.network/t/3d-web-full-blown-mii-maker-and-mii-unsecure-site-updates/7445/14?u=arian">that PoC I made</a> to work </li>
             </ul>
             </li>
+            <!--
             <li>
             ⚠️ Need to find whole body camera views for Wii U Mii Maker and Miitomo/Mii Studio
             <ul>
@@ -22,6 +19,7 @@
                 <li>For Mii Studio/Miitomo this is TBD but I assume it's hiding in the game files too.</li>
                 <li>I'm personally deferring this to when the above item is complete though...</li>
             </ul>
+            -->
             <details>
                 <summary>🚩 Missing a few parameters to be fully compatible with the Mii Studio API (read more...)</summary>
                 <ul>
@@ -31,12 +29,14 @@
                         <li>Legitimately not sure why that is. Camera rotation rotates the view matrix and character rotation moves the model matrix, so, don't know.</li>
                         <li>If you use multiple rotation axises, with our camera rotation it matches Mii Studio's character rotation, and combining axises with our character rotation matches Mii Studio's camera rotation...??????????? I can't wrap my head around all of this...</li>
                     </ul></li>
+                    <!--
                     <li>instanceCount, instanceRotationMode</li>
                     <ul>
                         <li>Many ways to approach doing this efficiently.  glDrawElementsInstanced?</li>
                         <li>Was also considering making a variant (as another instanceRotationMode?) for the same render but multiple expressions.</li>
                         <li>I did attempt this at some point but couldn't wrap my head around getting it right.. I'll probably try it again soon.</li>
                     </ul>
+                    -->
                     <li>splitMode, splitDepthOffset(??)
                     <ul>
                         <li>Feel like splitDepthOffset doesn't do anything? It maaaay have done something on cdn-mii 1.0.0 though...??</li>
@@ -63,7 +63,6 @@
             <h3 style="display: inline;">More Planned Items/Issues: <span class="small">click to expand</span></h3>
             </summary>
             <ul class="left-aligned-ul">
-            <li>❔At the moment I don't have the Switch and Miitomo body models..</li>
 
             <li>❔Poses from the Wii U Mii Maker are planned as soon as skeletal animations work.
                 <ul>
@@ -85,13 +84,6 @@
                     <li>(If you are a Kaeru dev reading this, <a href="#contact">PLEEEASEEEE get in touch!!!</a> 😭)</li>
                 </ul>
             </details></li>
-            <li>❔Extremely minor: the mask texture is transformed slightly differently between the FFL decomp and real FFL/AFL/nn::mii.
-            <ul>
-                <li>This is probably one of the last things left to achieve pixel-per-pixel perfection.</li>
-                <li>This is the Mii I usually use for testing this: <a target="_blank" href="https://studio.mii.nintendo.com/miis/image.png?type=face&width=512&data=67767d0916252c3230434a5359606f7083989fa4aab1b7bebdc0c7d4dce3b6bdc0c7ccdfe0e7f6fefa050c0d0c141d&bgColor=00000000">Mii Studio version</a>, <a target="_blank" href="/miis/image.png?data=67767d0916252c3230434a5359606f7083989fa4aab1b7bebdc0c7d4dce3b6bdc0c7ccdfe0e7f6fefa050c0d0c141d&type=face&width=512&shaderType=2&pantsColor=gray&bgColor=00000000">my render</a></li>
-                <li>It's not obvious what is wrong here, as many functions look identical in Ghidra.</li>
-                <li>Note that this is only with the mask texture (not shape), and FFL 1.3.10/AFL/nn::mii do this correctly, all have symbols.</li>
-            </ul>
 
             <details>
                 <summary>❔Replicating 3DS and Wii renders has been considered but isn't easy or a priority.</summary>
@@ -124,12 +116,14 @@
                 </ul>
             </details></li>
 
+            <!--
             <li>❔I've thought about making a Mii Maker-like app with the FFL decomp, but... don't get your hopes up too far about this.</li>
             <ul>
                 <li>However, if you like the sound of this...</li>
                 <li>... and you're either working on something like this right now and it just needs Mii heads, OR you'd want to design the UI for this and let me add the rendering logic, <a href="#contact">do get in touch!</a></li>
                 <li class="small">(This is assuming, yaknow. it's not a Scratch or Roblox game or something)</li>
             </ul>
+            -->
 
             </ul>
 

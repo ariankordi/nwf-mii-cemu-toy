@@ -1240,14 +1240,7 @@ function checkSupportedTypeBySize(data, type, checkCRC16) {
 }
 
 const shaderType = document.getElementById('shaderType');
-const shaderType2Inaccurate = document.getElementById('shader-type-2-inaccurate');
 
-shaderType.addEventListener('change', function() {
-  if(shaderType.value === '2')
-    shaderType2Inaccurate.style.display = '';
-  else
-    shaderType2Inaccurate.style.display = 'none';
-});
 
 const pantsColor = document.getElementById('pantsColor');
 const pantsColorsWithSwitchShaderInaccurate = document.getElementById('pants-colors-with-switch-shader-inaccurate');

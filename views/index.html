@@ -360,11 +360,11 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
 
         <div style="color: plum;" class="hide-iframe-mode">{{T("shader_lighting_type_above")}}</div>
         <label for="shaderType">{{T("shader_lighting_type_label")}}</label>
-        <select name="shaderType" id="shaderType" data-default-value="0" data-save>
-            <option value="0" selected>{{T("option_wii_u_miiverse")}}</option>
-            <option value="3">{{T("option_wii_u_miiverse")}} (Blinn)</option>
-            <option value="1">Switch</option>
-            <option value="2">{{T("option_miitomo_mii_studio")}} (!)</option>
+        <select name="shaderType" id="shaderType" data-default-value="wiiu" data-save>
+            <option value="wiiu" selected>{{T("option_wii_u_miiverse")}}</option>
+            <option value="wiiu_blinn">{{T("option_wii_u_miiverse")}} (Blinn)</option>
+            <option value="switch">Switch</option>
+            <option value="miitomo">{{T("option_miitomo_mii_studio")}}</option>
             <!--<option value="3">3DS</option>-->
         </select><br class="hide-iframe-mode">
 
@@ -535,6 +535,14 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             </select><br>
             <div class="smaller">{{T("resource_type_note")}}</div>
 
+            <label for="bodyType">Body model:</label>
+            <select name="bodyType" id="bodyType" data-default-value="default" data-save>
+                <option value="default" selected>Default (Shader)</option>
+                <option value="wiiu">{{T("option_wii_u_miiverse")}}</option>
+                <option value="switch">Switch</option>
+                <option value="miitomo">{{T("option_miitomo_mii_studio")}}</option>
+            </select><br class="hide-iframe-mode">
+
             <label for="expression2">Miitomo expression:</label>
 
             <select id="expression2" data-override="expression" data-default-value="">
@@ -657,8 +665,6 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
 
         </details>
 
-        <div id="shader-type-2-inaccurate" style="font-weight: bold; color: orange; font-size: 12px; display: none;" class="hide-iframe-mode">{{T("miitomo_shader_inaccurate_note_pre_link")}}<a href="#accuracy-status">{{T("miitomo_shader_inaccurate_note_link")}}</a>{{T("miitomo_shader_inaccurate_note_post_link")}}
-        <br><div style="font-size: 10px; line-height: 120%;">{{T("miitomo_shader_inaccurate_note_small")}}</div></div>
 <!-- TODO: AUTO-SUBMIT NOT IMPLEMENTED
         <label for="auto-submit"><b>{{T("auto_submit_label")}}</b></label>
         <input id="auto-submit" type="checkbox">
