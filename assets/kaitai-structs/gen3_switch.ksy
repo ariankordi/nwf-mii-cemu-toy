@@ -17,8 +17,11 @@ seq:
   - id: body_weight
     type: b7
     doc: Body weight. Ranges from 0 to 127, small to large. In the Mii editor, pressing right will add 1 to this value, and pressing left will subtract 1, allowing for precise editing.
+  - id: is_special
+    type: b1
+    doc: Determines if the Mii is Special (golden pants) or not. Special Miis are meant to only be created and distributed by Nintendo, however the Switch does not have any officially distributed Special Miis yet. 0 = not Special (Normal), 1 = Special.
   - id: hair_color
-    type: u1
+    type: b7
     doc: Hair color. Ranges from 0 to 99. Not ordered the same as visible in editor. A map of the internal values in correlation to the Mii editor is at /maps.txt/{hair-color} for default colors and /maps.txt/{colors} for custom colors.
   - id: gender
     type: b1
@@ -38,12 +41,18 @@ seq:
   - id: glasses_color
     type: u1
     doc: Glasses color. Ranges from 0 to 99. Not ordered the same as visible in editor. A map of the internal values in correlation to the Mii editor is at /maps.txt/{glasses-color} for default colors and /maps.txt/{colors} for custom colors.
+  - id: region_lock
+    type: b2
+    doc: Determines if a Special Mii can only be saved on devices of a certain region. 0 = no lock, 1 = JPN, 2 = USA, 3 = PAL/AUS. Other regions (CHN, KOR, TWN) simply must use no region lock to work.
   - id: eye_type
-    type: u1
     doc: Eye type. Ranges from 0 to 59. Not ordered the same as visible in editor. A map of the internal values in correlation to the Mii editor is at /maps.txt/{eyes}.
+    type: b6
+  - id: font_region
+    type: b2
+    doc: The font region for the Mii name. 0 = USA + PAL + JPN, 1 = CHN, 2 = KOR, 3 = TWN.
   - id: mouth_type
-    type: u1
     doc: Mouth type. Ranges from 0 to 35. Not ordered the same as visible in editor. A map of the internal values in correlation to the Mii editor is at /maps.txt/{mouth}.
+    type: b6
   - id: glasses_size
     type: b3
     doc: Glasses size. Ranges from 0 to 7, small to big.
