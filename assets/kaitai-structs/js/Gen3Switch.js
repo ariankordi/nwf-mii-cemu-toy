@@ -23,8 +23,8 @@ var Gen3Switch = (function() {
     this.bodyHeight = this._io.readBitsIntBe(7);
     this.hairFlip = this._io.readBitsIntBe(1) != 0;
     this.bodyWeight = this._io.readBitsIntBe(7);
-    this._io.alignToByte();
-    this.hairColor = this._io.readU1();
+    this.isSpecial = this._io.readBitsIntBe(1) != 0;
+    this.hairColor = this._io.readBitsIntBe(7);
     this.gender = this._io.readBitsIntBe(1) != 0;
     this.eyeColor = this._io.readBitsIntBe(7);
     this._io.alignToByte();
@@ -32,8 +32,10 @@ var Gen3Switch = (function() {
     this.mouthColor = this._io.readU1();
     this.facialHairColor = this._io.readU1();
     this.glassesColor = this._io.readU1();
-    this.eyeType = this._io.readU1();
-    this.mouthType = this._io.readU1();
+    this.regionLock = this._io.readBitsIntBe(2);
+    this.eyeType = this._io.readBitsIntBe(6);
+    this.fontRegion = this._io.readBitsIntBe(2);
+    this.mouthType = this._io.readBitsIntBe(6);
     this.glassesSize = this._io.readBitsIntBe(3);
     this.eyeVertical = this._io.readBitsIntBe(5);
     this.facialHairMustache = this._io.readBitsIntBe(3);
@@ -100,6 +102,10 @@ var Gen3Switch = (function() {
    */
 
   /**
+   * Determines if the Mii is Special (golden pants) or not. Special Miis are meant to only be created and distributed by Nintendo, however the Switch does not have any officially distributed Special Miis yet. 0 = not Special (Normal), 1 = Special.
+   */
+
+  /**
    * Hair color. Ranges from 0 to 99. Not ordered the same as visible in editor. A map of the internal values in correlation to the Mii editor is at /maps.txt/{hair-color} for default colors and /maps.txt/{colors} for custom colors.
    */
 
@@ -128,7 +134,15 @@ var Gen3Switch = (function() {
    */
 
   /**
+   * Determines if a Special Mii can only be saved on devices of a certain region. 0 = no lock, 1 = JPN, 2 = USA, 3 = PAL/AUS. Other regions (CHN, KOR, TWN) simply must use no region lock to work.
+   */
+
+  /**
    * Eye type. Ranges from 0 to 59. Not ordered the same as visible in editor. A map of the internal values in correlation to the Mii editor is at /maps.txt/{eyes}.
+   */
+
+  /**
+   * The font region for the Mii name. 0 = USA + PAL + JPN, 1 = CHN, 2 = KOR, 3 = TWN.
    */
 
   /**
