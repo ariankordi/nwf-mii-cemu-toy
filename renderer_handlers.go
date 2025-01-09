@@ -171,6 +171,22 @@ func isConnectionRefused(err error) bool {
 		errors.Is(err, syscall.Errno(10061))
 }
 
+func handleConnectionRefused(err error) {
+	if !isConnectionRefused(err) {
+		return
+	}
+
+	// send to webhook if it is there
+	if !isDevelopment {
+		go captureError(err)
+	}
+
+	/*if eventID := sentry.CaptureException(err); eventID != nil {
+		log.Print("(Event ID: "+*eventID+")")
+	}
+	*/
+}
+
 // if a socket response starts with this it
 // is always read out to the api response
 const socketErrorPrefix = "ERROR: "
@@ -195,7 +211,7 @@ func sendRenderRequest(request RenderRequest) ([]byte, io.Reader, error) {
 		if err != nil {
 			log.Println("\033[1;31mURGENT: Failed to connect to "+nextServer+". The upstream may be down:\033[0m", err)
 
-			go handleConnectionRefused(err) // handle error async
+			handleConnectionRefused(err) // handle error async
 
 			return nil, nil, err
 		}

@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 
@@ -193,6 +194,24 @@ var (
 	errFailedLookupTemplate     = "failed looking up %s: %s"
 
 )
+
+// checkFatalDBError checks for fatal database connection errors and alerts a webhook
+func checkFatalDBError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	// Check for net.OpError explicitly
+	if opErr, ok := err.(*net.OpError); ok {
+		log.Println("\033[1;31mURGENT: Received net.OpError in database query:\033[0m", err)
+
+		go captureError(err)
+
+		return errors.New("FATAL database error, please notify the site admin: " + opErr.Error())
+	}
+
+	return err
+}
 
 func nnasHTTPRequest(endpoint string, apiID int) ([]byte, error) {
 	base, exists := apiBases[apiID]
@@ -421,7 +440,8 @@ func retrieveMiiDataFromNNIDOrPID(nnid string, pid int64, apiID int, acceptsOcte
 				if result.Error == gorm.ErrRecordNotFound {
 					return data, nil, lastModified, errors.New("PID not found in archive")
 				} else {
-					return data, nil, lastModified, result.Error
+					err := checkFatalDBError(result.Error)
+					return data, nil, lastModified, err
 				}
 			}
 		} else { // look up NNID in archive
@@ -431,7 +451,8 @@ func retrieveMiiDataFromNNIDOrPID(nnid string, pid int64, apiID int, acceptsOcte
 				if result.Error == gorm.ErrRecordNotFound {
 					return data, nil, lastModified, errors.New("NNID not found in archive")
 				} else {
-					return data, nil, lastModified, result.Error
+					err := checkFatalDBError(result.Error)
+					return data, nil, lastModified, err
 				}
 			}
 		}
@@ -767,7 +788,8 @@ func randomNNIDHandler(w http.ResponseWriter, r *http.Request) {
 	var miiData NNIDToMiiDataMap
 	result := mdb.Where("pid >= ?", randomPID).Order("pid ASC").First(&miiData)
 	if result.Error != nil {
-		http.Error(w, "Failed to retrieve random NNID", http.StatusInternalServerError)
+		err := checkFatalDBError(result.Error)
+		http.Error(w, "Failed to retrieve random NNID:"+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
