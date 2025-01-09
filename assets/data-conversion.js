@@ -71,6 +71,23 @@ const DEFAULT_NAME_IF_NONE = 'Mii'; // blanco api sets mii studio miis' names to
 
 // conversion methods for supportedFormats are defined here instead of window now
 let conversionMethods = {};
+
+// NOTE: while there are tables to map ver3 colors to the CommonColor type...
+// shortcuts are being used here to effectively
+// simulate the exact behavior of those tables
+
+// facelineColor: maps identically, no conv needed
+const ver3ToVer4HairColor = c => c === 0 ? 8 : c; // 0->8
+const ver3ToVer4EyeColor = c => c + 8; // offset 8
+const ver3ToVer4GlassColor = c => {
+  // Ver3GlassColorTable
+  // ig there is a chance this will be out of bounds
+  return [8, 14, 15, 16, 17, 18, 0][c];
+          // ^^^^  0->8, 1->14, 5->18, 6->0
+}
+const ver3ToVer4MouthColor = c => c + 19; // offset 19
+// glassType: maps identically, no conv needed
+
 // convert fields from ver3 and below to be compatible with switch/studio
 // the only fields that need to be made compatible, however,
 // , are the colors to convert them to the CommonColor type
@@ -78,27 +95,28 @@ conversionMethods.convertVer3FieldsToVer4 = data => {
   // cannot just set these directly, have to set the properties
   // kaitai structs use defineProperty to make these fetch from bitshifts
 
-  // NOTE: while there is a table to map ver3 colors to the CommonColor type...
-  // ... mii2studio took a shortcut, which is also what is being done here
-  // due to the fact that in the common color tables, there is a contiguous
-  // section of ver3-compatible colors so this "bumps them" to that section
   Object.defineProperty(data, 'facialHairColor', {
-    value: data.facialHairColor === 0 ? 8 : data.facialHairColor
+    value: ver3ToVer4HairColor(data.facialHairColor),
+    configurable: true
   });
   Object.defineProperty(data, 'eyeColor', {
-    value: data.eyeColor + 8
+    value: ver3ToVer4EyeColor(data.eyeColor),
   });
   Object.defineProperty(data, 'eyebrowColor', {
-    value: data.eyebrowColor === 0 ? 8 : data.eyebrowColor
+    // hair color (same as above)
+    value: ver3ToVer4HairColor(data.eyebrowColor),
+    configurable: true
   });
   Object.defineProperty(data, 'glassesColor', {
-    value: data.glassesColor === 0 ? 8 : (data.glassesColor < 6 ? data.glassesColor + 13 : 0)
+    value: ver3ToVer4GlassColor(data.glassesColor)
   });
   Object.defineProperty(data, 'hairColor', {
-    value: data.hairColor === 0 ? 8 : data.hairColor
+    // hair color (same as above)
+    value: ver3ToVer4HairColor(data.hairColor),
+    configurable: true
   });
   Object.defineProperty(data, 'mouthColor', {
-    value: data.mouthColor < 4 ? data.mouthColor + 19 : 0
+    value: ver3ToVer4MouthColor(data.mouthColor)
   });
   // NOTE: you cannot do the same vice-versa to convert ver4 colors back
   // ver4 also has new glass types, and...
@@ -503,7 +521,7 @@ const handleDownloadDataFileButton = event => {
  */
 conversionMethods.encodeVer3StoreData = (dataStruct, forQRCode) => {
   // set unmarked fields
-  dataStruct.unknown1 = 0x03; // ALWAYS constant 100% of the time
+  dataStruct.unknown1 = 3; // ALWAYS constant 100% of the time
   // 3ds version mii, will scan as a qr code on 3ds and wii u
   // may already be set so using defineProperty on it
   if(forQRCode ||
@@ -511,36 +529,52 @@ conversionMethods.encodeVer3StoreData = (dataStruct, forQRCode) => {
     dataStruct.version === undefined || dataStruct.version < 1
   )
     Object.defineProperty(dataStruct, 'version', {
-      value: 3
+      value: 3 // FFL_BIRTH_PLATFORM_CTR
     });
   // mii needs a non-null name to scan
-  // TODO: you may want to make this part of a hash or encoding or.. something
-  // TODO: you have enough bytes to pack the studio info within all arbitrary data given
-  // NOTE: NOTE: this is what the Coral account API returns
-  // in its Mii data, along with random IDs, I assume they forge it from studio data
+
+  // this name is what the Coral account API returns in its
+  // Mii data, along with random IDs, I assume they forge it from studio data
   if(!dataStruct.miiName || isStringNull(dataStruct.miiName))
     dataStruct.miiName = DEFAULT_NAME_IF_NONE;
-  // setting system id and client id here are NOT necessary, but they can be randomized
-  //origMii.systemId = [0, 0, 0, 0, 0, 0, 0, 0];
-  // mii id on the other hand cannot be null
-  // if you scan two miis with the same id (or potentially other ids)
-  // then the system will think they are the same and not overwrite
-  //origMii.avatarId = [128, 0, 0, 0];
-  // TODO: make ALL RANDOM AVATAR IDS
-  // TODO: ALL NUMBERS and ALSO RANDOM SYSTEM ID. MAYBE RANDOM (NINTENDO) MAC???
 
-  // TODO: TODO: TODO: IF YOU ARE READING, ACTUALLY MAKE THIS
+  // random array of u8s:
+  const randomUint8Array = size => Array.from({ length: size }, () => Math.floor(Math.random() * 256));
+
+  // NOTE: "systemId" = AuthorID, "clientId" = CreateID base
+  // "avatarId" = CreateID first 4 bytes
+
+  // systemId/AuthorID and clientId/CreateID base are not
+  // needed, both can be randomy (CreateID base is ONLY
+  // set to the MAC address on Wii, (DS?), 3DS but NOT
+  // on Wii U (nn::act::GetDeviceHash), Switch (??? random?)
+
+  //dataStruct.systemId = [0, 0, 0, 0, 0, 0, 0, 0];
+  // CreateID cannot be null.
+  // scanning two Miis with the same CreateID leads
+  // the system to thinking they are the same and overwrite
+
+  //dataStruct.avatarId = [0b00001111, 0, 0, 0];
+  // TODO: make ALL IDs random, or, a hash of the
+  // mii studio data or something i think maybe???
+
+  // qr codes with THIS BIT SET will NOT SCAN on 3ds
+  // (all check against this bit: FFLiIsValidMiiID,
+  // CFLi_IsValidMiiID, nn::mii::CreateId::IsValid)
+  if(dataStruct.avatarId[0] & 0b00100000) // FFLI_CREATE_ID_FLAG_TEMPORARY
+    dataStruct.avatarId[0] &= ~0b00100000; // unset this bit
+
+  // TODO: IF YOU ARE READING, ACTUALLY MAKE THIS
   // A HASH OF THE MII STUDIO DATA OR SOMETHING I THINK MAYBE
   //debugger
-  if(!dataStruct.avatarId || isArrayNull(dataStruct.avatarId))
-    // NOTE NOTE NOTE TODO TODO TODO
-    // 3DS DOES NOT LIKE e.g. MATT'S RAW ID, BUT FFL & MIITOMO DOES???
-    dataStruct.avatarId = [128,
-      // should not exceed 256?
-      Math.floor(Math.random() * 257),
-      Math.floor(Math.random() * 257),
-      Math.floor(Math.random() * 257),
-    ];
+  if(!dataStruct.avatarId || isArrayNull(dataStruct.avatarId)) {
+    dataStruct.avatarId = [0b10000000, // set normal bit
+      0, 0, 0];
+    //dataStruct.clientId = [0, 0, 0, 0, 0, 0];
+    dataStruct.clientId = randomUint8Array(6);
+    // NOTE: THIS ^^ is the SECOND part of CreateID
+  }
+
   // force enable copying, but only if qr code mode is on
   if(forQRCode)
     Object.defineProperty(dataStruct, 'copying', {
@@ -548,7 +582,6 @@ conversionMethods.encodeVer3StoreData = (dataStruct, forQRCode) => {
     });
   // mingle, or local only, is already initialized to false tho
 
-  //origMii.clientId = [0, 0, 0, 0, 0, 0];
   // skip crc16 for qr code bc qr encode function does it itself
   let skipCRC16 = Boolean(forQRCode);
   return encode3DSStoreDataFromStructCopiedFromKazukiMiiEncode(dataStruct,

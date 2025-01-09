@@ -196,7 +196,7 @@ function scanFile(file) {
       })
       .then(result => handleDecryption(result))
       .catch(error => {
-      	console.error(error);
+        console.error(error);
         if(error === QrScanner.NO_QR_CODE_FOUND) {//return;
           showStatus('no-qr');
         } else {
