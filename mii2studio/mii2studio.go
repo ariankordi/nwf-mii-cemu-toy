@@ -74,9 +74,7 @@ func Map3DSStoreDataToStudioBytes(origMiiData []byte) []byte {
 		studioMii.HairColor = 8
 	}
 	studioMii.MouthColor = ignoreErrorAndIntToU8(origMii.MouthColor())
-	if studioMii.MouthColor < 4 {
-		studioMii.MouthColor = studioMii.MouthColor + 19
-	}
+	studioMii.MouthColor = studioMii.MouthColor + 19
 
 	var byteBuffer bytes.Buffer
 	// Encode to byte buffer
