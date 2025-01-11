@@ -508,6 +508,21 @@ func retrieveMiiDataFromNNIDOrPID(nnid string, pid int64, apiID int, acceptsOcte
 	return data, miiDataBytes, lastModified, nil
 }
 
+
+// @Summary Lookup NNID
+// @Description Retrieves Mii data from a Nintendo/Pretendo NNID or PID. Note that this uses a local archive database for NNID data.
+// @Tags Fetch Mii Data
+// @Accept json,octet-stream
+// @Produce json,octet-stream
+// @Param nnid path string false "NNID/user ID. Also works as a query parameter that allows multiple comma separated values."
+// @Param pid query int false "PID. Can be used without nnid path parameter and allows multiple comma separated values."
+// @Param api_id query int false "API ID. Set to 1 to look up a Pretendo Network ID. This was originally intended for working with multiple NNID environments, which is why it's like this."
+// @Param force_refresh query bool false "Force refresh. Bypasses cache when fetching."
+// @Success 200 {object} ResponseData "NNID data including Mii data, will return an array if multiple NNIDs are requested. Mii data is 96 byte FFLStoreData in Base64, but if you are requesting one NNID, it will be returned as binary if you request with Accept: application/octet-stream."
+// @Failure 400 {object} string "Bad Request"
+// @Failure 404 {object} string "Not Found"
+// @Failure 500 {object} string "Internal Server Error"
+// @Router /mii_data/{nnid} [get]
 func nnidLookupHandler(w http.ResponseWriter, r *http.Request) {
 	setCORSHeaders(w, r)
 

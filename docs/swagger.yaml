@@ -1,0 +1,984 @@
+basePath: /
+definitions:
+  main.ResponseData:
+    properties:
+      data:
+        type: string
+      error:
+        type: string
+      images:
+        properties:
+          last_modified:
+            description: this is only a pointer so that omitempty will work
+            type: string
+        type: object
+      name:
+        type: string
+      pid:
+        type: integer
+      studio_url_data:
+        type: string
+      user_id:
+        type: string
+    type: object
+host: mii-unsecure.ariankordi.net
+info:
+  contact: {}
+  description: 'This API contains endpoints to fetch Mii data from NNID, CMOC, or
+    Miitomo and an endpoint to render a Mii icon. As of writing, the repo for the
+    renderer server is located here: https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype
+    and for the frontend/APIs itself is located here: https://github.com/ariankordi/nwf-mii-cemu-toy/tree/ffl-renderer-proto-integrate
+    If you are lurking and found this, my email address is ariankordi@ariankordi.net'
+  title: Mii Renderer (REAL) Frontend and API
+  version: "1.0"
+paths:
+  /cmoc_lookup/{cmoc_code}:
+    get:
+      consumes:
+      - application/json
+      - application/octet-stream
+      description: 'Looks up a CMOC entry number from the Check Mii Out Channel and
+        returns its Mii data as 76 byte RFLStoreData/.rsd format. As of writing this
+        code, it''s retrieving from WiiLink: https://miicontest.wiilink.ca'
+      parameters:
+      - description: CMOC Entry Number (we will descramble it)
+        format: string, 1234-5678-9123
+        in: path
+        name: cmoc_code
+        required: true
+        type: string
+      produces:
+      - application/json
+      - application/octet-stream
+      responses:
+        "200":
+          description: 'Base64 encoded RFLStoreData (76 bytes) or binary data if requesting
+            with Accept: application/octet-stream'
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Lookup CMOC Entry
+      tags:
+      - Fetch Mii Data
+  /mii_data/{nnid}:
+    get:
+      consumes:
+      - application/json
+      - application/octet-stream
+      description: Retrieves Mii data from a Nintendo/Pretendo NNID or PID. Note that
+        this uses a local archive database for NNID data.
+      parameters:
+      - description: NNID/user ID. Also works as a query parameter that allows multiple
+          comma separated values.
+        in: path
+        name: nnid
+        type: string
+      - description: PID. Can be used without nnid path parameter and allows multiple
+          comma separated values.
+        in: query
+        name: pid
+        type: integer
+      - description: API ID. Set to 1 to look up a Pretendo Network ID. This was originally
+          intended for working with multiple NNID environments, which is why it's
+          like this.
+        in: query
+        name: api_id
+        type: integer
+      - description: Force refresh. Bypasses cache when fetching.
+        in: query
+        name: force_refresh
+        type: boolean
+      produces:
+      - application/json
+      - application/octet-stream
+      responses:
+        "200":
+          description: 'NNID data including Mii data, will return an array if multiple
+            NNIDs are requested. Mii data is 96 byte FFLStoreData in Base64, but if
+            you are requesting one NNID, it will be returned as binary if you request
+            with Accept: application/octet-stream.'
+          schema:
+            $ref: '#/definitions/main.ResponseData'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Lookup NNID
+      tags:
+      - Fetch Mii Data
+  /miis/image.glb:
+    get:
+      description: Renders a Mii image based on provided data, NNID, or PID. Also
+        supports exporting a 3D model of the head to binary glTF (.glb).
+      parameters:
+      - description: Mii data in hex or Base64. Accepts many different types, but
+          the data is detected based on its length.
+        in: query
+        name: data
+        type: string
+      - description: NNID/PNID (Set api_id for Pretendo)
+        in: query
+        name: nnid
+        type: string
+      - description: API ID (Set to 1 for Pretendo)
+        in: query
+        name: api_id
+        type: integer
+      - description: PID (For NNID lookup)
+        in: query
+        name: pid
+        type: integer
+      - description: View Type (Camera)
+        enum:
+        - face
+        - face_only
+        - all_body
+        - fflmakeicon
+        - ffliconwithbody
+        - variableiconbody
+        - all_body_sugar
+        in: query
+        name: type
+        type: string
+      - description: Expression - NOTE that for glTF export, this accepts multiple
+          comma separated values.
+        enum:
+        - surprise
+        - surprise_open_mouth
+        - wink_left_open_mouth
+        - like
+        - anger_open_mouth
+        - blink_open_mouth
+        - anger
+        - like_wink_left
+        - happy
+        - blink
+        - smile
+        - sorrow_open_mouth
+        - wink_right
+        - sorrow
+        - normal
+        - like_wink_right
+        - wink_right_open_mouth
+        - smile_open_mouth
+        - frustrated
+        - surprised
+        - wink_left
+        - open_mouth
+        - puzzled
+        - normal_open_mouth
+        in: query
+        name: expression
+        type: string
+      - description: Resolution
+        in: query
+        name: width
+        type: integer
+      - description: Upscale Factor - Set to 1 for no upscaling
+        in: query
+        name: scale
+        type: integer
+      - description: Mask/Faceline Texture Resolution
+        in: query
+        name: texResolution
+        type: integer
+      - description: Enable Mipmaps for Mask//Faceline
+        in: query
+        name: mipmapEnable
+        type: boolean
+      - description: Resource Type
+        enum:
+        - default
+        - middle
+        - high
+        in: query
+        name: resourceType
+        type: string
+      - description: Shader Type
+        enum:
+        - wiiu
+        - switch
+        - miitomo
+        - wiiu_blinn
+        - ffliconwithbody
+        in: query
+        name: shaderType
+        type: string
+      - description: Body Type
+        enum:
+        - default
+        - wiiu
+        - switch
+        - ffliconwithbody
+        in: query
+        name: bodyType
+        type: string
+      - description: Head Model Type
+        enum:
+        - normal
+        - hat
+        - face_only
+        in: query
+        name: modelType
+        type: string
+      - description: Flatten Nose (For helmets)
+        in: query
+        name: flattenNose
+        type: boolean
+      - description: Draw Stage Mode
+        enum:
+        - all
+        - opa_only
+        - xlu_only
+        - mask_only
+        - xlu_depth_mask
+        in: query
+        name: drawStageMode
+        type: string
+      - description: Clothes/Shirt Color
+        enum:
+        - default
+        - red
+        - orange
+        - yellow
+        - yellowgreen
+        - green
+        - blue
+        - skyblue
+        - pink
+        - purple
+        - brown
+        - white
+        - black
+        in: query
+        name: clothesColor
+        type: string
+      - description: Pants Color
+        enum:
+        - default
+        - gray
+        - blue
+        - red
+        - gold
+        - body
+        - none
+        in: query
+        name: pantsColor
+        type: string
+      - description: Split Depth Mode
+        enum:
+        - none
+        - front
+        - back
+        - both
+        in: query
+        name: splitMode
+        type: string
+      - description: Camera X Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: cameraXRotate
+        type: integer
+      - description: Camera Y Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: cameraYRotate
+        type: integer
+      - description: Camera Z Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: cameraZRotate
+        type: integer
+      - description: Model X Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: characterXRotate
+        type: integer
+      - description: Model Y Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: characterYRotate
+        type: integer
+      - description: Model Z Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: characterZRotate
+        type: integer
+      - description: Light Direction X
+        in: query
+        maximum: 360
+        minimum: 0
+        name: lightXDirection
+        type: integer
+      - description: Light Direction Y
+        in: query
+        maximum: 360
+        minimum: 0
+        name: lightYDirection
+        type: integer
+      - description: Light Direction Z
+        in: query
+        maximum: 360
+        minimum: 0
+        name: lightZDirection
+        type: integer
+      - description: Instance Count (Rotation) - NOTE that, for the moment, the extra
+          instances are stacked vertically.
+        in: query
+        maximum: 16
+        minimum: 1
+        name: instanceCount
+        type: integer
+      - description: Background Color
+        format: string, 6 digit hex with hash/8 digit for RGBA
+        in: query
+        name: bgColor
+        type: string
+      - description: Enable CharInfo Verification
+        in: query
+        name: verifyCharInfo
+        type: boolean
+      - description: Verify CRC16 (If present)
+        in: query
+        name: verifyCRC16
+        type: boolean
+      - description: Enable Lighting
+        in: query
+        name: lightEnable
+        type: boolean
+      produces:
+      - image/png
+      - image/tga
+      - model/gltf-binary
+      responses:
+        "200":
+          description: Model rendered to png, tga, or binary glTF (.glb)
+          schema:
+            items:
+              type: integer
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Render Mii Icon
+      tags:
+      - Render
+  /miis/image.png:
+    get:
+      description: Renders a Mii image based on provided data, NNID, or PID. Also
+        supports exporting a 3D model of the head to binary glTF (.glb).
+      parameters:
+      - description: Mii data in hex or Base64. Accepts many different types, but
+          the data is detected based on its length.
+        in: query
+        name: data
+        type: string
+      - description: NNID/PNID (Set api_id for Pretendo)
+        in: query
+        name: nnid
+        type: string
+      - description: API ID (Set to 1 for Pretendo)
+        in: query
+        name: api_id
+        type: integer
+      - description: PID (For NNID lookup)
+        in: query
+        name: pid
+        type: integer
+      - description: View Type (Camera)
+        enum:
+        - face
+        - face_only
+        - all_body
+        - fflmakeicon
+        - ffliconwithbody
+        - variableiconbody
+        - all_body_sugar
+        in: query
+        name: type
+        type: string
+      - description: Expression - NOTE that for glTF export, this accepts multiple
+          comma separated values.
+        enum:
+        - surprise
+        - surprise_open_mouth
+        - wink_left_open_mouth
+        - like
+        - anger_open_mouth
+        - blink_open_mouth
+        - anger
+        - like_wink_left
+        - happy
+        - blink
+        - smile
+        - sorrow_open_mouth
+        - wink_right
+        - sorrow
+        - normal
+        - like_wink_right
+        - wink_right_open_mouth
+        - smile_open_mouth
+        - frustrated
+        - surprised
+        - wink_left
+        - open_mouth
+        - puzzled
+        - normal_open_mouth
+        in: query
+        name: expression
+        type: string
+      - description: Resolution
+        in: query
+        name: width
+        type: integer
+      - description: Upscale Factor - Set to 1 for no upscaling
+        in: query
+        name: scale
+        type: integer
+      - description: Mask/Faceline Texture Resolution
+        in: query
+        name: texResolution
+        type: integer
+      - description: Enable Mipmaps for Mask//Faceline
+        in: query
+        name: mipmapEnable
+        type: boolean
+      - description: Resource Type
+        enum:
+        - default
+        - middle
+        - high
+        in: query
+        name: resourceType
+        type: string
+      - description: Shader Type
+        enum:
+        - wiiu
+        - switch
+        - miitomo
+        - wiiu_blinn
+        - ffliconwithbody
+        in: query
+        name: shaderType
+        type: string
+      - description: Body Type
+        enum:
+        - default
+        - wiiu
+        - switch
+        - ffliconwithbody
+        in: query
+        name: bodyType
+        type: string
+      - description: Head Model Type
+        enum:
+        - normal
+        - hat
+        - face_only
+        in: query
+        name: modelType
+        type: string
+      - description: Flatten Nose (For helmets)
+        in: query
+        name: flattenNose
+        type: boolean
+      - description: Draw Stage Mode
+        enum:
+        - all
+        - opa_only
+        - xlu_only
+        - mask_only
+        - xlu_depth_mask
+        in: query
+        name: drawStageMode
+        type: string
+      - description: Clothes/Shirt Color
+        enum:
+        - default
+        - red
+        - orange
+        - yellow
+        - yellowgreen
+        - green
+        - blue
+        - skyblue
+        - pink
+        - purple
+        - brown
+        - white
+        - black
+        in: query
+        name: clothesColor
+        type: string
+      - description: Pants Color
+        enum:
+        - default
+        - gray
+        - blue
+        - red
+        - gold
+        - body
+        - none
+        in: query
+        name: pantsColor
+        type: string
+      - description: Split Depth Mode
+        enum:
+        - none
+        - front
+        - back
+        - both
+        in: query
+        name: splitMode
+        type: string
+      - description: Camera X Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: cameraXRotate
+        type: integer
+      - description: Camera Y Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: cameraYRotate
+        type: integer
+      - description: Camera Z Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: cameraZRotate
+        type: integer
+      - description: Model X Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: characterXRotate
+        type: integer
+      - description: Model Y Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: characterYRotate
+        type: integer
+      - description: Model Z Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: characterZRotate
+        type: integer
+      - description: Light Direction X
+        in: query
+        maximum: 360
+        minimum: 0
+        name: lightXDirection
+        type: integer
+      - description: Light Direction Y
+        in: query
+        maximum: 360
+        minimum: 0
+        name: lightYDirection
+        type: integer
+      - description: Light Direction Z
+        in: query
+        maximum: 360
+        minimum: 0
+        name: lightZDirection
+        type: integer
+      - description: Instance Count (Rotation) - NOTE that, for the moment, the extra
+          instances are stacked vertically.
+        in: query
+        maximum: 16
+        minimum: 1
+        name: instanceCount
+        type: integer
+      - description: Background Color
+        format: string, 6 digit hex with hash/8 digit for RGBA
+        in: query
+        name: bgColor
+        type: string
+      - description: Enable CharInfo Verification
+        in: query
+        name: verifyCharInfo
+        type: boolean
+      - description: Verify CRC16 (If present)
+        in: query
+        name: verifyCRC16
+        type: boolean
+      - description: Enable Lighting
+        in: query
+        name: lightEnable
+        type: boolean
+      produces:
+      - image/png
+      - image/tga
+      - model/gltf-binary
+      responses:
+        "200":
+          description: Model rendered to png, tga, or binary glTF (.glb)
+          schema:
+            items:
+              type: integer
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Render Mii Icon
+      tags:
+      - Render
+  /miis/image.tga:
+    get:
+      description: Renders a Mii image based on provided data, NNID, or PID. Also
+        supports exporting a 3D model of the head to binary glTF (.glb).
+      parameters:
+      - description: Mii data in hex or Base64. Accepts many different types, but
+          the data is detected based on its length.
+        in: query
+        name: data
+        type: string
+      - description: NNID/PNID (Set api_id for Pretendo)
+        in: query
+        name: nnid
+        type: string
+      - description: API ID (Set to 1 for Pretendo)
+        in: query
+        name: api_id
+        type: integer
+      - description: PID (For NNID lookup)
+        in: query
+        name: pid
+        type: integer
+      - description: View Type (Camera)
+        enum:
+        - face
+        - face_only
+        - all_body
+        - fflmakeicon
+        - ffliconwithbody
+        - variableiconbody
+        - all_body_sugar
+        in: query
+        name: type
+        type: string
+      - description: Expression - NOTE that for glTF export, this accepts multiple
+          comma separated values.
+        enum:
+        - surprise
+        - surprise_open_mouth
+        - wink_left_open_mouth
+        - like
+        - anger_open_mouth
+        - blink_open_mouth
+        - anger
+        - like_wink_left
+        - happy
+        - blink
+        - smile
+        - sorrow_open_mouth
+        - wink_right
+        - sorrow
+        - normal
+        - like_wink_right
+        - wink_right_open_mouth
+        - smile_open_mouth
+        - frustrated
+        - surprised
+        - wink_left
+        - open_mouth
+        - puzzled
+        - normal_open_mouth
+        in: query
+        name: expression
+        type: string
+      - description: Resolution
+        in: query
+        name: width
+        type: integer
+      - description: Upscale Factor - Set to 1 for no upscaling
+        in: query
+        name: scale
+        type: integer
+      - description: Mask/Faceline Texture Resolution
+        in: query
+        name: texResolution
+        type: integer
+      - description: Enable Mipmaps for Mask//Faceline
+        in: query
+        name: mipmapEnable
+        type: boolean
+      - description: Resource Type
+        enum:
+        - default
+        - middle
+        - high
+        in: query
+        name: resourceType
+        type: string
+      - description: Shader Type
+        enum:
+        - wiiu
+        - switch
+        - miitomo
+        - wiiu_blinn
+        - ffliconwithbody
+        in: query
+        name: shaderType
+        type: string
+      - description: Body Type
+        enum:
+        - default
+        - wiiu
+        - switch
+        - ffliconwithbody
+        in: query
+        name: bodyType
+        type: string
+      - description: Head Model Type
+        enum:
+        - normal
+        - hat
+        - face_only
+        in: query
+        name: modelType
+        type: string
+      - description: Flatten Nose (For helmets)
+        in: query
+        name: flattenNose
+        type: boolean
+      - description: Draw Stage Mode
+        enum:
+        - all
+        - opa_only
+        - xlu_only
+        - mask_only
+        - xlu_depth_mask
+        in: query
+        name: drawStageMode
+        type: string
+      - description: Clothes/Shirt Color
+        enum:
+        - default
+        - red
+        - orange
+        - yellow
+        - yellowgreen
+        - green
+        - blue
+        - skyblue
+        - pink
+        - purple
+        - brown
+        - white
+        - black
+        in: query
+        name: clothesColor
+        type: string
+      - description: Pants Color
+        enum:
+        - default
+        - gray
+        - blue
+        - red
+        - gold
+        - body
+        - none
+        in: query
+        name: pantsColor
+        type: string
+      - description: Split Depth Mode
+        enum:
+        - none
+        - front
+        - back
+        - both
+        in: query
+        name: splitMode
+        type: string
+      - description: Camera X Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: cameraXRotate
+        type: integer
+      - description: Camera Y Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: cameraYRotate
+        type: integer
+      - description: Camera Z Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: cameraZRotate
+        type: integer
+      - description: Model X Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: characterXRotate
+        type: integer
+      - description: Model Y Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: characterYRotate
+        type: integer
+      - description: Model Z Rotate
+        in: query
+        maximum: 360
+        minimum: 0
+        name: characterZRotate
+        type: integer
+      - description: Light Direction X
+        in: query
+        maximum: 360
+        minimum: 0
+        name: lightXDirection
+        type: integer
+      - description: Light Direction Y
+        in: query
+        maximum: 360
+        minimum: 0
+        name: lightYDirection
+        type: integer
+      - description: Light Direction Z
+        in: query
+        maximum: 360
+        minimum: 0
+        name: lightZDirection
+        type: integer
+      - description: Instance Count (Rotation) - NOTE that, for the moment, the extra
+          instances are stacked vertically.
+        in: query
+        maximum: 16
+        minimum: 1
+        name: instanceCount
+        type: integer
+      - description: Background Color
+        format: string, 6 digit hex with hash/8 digit for RGBA
+        in: query
+        name: bgColor
+        type: string
+      - description: Enable CharInfo Verification
+        in: query
+        name: verifyCharInfo
+        type: boolean
+      - description: Verify CRC16 (If present)
+        in: query
+        name: verifyCRC16
+        type: boolean
+      - description: Enable Lighting
+        in: query
+        name: lightEnable
+        type: boolean
+      produces:
+      - image/png
+      - image/tga
+      - model/gltf-binary
+      responses:
+        "200":
+          description: Model rendered to png, tga, or binary glTF (.glb)
+          schema:
+            items:
+              type: integer
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Render Mii Icon
+      tags:
+      - Render
+  /miitomo_get_player_data/{player_id}:
+    get:
+      description: 'Get data (e.g. nn::mii::CoreData, Mii image...) from a player
+        on Miitomo (Kaerutomo) by their player ID. As of writing, this is requesting
+        the following API endpoint: ktp.kaeru.world/v1/player/get_player_data'
+      parameters:
+      - description: Player ID. This is in your friend request invite link as the
+          first 16 character hex string after friend_code/
+        format: string, 16-character hex
+        in: path
+        name: player_id
+        type: string
+      - description: Target player ID. Accepts multiple comma separated values. This
+          works in substitute of the player ID path parameter.
+        format: string, 16-character hex
+        in: query
+        name: target_player_id
+        type: string
+      - description: 'Namespace. Accepts multiple comma separated values. Known values:
+          own_mii, stock_mii, mii_face_image, account_info, stock_item, reported_content,
+          corinth_status, star_account_info, _star_account_info, message_info'
+        in: query
+        name: namespace
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Player data returned from the upstream.
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Player data not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error. Error with marshaling, obfuscating,
+            or sending request.
+          schema:
+            type: string
+        "502":
+          description: Bad Gateway
+          schema:
+            type: string
+      summary: Lookup Miitomo Player Data
+      tags:
+      - Fetch Mii Data
+swagger: "2.0"

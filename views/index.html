@@ -861,26 +861,9 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
             <li class="smaller">* Exceptions: DS (just Wii but endian-flipped to LE), Miis in 3DS/Wii U databases (also endian-flipped but to BE), any unofficial format, game-specific formats or any other one I'm not aware of.</li>
             <li>See the GitHub linked above for more details.</li>
         </ul></li>
+        <li>There is a <a target="_blank" href="/swagger/">Swagger page</a> for API documentation - I've tried to make it similar to Mii Studio, should be usable as a drop-in replacement.</li>
+        <li><i>(Please don't rely tooo hard on the site being up, since it does go down and performance fluctuates...)</i></li>
 
-        <li>
-            <details style="display: inline;">
-            <summary>Interested? Click to read more...</summary>
-            <ul>
-                <li>This website is running on the code linked above. I've tried to make the API compatible with Mii Studio.
-                <ul>
-                    <li>This means that it should work as a drop-in replacement wherever you use the Mii Studio API. If it doesn't work as that for you, please <a href="#contact">contact me</a>.</li>
-                    <li>Feel free to use it however you seek fit, though, for the love of all that is holy, <b>do NOT rely on the site being up!!!</b></li>
-                <li>Also, you may omit unnecessary parameters. The <code>erri</code> parameter is not needed at all.</li>
-                </ul></li>
-                <li>Thanks to our dear AboodXD, the official Mii renderer on Wii U, FFL (Cafe Face Library) has been decompiled and ported to OpenGL 3.3.</li>
-                <li><a href="https://github.com/ariankordi/FFL-Testing">FFL-Testing</a> is the program he made to demo it: all it does is spin Mii heads in a window. My fork linked previously contains build instructions, as well as ports of the libraries involved to more systems.</li>
-                <li>The Wii U shader has been decompiled as FFLShader.vert/frag, and the uniforms needed to use it are in src/Shader.cpp. Feel free to use it for any other projects.</li>
-                <li>Likewise, the renderer-server-prototype branch contains the same for Switch and Miitomo shaders.</li>
-                <li>I feel like I had a lot more to say here but I uhhhh don't for now...</li>
-            </ul>
-
-            </details>
-        </li>
     </ul>
 
     <h2>{{T("contact_me_header")}}</h2>

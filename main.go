@@ -50,6 +50,10 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+
+	// import swaggo documentation:
+	"github.com/swaggo/http-swagger"
+	_ "ffl-testing-frontend-http/docs"
 )
 
 var (
@@ -202,6 +206,12 @@ var handler http.Handler = http.DefaultServeMux
 var gtmContainerID, cloudflareAnalyticsToken, sentryDSN string
 var sentryInitialized, isDevelopment bool
 var lumberjackLogger *lumberjack.Logger
+
+// @title Mii Renderer (REAL) Frontend and API
+// @version 1.0
+// @description This API contains endpoints to fetch Mii data from NNID, CMOC, or Miitomo and an endpoint to render a Mii icon. As of writing, the repo for the renderer server is located here: https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype and for the frontend/APIs itself is located here: https://github.com/ariankordi/nwf-mii-cemu-toy/tree/ffl-renderer-proto-integrate If you are lurking and found this, my email address is ariankordi@ariankordi.net
+// @host mii-unsecure.ariankordi.net
+// @BasePath /
 func main() {
 	var host, unixSocket, certFile, keyFile, hostnamesSniAllowArg, assetsDir string
 	var sentryEnableTracing bool
@@ -418,6 +428,9 @@ func main() {
 	http.HandleFunc("/miis/image.png", renderImage)
 	http.HandleFunc("/miis/image.glb", renderImage)
 	http.HandleFunc("/miis/image.tga", renderImage)
+
+	// Swagger UI handler
+	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	var err error
 
