@@ -47,7 +47,7 @@ type RenderRequest struct {
 	Resolution      uint16
 	TexResolution   int16
 	ViewType        uint8
-	ResourceType    uint8
+	ResourceType    int8
 	ShaderType      uint8
 	Expression      uint8
 	ExpressionFlag  FFLAllExpressionFlag //uint32  // used if there are multiple
@@ -61,18 +61,23 @@ type RenderRequest struct {
 	VerifyCRC16          bool
 	LightEnable          bool
 	ClothesColor         int8 // default: -1
-	PantsColor           uint8
-	BodyType             int8
+	PantsColor           int8 // ^^
+	BodyType             int8 // ^^
 	InstanceCount        uint8
 	InstanceRotationMode uint8
 	LightDirection       [3]int16 // default/unset: -1
+	SplitMode            uint8
+
+	// NOTE: needs to be adjusted on EVERY update:
 	//_                    [3]byte // padding for alignment
 }
 
 const FFL_EXPRESSION_LIMIT = 70
+
 type FFLAllExpressionFlag struct {
 	Flags [3]uint32 // 0-96
 }
+
 func SetExpressionFlagIndex(ef *FFLAllExpressionFlag, index int, set bool) {
 	if index < 0 || index >= FFL_EXPRESSION_LIMIT {
 		fmt.Printf("FFLSetExpressionFlagIndex: input out of range: %d\n", index)
@@ -132,6 +137,13 @@ var modelTypes = map[string]int{
 	"normal":    0,
 	"hat":       1,
 	"face_only": 2,
+}
+
+var splitModes = map[string]int{
+	"none":  0,
+	"front": 1,
+	"back":  2,
+	"both":  3,
 }
 
 var drawStageModes = map[string]int{
@@ -341,25 +353,24 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	pidStr := query.Get("pid")
 	resourceTypeStr := query.Get("resourceType")
 	if resourceTypeStr == "" {
-		// TODO: should be -1 instead?
-		resourceTypeStr = "1"
+		resourceTypeStr = "default"
 	}
 	shaderTypeStr := query.Get("shaderType")
 	if shaderTypeStr == "" {
 		// TODO: should server determine default (-1)?
-		shaderTypeStr = "0"
+		shaderTypeStr = "wiiu"
 	}
 	bodyTypeStr := query.Get("bodyType")
 	if bodyTypeStr == "" {
-		bodyTypeStr = "-1" // based on shader type
+		bodyTypeStr = "default" // based on shader type
 	}
 	clothesColorStr := query.Get("clothesColor")
 	if clothesColorStr == "" {
-		clothesColorStr = "-1"
+		clothesColorStr = "default"
 	}
 	pantsColorStr := query.Get("pantsColor")
 	if pantsColorStr == "" {
-		pantsColorStr = "red"
+		pantsColorStr = "default"
 	}
 
 	var responseFormat uint8 = 0
@@ -538,13 +549,17 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		http.Error(w, "valid model types: normal, hat, face_only", http.StatusBadRequest)
 		return
 	}
-	/*
-		modelType, err := strconv.Atoi(modelTypeStr)
-		if err != nil || modelType > 2 {
-			http.Error(w, "modelType must be 0-2", http.StatusBadRequest)
-			return
-		}
-	*/
+
+	splitModeStr := query.Get("splitMode")
+	if splitModeStr == "" {
+		splitModeStr = "none"
+	}
+	splitMode, exists := splitModes[splitModeStr]
+	if !exists {
+		http.Error(w, "valid split modes: none, front, back, both", http.StatusBadRequest)
+		return
+	}
+
 	flattenNose := query.Get("flattenNose") != ""
 
 	modelFlag := (1 << modelType)
@@ -566,12 +581,12 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	lightEnable := query.Get("lightEnable") != "0"       // 0 = no lighting
 	verifyCharInfo := query.Get("verifyCharInfo") != "0" // verify default
 
-	// Parsing and validating resource type
-	resourceType, err := strconv.Atoi(resourceTypeStr)
+	var resourceType int
+	resourceType, err = strconv.Atoi(resourceTypeStr)
 	if err != nil {
-		http.Error(w, "resource type is not a number", http.StatusBadRequest)
-		return
+		resourceType = getMapToInt(resourceTypeStr, resourceTypeMap, -1)
 	}
+
 	verifyCRC16 := query.Get("verifyCRC16") != "0" // 0 = no verify
 
 	// Parsing and validating expression flag
@@ -594,7 +609,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		expression = getMapToInt(expressionStr, expressionMap, FFL_EXPRESSION_NORMAL)
 	}
 
-	if expression > 18 && resourceType < 1 {
+	if expression > 18 && resourceType == 0 {
 		http.Error(w, "🥺🥺 🥺🥺🥺🥺 🥺🥺🥺, 🥺🥺🥺 😔 (Translation: Sorry, you cannot use this expression with the middle resource.)", http.StatusBadRequest)
 		return
 	}
@@ -635,7 +650,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	var pantsColor int
 	pantsColor, err = strconv.Atoi(pantsColorStr)
 	if err != nil {
-		pantsColor = getMapToInt(pantsColorStr, pantsColorMap, 0)
+		pantsColor = getMapToInt(pantsColorStr, pantsColorMap, -1)
 	}
 
 	// Parsing and validating width
@@ -711,6 +726,27 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	lightDirectionVec3i := [3]int16{-1, -1, -1}
+
+	if lightXDir := query.Get("lightXDirection"); lightXDir != "" {
+		x, err := strconv.Atoi(lightXDir)
+		if err == nil {
+			lightDirectionVec3i[0] = int16(x)
+		}
+	}
+	if lightYDir := query.Get("lightYDirection"); lightYDir != "" {
+		y, err := strconv.Atoi(lightYDir)
+		if err == nil {
+			lightDirectionVec3i[1] = int16(y)
+		}
+	}
+	if lightZDir := query.Get("lightZDirection"); lightZDir != "" {
+		z, err := strconv.Atoi(lightZDir)
+		if err == nil {
+			lightDirectionVec3i[2] = int16(z)
+		}
+	}
+
 	instanceCount, err := strconv.Atoi(instanceCountStr)
 	if err != nil || instanceCount > 20 {
 		http.Error(w, "instanceCount must be a number less than 20 or whatever i just set the maximum to", http.StatusBadRequest)
@@ -761,22 +797,24 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		Resolution:      uint16(width),
 		TexResolution:   int16(texResolution),
 		ViewType:        uint8(viewType),
-		ResourceType:    uint8(resourceType),
+		ResourceType:    int8(resourceType),
 		ShaderType:      uint8(shaderType),
 		Expression:      uint8(expression),
 		ExpressionFlag:  expressionFlag,
 		CameraRotate:    cameraRotateVec3i,
 		ModelRotate:     modelRotateVec3i,
 		BackgroundColor: bgColor4u8,
-		BodyType:        int8(bodyType),
-		InstanceCount:   uint8(instanceCount),
-		//InstanceRotationModeIsCamera: false,
 		DrawStageMode:   uint8(drawStageMode),
 		VerifyCharInfo:  verifyCharInfo,
 		VerifyCRC16:     verifyCRC16,
 		LightEnable:     lightEnable,
 		ClothesColor:    int8(clothesColor),
-		PantsColor:      uint8(pantsColor),
+		PantsColor:      int8(pantsColor),
+		BodyType:        int8(bodyType),
+		InstanceCount:   uint8(instanceCount),
+		InstanceRotationMode: 0, // TODO
+		LightDirection:  lightDirectionVec3i,
+		SplitMode:       uint8(splitMode),
 	}
 
 	// Enabling mipmap if specified
@@ -808,7 +846,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		// all we care about is the length
 		glbSize := strconv.Itoa(int(glbHeader.Length))
 		// set content-length from it
-		w.Header().Set("Content-Length", glbSize)
+		header.Set("Content-Length", glbSize)
 
 		// now set filename
 		filename := time.Now().Format("2006-01-02_15-04-05-")
@@ -818,7 +856,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 			filename += "mii-data"
 		}
 		filename += ".glb"
-		w.Header().Add("Content-Disposition", "attachment; filename="+filename)
+		header.Add("Content-Disposition", "attachment; filename="+filename)
 
 		// Stream the data directly to the HTTP response without buffering
 		_, err = io.Copy(w, fullReader)
@@ -838,7 +876,9 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	}
 	fullReader.Discard(18) // tga header length, move past the tga reader
 
-	imageDataSize := int(tgaHeader.Width) * int(tgaHeader.Height) * int(tgaHeader.BitsPerPixel) / 8
+	bytesPerPixel := int(tgaHeader.BitsPerPixel) / 8
+	imageDataSize := int(tgaHeader.Width) * int(tgaHeader.Height) * bytesPerPixel
+
 	imageData := make([]byte, imageDataSize)
 	if _, err := io.ReadFull(fullReader, imageData); err != nil {
 		handleRenderRequestError(w, bufferData, err)
@@ -847,8 +887,10 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 
 	// Create an image directly using the read data
 	img := &image.NRGBA{
-		Pix:    imageData,
-		Stride: int(tgaHeader.Width) * 4,
+		Pix: imageData,
+		// NOTE: ig this assumes it could be not rgba
+		// but we are... composing rgba
+		Stride: int(tgaHeader.Width) * bytesPerPixel,
 		Rect:   image.Rect(0, 0, int(tgaHeader.Width), int(tgaHeader.Height)),
 	}
 
@@ -893,7 +935,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	// otherwise encode as png
 
 	// Sending the image as a PNG response
-	w.Header().Set("Content-Type", "image/png")
+	header.Set("Content-Type", "image/png")
 
 	png.Encode(w, img)
 }
@@ -967,7 +1009,6 @@ var expressionMap = map[string]int{
 	"open_mouth":            FFL_EXPRESSION_OPEN_MOUTH,
 	"puzzled":               FFL_EXPRESSION_SORROW, // assuming PUZZLED is similar to SORROW
 	"normal_open_mouth":     FFL_EXPRESSION_OPEN_MOUTH,
-	"🥺":                     65,
 }
 
 var clothesColorMap = map[string]int{
@@ -988,13 +1029,20 @@ var clothesColorMap = map[string]int{
 }
 
 var pantsColorMap = map[string]int{
-	//"default": -1,
-	"gray": 0,
-	"blue": 1,
-	"red":  2,
-	"gold": 3,
-	"body": 4,
-	"none": 5,
+	"default": -1,
+	"gray":    0,
+	"blue":    1,
+	"red":     2,
+	"gold":    3,
+	"body":    4,
+	"none":    5,
+}
+
+var resourceTypeMap = map[string]int{
+	"default": -1, // server will select preferred
+	"middle":  0,  // FFL_RESOURCE_TYPE_MIDDLE
+	"high":    1,  // FFL_RESOURCE_TYPE_HIGH
+	//"low":     2,
 }
 
 func getMapToInt(input string, theMap map[string]int, defaultValue int) int {

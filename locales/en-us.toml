@@ -316,10 +316,10 @@ other = "Provide a 540/532 byte file of a preferably encrypted amiibo containing
 other = "Advanced options"
 
 [resource_type_label]
-other = "Resource type:"
+other = "Model/texture quality:"
 
 [resource_type_note]
-other = "You should always use high, but official renders all use middle in case you want to match them. Note that middle does not have new glasses or expressions."
+other = "Default is high, but Wii U era renders always use middle. Only high supports new glasses and Miitomo expressions."
 
 [disable_lighting_label]
 other = "Disable lighting:"
