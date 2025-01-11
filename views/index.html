@@ -77,8 +77,8 @@
     <!-- TODO BELOW IS TO BE LOCALIZED -->
     <meta property="og:title" content="{{T("page_title")}}">
 
-    <meta name="og:description" content="That's right, we will render your Miis with our bare f*cking hands.
-This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*ss Mii Studio API. NO. This runs on MY COMPUTER. On MY very own Intel® Core™ i7-1185G7 Intel Iris® Xᵉ Graphics™. And guess what? It can run on yours too, since the renderer is entirely open source.">
+    <meta name="og:description" content="That's right, we will render your Miis with our bare hands.
+This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii Studio API. NO. This runs on MY COMPUTER. On MY very own Intel® Core™ i7-1185G7 Intel Iris® Xᵉ Graphics™. And guess what? It can run on yours too, since the renderer is entirely open source.">
     <link rel="alternate" hreflang="x-default" href="https://mii-unsecure.ariankordi.net/">
     {{range _, lang := .LanguageStrings}}
     <link rel="alternate" hreflang="{{lang}}" href="https://mii-unsecure.ariankordi.net/?locale.lang={{lang}}">
@@ -239,9 +239,13 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
 
             <!-- QR code statuses -->
             <div id="qr-status-ready" style="font-weight: bold;">{{T("status_ready")}}</div>
+            <div id="qr-status-drop" style="font-weight: bold; color: blue; display: none;">Drop your image anywhere!</div>
             <div id="qr-status-scanning" style="font-weight: bold; color: blue; display: none;">{{T("qr_status_scanning")}}</div>
             <div id="qr-status-waiting" style="font-weight: bold; color: orange; display: none;">{{T("qr_status_waiting")}}</div>
+
             <div id="qr-status-loaded" style="font-weight: bold; color: green; display: none;">{{T("qr_status_loaded")}}<span></span></div>
+
+            <div id="qr-status-loaded-tomodachilife" style="color: deepskyblue; display: none;">Tomodachi Life Info: <span style="font-weight: bold;">First</span> <span style="font-weight: bold;">Last</span> from <span style="font-weight: bold;"></span> Island <span id="qr-tomodachilife-hair-dye" style="font-weight: bold; display: none;">(Has Hair Spray)</span></div>
 
             <div id="qr-notice-size" style="color: indianred; display: none;">{{T("qr_status_loaded")}}<span></span></div>
 
@@ -443,7 +447,6 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             <option value="like_wink_left">{{T("expression_like_wink_left")}}</option>
             <option value="like_wink_right">{{T("expression_like_wink_right")}}</option>
             <option value="frustrated">{{T("expression_frustrated")}}</option>
-            <option value="🥺">🥺</option>
         </select><br class="hide-iframe-mode">
         <label class="hide-iframe-mode" for="resolution-slider">{{T("resolution_slider_label")}}</label>
         <input class="hide-iframe-mode" id="resolution-slider" type="range" min="96" max="1080" step="16" value="270">
@@ -482,9 +485,10 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
         </select>
         <br>
         <label for="pantsColor">Pants color: </label>
-        <select id="pantsColor" name="pantsColor" data-save data-default-value="red">
+        <select id="pantsColor" name="pantsColor" data-save data-default-value="default">
+            <option value="default" selected>{{T("default")}}</option>
             <option value="gray">Gray</option>
-            <option value="red" selected>{{T("red")}}</option>
+            <option value="red">{{T("red")}}</option>
             <option value="blue">{{T("dark_blue")}}</option>
             <option value="gold">Gold</option>
         </select>
@@ -538,15 +542,16 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             <div class="smaller" style="margin-bottom: 5px;">{{T("scale_label_small")}}</div>
 
             <label for="resourceType">{{T("resource_type_label")}}</label>
-            <select name="resourceType" id="resourceType" data-default-value="1">
-                <option value="0">FFL_RESOURCE_TYPE_MIDDLE</option>
-                <option value="1" selected>FFL_RESOURCE_TYPE_HIGH</option>
+            <select name="resourceType" id="resourceType" data-default-value="default">
+                <option value="default">{{T("default")}}</option>
+                <option value="middle">FFL_RESOURCE_TYPE_MIDDLE</option>
+                <option value="high" selected>FFL_RESOURCE_TYPE_HIGH</option>
             </select><br>
             <div class="smaller">{{T("resource_type_note")}}</div>
 
             <label for="bodyType">Body model:</label>
             <select name="bodyType" id="bodyType" data-default-value="default" data-save>
-                <option value="default" selected>Default (Shader)</option>
+                <option value="default" selected>{{T("default")}} (Shader)</option>
                 <option value="wiiu">{{T("option_wii_u_miiverse")}}</option>
                 <option value="switch">Switch</option>
                 <option value="miitomo">{{T("option_miitomo_mii_studio")}}</option>
@@ -629,8 +634,6 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
                 <option value="hat">FFL_MODEL_TYPE_HAT</option>
                 <option value="face_only">FFL_MODEL_TYPE_FACE_ONLY</option>
             </select>
-            <label style="display: inline-block;" for="flattenNose">{{T("flatten_nose")}}</label>
-            <input type="checkbox" id="flattenNose" name="flattenNose" value="1" data-default-value="0">
             <div class="smaller">{{T("model_type_note")}}</div>
 
             <label for="drawStageMode">{{T("draw_stage_mode")}}:</label>
