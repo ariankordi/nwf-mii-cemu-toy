@@ -153,15 +153,23 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
         <!-- the js is STILL RESPONSIBLE for DISABLING THE FORM ELEMENTS -->
         <div id="data-group" {{if .GroupEnabled != "data"}}style="display: none;" {{end}}>
             <label class="small" for="file"><b>{{T("file_input_label")}}</b></label><br>
-            <input class="long-field" type="file" id="file">
-            <input type="hidden" name="data" id="file-data">
+            <div class="input-switch-container">
+                <input class="long-field" type="file" id="file">
+                <input type="hidden" name="data" id="file-data">
+                <input type="hidden" name="data-REAL" id="file-data-real" disabled>
+            </div>
 
             <div id="file-loaded" style="font-weight: bold; color: green; display: none;">{{T("loaded_mii_file")}}<span></span></div>
 
-            <div><label class="small" for="data"><b>{{T("enter_data_in_hex_or_base64")}}</b></label></div>
-            <input class="long-field green-border" id="data" type="text" name="data"
-                placeholder="{{T("data_placeholder")}}"
-                value="AwBgMIJUICvpzY4vnWYVrXy7ikd01AAAWR1KAGEAcwBtAGkAbgBlAAAAAAAAABw3EhB7ASFuQxwNZMcYAAgegg0AMEGzW4JtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAML0">
+            <div>
+                <label class="small" for="data"><b>{{T("enter_data_in_hex_or_base64")}}</b></label>
+            </div>
+            <div class="input-switch-container">
+                <input class="long-field green-border" id="data" type="text" name="data"
+                    placeholder="{{T("data_placeholder")}}"
+                    value="AwBgMIJUICvpzY4vnWYVrXy7ikd01AAAWR1KAGEAcwBtAGkAbgBlAAAAAAAAABw3EhB7ASFuQxwNZMcYAAgegg0AMEGzW4JtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAML0">
+                <input type="hidden" name="data-REAL" id="data-real" disabled>
+            </div>
             <div id="data-loaded" style="font-weight: bold; color: green; display: none;">{{T("loaded_mii_data")}}<span></span></div>
 
             <span class="small">{{T("click_on_label_to_select_field")}}</span>
@@ -243,7 +251,8 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             <div id="qr-status-no-camera" style="font-weight: bold; color: red; display: none;">{{T("qr_status_no_camera")}}</div>
 
 
-            <input type="hidden" name="data" id="qrcode">
+            <input type="hidden" name="data" id="qrcode-data">
+            <input type="hidden" name="data-REAL" id="qrcode-data-real" disabled>
         </div>
         <div id="nnid-group" {{if .GroupEnabled != "nnid"}}style="display: none;" {{end}}>
             <!-- you may want to add labels to differentiate in the case of no js -->
@@ -310,7 +319,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
             <input class="long-field" type="file" id="nfp-file" required>
             <input type="hidden" name="data" id="nfp-file-data">
             <!-- while data is put in the url, data-REAL is used by the conversion routine -->
-            <input type="hidden" name="data-REAL" id="nfp-file-data-with-ext">
+            <input type="hidden" name="data-REAL" id="nfp-file-data-real" disabled>
 
             <div id="nfp-data-loaded" style="font-weight: bold; color: green; display: none;">{{T("nfp_data_loaded_label")}}<span></span></div>
             <div id="nfp-figure-loaded" style="font-weight: bold; color: green; display: none;">{{T("nfp_figure_loaded_label")}}<span></span></div>
@@ -813,10 +822,10 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the sh*t*s
     <script async src="/{{asset("assets/kaitai-structs/js/Gen3Studio.js")}}"></script>
     <script async src="/{{asset("assets/kaitai-structs/js/Gen1Wii.js")}}"></script>
     <script async src="/{{asset("assets/kaitai-structs/js/Gen3Switch.js")}}"></script>
-    <script async src="/{{asset("assets/kaitai-structs/js/Gen2Wiiu3dsMiitomoNfpstoredataextention.js")}}"></script>
+    <script async src="/{{asset("assets/kaitai-structs/js/TomodachiLifeQrCode.js")}}"></script>
     <script async src="/{{asset("assets/kaitai-structs/js/Gen3Switchgame.js")}}"></script>
     -->
-    <script async src="/{{asset("assets/kaitai-structs/js/2024-12-30-all-compiled-kaitai-structs.min.js")}}"></script>
+    <script async src="/{{asset("assets/kaitai-structs/js/2025-01-06-all-compiled-kaitai-structs.min.js")}}"></script>
     <!-- qr code encoder for data conversion -->
 {{ if .IframeMode == false }}
     <script async src="/{{asset("assets/vendor-js/qr.min.js")}}"></script>

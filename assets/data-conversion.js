@@ -44,13 +44,23 @@ window.supportedFormats = [{
     // ... then it should logically be applied there as WELL, bleh.
     postConvertToFunction: 'forceEnableCopyingIfUndefined'
   },
+  // for NfpStoreDataExtention:
   {
-    className: 'Gen2Wiiu3dsMiitomoNfpstoredataextention',
-    sizes: [104],
-    //sizes: [], // not meant to be specified by user
+    className: 'Gen2Wiiu3dsMiitomo',
+    sizes: [104, 106, 108], // 106/108 = for mii-creator ".miic"
     technicalName: 'Ver3StoreData + NfpStoreDataExtention (amiibo Data)',
     version: 3,
+    parseExtensionFunction: 'parseNfpStoreDataExtention',
     toVer4Function: 'useNfpStoreDataExtentionFieldsForVer4',
+  },
+  // for Tomodachi Life 3DS data:
+  {
+    className: 'Gen2Wiiu3dsMiitomo',
+    sizes: [96 + 240], // qr code data is 240 bytes long
+    technicalName: 'CFLiMiiDataPacket + Tomodachi Life 3DS QR Data',
+    version: 3,
+    parseExtensionFunction: 'parseTomodachiLifeQRCodeData',
+    toVer4Function: 'applyHairDyeAsVer4HairColor',
   },
   {
     // mii studio site decoded URL format/LocalStorage format
@@ -123,21 +133,23 @@ conversionMethods.convertVer3FieldsToVer4 = data => {
   // ... faceline/skin color is not mapped (ver3 ones work on ver4)
 };
 
+
+// NOTE: tables are from MiiPort:
+// https://github.com/Genwald/MiiPort/blob/4ee38bbb8aa68a2365e9c48d59d7709f760f9b5d/include/convert_mii.h#L18
+// these SHOULD be extracted from nn::mii, however, AFAIK these are located...
+// ... in the CommonColorTable as four uint8s after the two Color3s
+const ToVer3GlassTypeTable = [0, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 1, 3, 7, 7, 6, 7, 8, 7, 7];
+const ToVer3HairColorTable = [0, 1, 2, 3, 4, 5, 6, 7, 0, 4, 3, 5, 4, 4, 6, 2, 0, 6, 4, 3, 2, 2, 7, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 0, 0, 4, 4, 4, 4, 4, 4, 0, 0, 0, 4, 4, 4, 4, 4, 4, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 5, 7, 5, 7, 7, 7, 7, 7, 6, 7, 7, 7, 7, 7, 3, 7, 7, 7, 7, 7, 0, 4, 4, 4, 4];
+const ToVer3EyeColorTable = [0, 2, 2, 2, 1, 3, 2, 3, 0, 1, 2, 3, 4, 5, 2, 2, 4, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 4, 4, 4, 4, 4, 4, 4, 1, 0, 4, 4, 4, 4, 4, 4, 4, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1];
+const ToVer3MouthColorTable = [4, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 1, 4, 4, 4, 0, 1, 2, 3, 4, 4, 2, 3, 3, 4, 4, 4, 4, 1, 4, 4, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 4, 4, 3, 3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3, 4, 0, 3, 3, 3, 3, 4, 3, 3, 3, 3];
+const ToVer3GlassColorTable = [0, 1, 1, 1, 5, 1, 1, 4, 0, 5, 1, 1, 3, 5, 1, 2, 3, 4, 5, 4, 2, 2, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5];
+const ToVer3FacelineColorTable = [0, 1, 2, 3, 4, 5, 0, 1, 5, 5];
+
 // converting fields from ver4 to ver3, like vice versa,
 // involves reassigning colors, from CommonColor to the respective ver3 types
 // one of the differences is that this is also reassigning glass type as ver4 has more
-// NOTE: this is currently making use of tables from MiiPort:
-// https://github.com/Genwald/MiiPort/blob/4ee38bbb8aa68a2365e9c48d59d7709f760f9b5d/include/convert_mii.h#L18
 conversionMethods.convertVer4FieldsToVer3 = data => {
-  // // these SHOULD be extracted from nn::mii, however, AFAIK these are located...
-  // ... in the CommonColorTable as four uint8s after the two Color3s
-  const ToVer3GlassTypeTable = [0, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 1, 3, 7, 7, 6, 7, 8, 7, 7];
-  const ToVer3HairColorTable = [0, 1, 2, 3, 4, 5, 6, 7, 0, 4, 3, 5, 4, 4, 6, 2, 0, 6, 4, 3, 2, 2, 7, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 0, 0, 4, 4, 4, 4, 4, 4, 0, 0, 0, 4, 4, 4, 4, 4, 4, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 5, 7, 5, 7, 7, 7, 7, 7, 6, 7, 7, 7, 7, 7, 3, 7, 7, 7, 7, 7, 0, 4, 4, 4, 4];
-  const ToVer3EyeColorTable = [0, 2, 2, 2, 1, 3, 2, 3, 0, 1, 2, 3, 4, 5, 2, 2, 4, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 4, 4, 4, 4, 4, 4, 4, 1, 0, 4, 4, 4, 4, 4, 4, 4, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1];
-  const ToVer3MouthColorTable = [4, 4, 4, 4, 4, 4, 4, 3, 4, 4, 4, 4, 4, 4, 4, 1, 4, 4, 4, 0, 1, 2, 3, 4, 4, 2, 3, 3, 4, 4, 4, 4, 1, 4, 4, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 3, 3, 3, 3, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 4, 4, 3, 3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3, 4, 0, 3, 3, 3, 3, 4, 3, 3, 3, 3];
-  const ToVer3GlassColorTable = [0, 1, 1, 1, 5, 1, 1, 4, 0, 5, 1, 1, 3, 5, 1, 2, 3, 4, 5, 4, 2, 2, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 5, 5, 5, 5, 5, 5, 0, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5];
-  const ToVer3FacelineColorTable = [0, 1, 2, 3, 4, 5, 0, 1, 5, 5];
-
+  // using the conversion tables defined above:
   data.faceColor = ToVer3FacelineColorTable[data.faceColor];
   data.hairColor = ToVer3HairColorTable[data.hairColor];
   data.eyeColor = ToVer3EyeColorTable[data.eyeColor];
@@ -148,6 +160,48 @@ conversionMethods.convertVer4FieldsToVer3 = data => {
   data.facialHairColor = ToVer3HairColorTable[data.facialHairColor];
   data.glassesColor = ToVer3GlassColorTable[data.glassesColor];
   data.glassesType = ToVer3GlassTypeTable[data.glassesType];
+};
+
+// parses either NfpStoreDataExtention or
+// mii-creator custom extension/".miic" format
+conversionMethods.parseNfpStoreDataExtention = (data, struct) => {
+  // begin reading after Ver3StoreData offset
+  let offset = 96; // sizeof(FFLStoreData)
+
+  let useOriginalVer3Value = -1; // stub, no u8 fields equal this
+  if(data.length > 104) // 104 = sizeof(nn::mii::Ver3StoreData)
+                        // + sizeof(nn::mii::NfpStoreDataExtention)
+    // mii-creator extension is larger than 8 bytes
+    useOriginalVer3Value = 0; // uses 0 to indicate use original val
+
+  // all fields below are u8 so all just one byte
+  struct.extFacelineColor = data[offset++];
+  struct.extHairColor = data[offset++];
+  struct.extEyeColor = data[offset++];
+  struct.extEyebrowColor = data[offset++];
+  struct.extMouthColor = data[offset++];
+  struct.extBeardColor = data[offset++];
+  struct.extGlassColor = data[offset++];
+  struct.extGlassType = data[offset++];
+
+  // handle fields that use original values:
+  // (mostly for mii-creator format)
+  if(struct.extFacelineColor === useOriginalVer3Value)
+    struct.extFacelineColor = struct.faceColor; // identity
+  if(struct.extHairColor === useOriginalVer3Value)
+    struct.extHairColor = ver3ToVer4HairColor(struct.hairColor);
+  if(struct.extEyeColor === useOriginalVer3Value)
+    struct.extEyeColor = ver3ToVer4EyeColor(struct.eyeColor);
+  if(struct.extEyebrowColor === useOriginalVer3Value)
+    struct.extEyebrowColor = ver3ToVer4HairColor(struct.eyebrowColor);
+  if(struct.extMouthColor === useOriginalVer3Value)
+    struct.extMouthColor = ver3ToVer4MouthColor(struct.mouthColor);
+  if(struct.extBeardColor === useOriginalVer3Value)
+    struct.extBeardColor = ver3ToVer4HairColor(struct.facialHairColor);
+  if(struct.extGlassColor === useOriginalVer3Value)
+    struct.extGlassColor = ver3ToVer4GlassColor(struct.glassesColor);
+  if(struct.extGlassType === useOriginalVer3Value)
+    struct.extGlassType = struct.glassesType; // identity
 };
 
 // apply extra "extension" fields at the end of this struct
@@ -178,6 +232,114 @@ conversionMethods.useNfpStoreDataExtentionFieldsForVer4 = data => {
     value: data.extGlassType
   });
 }
+
+// parse tomodachi life qr code data from kaitai
+// treat as extension appended after data
+const parseTomodachiLifeQRCodeData = (data, struct) => {
+  const className = 'TomodachiLifeQrCode';
+  const structClass = window[className];
+
+  const qrCodeData = data.slice(96); // begins after cfsd
+  const stream = new KaitaiStream(qrCodeData);
+  const src = new structClass(stream);
+
+  // copy fields on the destination that the source also has
+  let allDestKeys = [...Object.keys(src),
+    // get keys as WELL as properties on the prototype
+    ...Object.getOwnPropertyNames(
+      Object.getPrototypeOf(src)
+    )
+  ];
+  for(const key of allDestKeys) {
+    // do not copy private fields that start with an underscore
+    if(key.startsWith('_'))
+      continue;
+    // null terminate every string...
+    if(typeof src[key] === 'string')
+      src[key] = removeEverythingAfterNullTerminator(src[key]);
+    Object.defineProperty(struct, key, {
+      value: src[key]
+    });
+  }
+
+};
+
+conversionMethods.parseTomodachiLifeQRCodeData = parseTomodachiLifeQRCodeData;
+
+conversionMethods.applyHairDyeAsVer4HairColor = data => {
+  // all fields will be interpreted as common colors
+  conversionMethods.convertVer3FieldsToVer4(data);
+
+  // usually the value is at offset 0x43
+  // first bit = hair dye enable
+  // hair dye value = bits range 2-7 (5 bits, 32 max)
+
+  //if(typeof data.hairDye !== 'number')
+  if(!data.hairDyeEnable) // if it's false or undefined
+    // Return unmodified:
+    return;
+
+  /* Hair dye table extracted by kat21 from RenderDoc (vec3):
+    0.61569, 0.87451, 1.00
+    0.40784, 0.80,    1.00
+    0.23922, 0.52549, 1.00
+    0.00,    0.00,    1.00
+    0.15294, 0.15294, 0.37255
+    0.29412, 0.29412, 0.54902
+    0.00,    0.43922, 0.43922
+    0.18039, 0.66275, 0.66275
+    0.00,    1.00,    1.00
+    0.5451,  0.91765, 0.61961
+    0.27843, 0.94118, 0.14902
+    0.00,    0.58431, 0.00
+    0.00,    0.29804, 0.00
+    1.00,    1.00,    0.44314
+    1.00,    1.00,    0.00
+    1.00,    0.80,    0.60
+    1.00,    0.61176, 0.2549
+    0.86667, 0.39216, 0.00
+    1.00,    0.11765, 0.11765
+    1.00,    0.00,    0.00
+    0.56863, 0.00,    0.00
+    1.00,    0.00,    0.66667
+    1.00,    0.38431, 0.59216
+    1.00,    0.67843, 0.63529
+    0.23529, 0.00,    0.23529
+    0.51373, 0.03137, 0.76078
+    0.76471, 0.50588, 0.97255
+    0.48235, 0.36471, 0.42745
+    0.29412, 0.29412, 0.29412
+    0.73333, 0.74902, 0.63137
+    0.70588, 0.70588, 0.70588
+    1.00,    1.00,    1.00
+  */
+  // Lookup table courtesy of kat21.
+  const HairDyeToCommonColorTable = [
+    // Corresponds to the in-game color selection layout:
+    55, 51, 50, 12, 16, 12, 67, 61,
+    51, 64, 69, 66, 65, 86, 85, 93,
+    92, 19, 20, 20, 15, 32, 35, 26,
+    38, 41, 43, 18, 95, 97, 97, 99,
+  ];
+  // Map from data.hairDye.
+  const hairDyeCommonColor = HairDyeToCommonColorTable[data.hairDye];
+  // (According to https://web.archive.org/web/20250106204124/https://tomodachi.fandom.com/wiki/Hair_Dye):
+  // Applied to hairColor, eyebrowColor, facialHairColor.
+  Object.defineProperty(data, 'hairColor', {
+    value: hairDyeCommonColor
+  });
+  Object.defineProperty(data, 'eyebrowColor', {
+    value: hairDyeCommonColor
+  });
+  Object.defineProperty(data, 'facialHairColor', {
+    value: hairDyeCommonColor
+  });
+};
+
+
+
+
+
 
 // add 3 to eyebrow vertical
 conversionMethods.correctFromVer4CoreDataFields = (_, input) => {
@@ -611,6 +773,10 @@ const createNewInstanceOfKaitaiStructFormat = (format, data) => {
   if(!structClass.prototype._read)
     throw new Error('Class does not have prototype._read and may not be generated from a Kaitai struct: ' + format.className);
 
+  // determine if this format is an extension
+  const hasExtensionFunction = format.parseExtensionFunction !== undefined &&
+    typeof conversionMethods[format.parseExtensionFunction] === 'function'
+
   // assumed to be a KaitaiStream type passed to the constructor
   let stream;
 
@@ -619,9 +785,15 @@ const createNewInstanceOfKaitaiStructFormat = (format, data) => {
     // ensure that the format actually defines sizes
     if(format.sizes.length < 1)
       throw new Error(`Trying to construct a blank instance of format ${format.className} but it does not have any defined sizes and no data was passed in.`);
-    // assuming that the first size in the list is sufficient
-    const firstSupportedSize = format.sizes[0];
-    stream = new KaitaiStream(new ArrayBuffer(firstSupportedSize));
+    // if this is an extension, do not use the first supported size
+    if(hasExtensionFunction) {
+      // use the data as is so that the size can be detected
+      stream = new KaitaiStream(data);
+    } else {
+      // assuming that the first size in the list is sufficient
+      const firstSupportedSize = format.sizes[0];
+      stream = new KaitaiStream(new ArrayBuffer(firstSupportedSize));
+    }
   } else {
     // ... otherwise, construct with data
     // if the data is smaller than the first size, which is assumed to be the size of the struct, then construct with that first size
@@ -646,6 +818,11 @@ const createNewInstanceOfKaitaiStructFormat = (format, data) => {
   const struct = new structClass(stream);
   // the above function will throw an error if something goes wrong
   // notably I have seen it will if the data is not long enough for it
+
+  // apply parseExtensionFunction if the format is an extension
+  if(hasExtensionFunction) // has valid parseExtensionFunction
+    conversionMethods[format.parseExtensionFunction](data, struct);
+
   return struct;
 }
 

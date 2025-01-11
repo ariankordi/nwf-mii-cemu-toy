@@ -277,6 +277,9 @@ code.code-block {
   height: 100%;
   width: 100%;
 }
+.dashed {
+  border: 3px dashed #555;
+}
 /* add spacing so these do not clash */
 input[type=range] {
   margin: 10px;
