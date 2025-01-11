@@ -297,6 +297,50 @@ func handleRenderRequestError(w http.ResponseWriter, bufferData []byte, err erro
 var encoder = png.Encoder{CompressionLevel: png.BestSpeed}
 
 // renderImage handles the /miis/image.png endpoint
+
+// @Summary Render Mii Icon
+// @Description Renders a Mii image based on provided data, NNID, or PID. Also supports exporting a 3D model of the head to binary glTF (.glb).
+// @Tags Render
+// @Produce image/png,image/tga,model/gltf-binary
+// @Param data query string false "Mii data in hex or Base64. Accepts many different types, but the data is detected based on its length."
+// @Param nnid query string false "NNID/PNID (Set api_id for Pretendo)"
+// @Param api_id query int false "API ID (Set to 1 for Pretendo)"
+// @Param pid query int false "PID (For NNID lookup)"
+// @Param type query string false "View Type (Camera)" Enums(face, face_only, all_body, fflmakeicon, ffliconwithbody, variableiconbody, all_body_sugar)
+// @Param expression query string false "Expression - NOTE that for glTF export, this accepts multiple comma separated values." Enums(surprise, surprise_open_mouth, wink_left_open_mouth, like, anger_open_mouth, blink_open_mouth, anger, like_wink_left, happy, blink, smile, sorrow_open_mouth, wink_right, sorrow, normal, like_wink_right, wink_right_open_mouth, smile_open_mouth, frustrated, surprised, wink_left, open_mouth, puzzled, normal_open_mouth)
+// @Param width query int false "Resolution"
+// @Param scale query int false "Upscale Factor - Set to 1 for no upscaling"
+// @Param texResolution query int false "Mask/Faceline Texture Resolution"
+// @Param mipmapEnable query bool false "Enable Mipmaps for Mask//Faceline"
+// @Param resourceType query string false "Resource Type" Enums(default, middle, high)
+// @Param shaderType query string false "Shader Type" Enums(wiiu, switch, miitomo, wiiu_blinn, ffliconwithbody)
+// @Param bodyType query string false "Body Type" Enums(default, wiiu, switch, ffliconwithbody)
+// @Param modelType query string false "Head Model Type" Enums(normal, hat, face_only)
+// @Param flattenNose query bool false "Flatten Nose (For helmets)"
+// @Param drawStageMode query string false "Draw Stage Mode" Enums(all, opa_only, xlu_only, mask_only, xlu_depth_mask)
+// @Param clothesColor query string false "Clothes/Shirt Color" Enums(default, red, orange, yellow, yellowgreen, green, blue, skyblue, pink, purple, brown, white, black)
+// @Param pantsColor query string false "Pants Color" Enums(default, gray, blue, red, gold, body, none)
+// @Param splitMode query string false "Split Depth Mode" Enums(none, front, back, both)
+// @Param cameraXRotate query int false "Camera X Rotate" Minimum(0) Maximum(360)
+// @Param cameraYRotate query int false "Camera Y Rotate" Minimum(0) Maximum(360)
+// @Param cameraZRotate query int false "Camera Z Rotate" Minimum(0) Maximum(360)
+// @Param characterXRotate query int false "Model X Rotate" Minimum(0) Maximum(360)
+// @Param characterYRotate query int false "Model Y Rotate" Minimum(0) Maximum(360)
+// @Param characterZRotate query int false "Model Z Rotate" Minimum(0) Maximum(360)
+// @Param lightXDirection query int false "Light Direction X" Minimum(0) Maximum(360)
+// @Param lightYDirection query int false "Light Direction Y" Minimum(0) Maximum(360)
+// @Param lightZDirection query int false "Light Direction Z" Minimum(0) Maximum(360)
+// @Param instanceCount query int false "Instance Count (Rotation) - NOTE that, for the moment, the extra instances are stacked vertically." Minimum(1) Maximum(16)
+// @Param bgColor query string false "Background Color" Format(string, 6 digit hex with hash/8 digit for RGBA)
+// @Param verifyCharInfo query bool false "Enable CharInfo Verification"
+// @Param verifyCRC16 query bool false "Verify CRC16 (If present)"
+// @Param lightEnable query bool false "Enable Lighting"
+// @Success 200 {object} []byte "Model rendered to png, tga, or binary glTF (.glb)"
+// @Failure 400 {object} string "Bad Request"
+// @Failure 500 {object} string "Internal Server Error"
+// @Router /miis/image.png [get]
+// @Router /miis/image.tga [get]
+// @Router /miis/image.glb [get]
 func renderImage(ow http.ResponseWriter, r *http.Request) {
 	header := ow.Header()
 	header.Set("Access-Control-Allow-Private-Network", "true")

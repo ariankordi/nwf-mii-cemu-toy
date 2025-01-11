@@ -98,6 +98,20 @@ the search endpoint is: ` + cmocSearchEndpoint + `
 soooo as of writing this, the site is accessed at: https://miicontest.wiilink.ca`
 
 // looks up a check mii out code to RFLStoreData
+
+
+// cmocLookupHandler looks up a check mii out code to RFLStoreData
+// @Summary Lookup CMOC Entry
+// @Description Looks up a CMOC entry number from the Check Mii Out Channel and returns its Mii data as 76 byte RFLStoreData/.rsd format. As of writing this code, it's retrieving from WiiLink: https://miicontest.wiilink.ca
+// @Tags Fetch Mii Data
+// @Accept json,octet-stream
+// @Produce json,octet-stream
+// @Param cmoc_code path string true "CMOC Entry Number (we will descramble it)" Format(string, 1234-5678-9123)
+// @Success 200 {object} string "Base64 encoded RFLStoreData (76 bytes) or binary data if requesting with Accept: application/octet-stream"
+// @Failure 400 {object} string "Bad Request"
+// @Failure 404 {object} string "Not Found"
+// @Failure 500 {object} string "Internal Server Error"
+// @Router /cmoc_lookup/{cmoc_code} [get]
 func cmocLookupHandler(w http.ResponseWriter, r *http.Request) {
 	setCORSHeaders(w, r) // nnid_fetch.go
 

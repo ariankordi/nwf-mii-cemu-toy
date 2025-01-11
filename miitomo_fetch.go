@@ -40,7 +40,7 @@ var (
 	errVarintTooLong         = errors.New("varint too long")
 	errIncompleteVarint      = errors.New("incomplete varint")
 	errUnexpectedResponse    = errors.New("unexpected response from upstream")
-	errPlayerDataNotFound    = errors.New("player data not found for requested namespaces")
+	errPlayerDataNotFound    = errors.New("player data not found")
 )
 
 // transformCommonKey transforms the common key by subtracting 0x62 from each character
@@ -222,6 +222,19 @@ hope that helps - if it does, you can specify these query params:
 
 the endpoint this requests is: ` + getPlayerDataEndpoint
 
+// @Summary Lookup Miitomo Player Data
+// @Description Get data (e.g. nn::mii::CoreData, Mii image...) from a player on Miitomo (Kaerutomo) by their player ID. As of writing, this is requesting the following API endpoint: ktp.kaeru.world/v1/player/get_player_data
+// @Tags Fetch Mii Data
+// @Produce  json
+// @Param player_id path string false "Player ID. This is in your friend request invite link as the first 16 character hex string after friend_code/" Format(string, 16-character hex)
+// @Param target_player_id query string false "Target player ID. Accepts multiple comma separated values. This works in substitute of the player ID path parameter." Format(string, 16-character hex)
+// @Param namespace query string false "Namespace. Accepts multiple comma separated values. Known values: own_mii, stock_mii, mii_face_image, account_info, stock_item, reported_content, corinth_status, star_account_info, _star_account_info, message_info"
+// @Success 200 {object} map[string]interface{} "Player data returned from the upstream."
+// @Failure 400 {object} string "Bad Request"
+// @Failure 404 {object} string "Player data not found"
+// @Failure 500 {object} string "Internal Server Error. Error with marshaling, obfuscating, or sending request."
+// @Failure 502 {object} string "Bad Gateway"
+// @Router /miitomo_get_player_data/{player_id} [get]
 // miitomoLookupHandler looks up stock_mii and own_mii fields and returns raw JSON from the upstream.
 func miitomoLookupHandler(w http.ResponseWriter, r *http.Request) {
 	setCORSHeaders(w, r) // nnid_fetch.go
