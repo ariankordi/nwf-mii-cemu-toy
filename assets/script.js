@@ -332,7 +332,7 @@ function onFormSubmit(event) {
 
   // data-REAL overrides the data for conversion
   const dataForConversion = formData.get('data-REAL');
-  if(dataForConversion)
+  if(dataForConversion !== undefined)
     // delete it so it is not sent to the server, only used for js
     searchParams.delete('data-REAL');
   let data = !dataForConversion ? formData.get('data') : dataForConversion
@@ -540,7 +540,10 @@ async function handleNNIDDataFetch(apiUrl, nnidInput, nnidLoaded, nnidDataInput,
       if(data.data instanceof Uint8Array) {
           decodedData = data.data;
       } else {
-        if(!data.data) {
+        if(typeof data.error === 'string') {
+          throw new Error(data.error);
+        }
+        else if(!data.data) {
           throw new Error('No data attribute in response');
         }
         decodedData = base64ToUint8Array(data.data);
@@ -669,9 +672,19 @@ const supportedTypes = [
   },
   {
     name: 'FFLStoreData',
-    sizes: [96, 104], // 104 = 96 + nfpstoredataextention length
+    sizes: [96],
     offsetCRC16: 94,
     offsetName: 0x1A,
+  },
+  {
+    name: 'FFLStoreData',
+    sizes: [104,  // 104 = 96 + nfpstoredataextention length
+            106, 108, // mii-creator custom format
+            336 // plus tomodachi life qr code extension
+           ],
+    offsetCRC16: 94,
+    offsetName: 0x1A,
+    specialCaseConvertTo: true
   },
   {
     name: 'RFLCharData',
@@ -829,10 +842,9 @@ function displayNameFromSupportedType(data, nameElement, type, crc16NotPassed) {
 // file type input
 const fileInput = document.getElementById('file');
 const fileDataInput = document.getElementById('file-data');
+const fileDataReal = document.getElementById('file-data-real');
 const fileLoaded = document.getElementById('file-loaded');
 
-const dataInput = document.getElementById('data');
-const dataLoaded = document.getElementById('data-loaded');
 // select an error element that is visible
 // visible = does not have (display: )none
 const errorTextQuery = '[id^="data-error-"]:not([style*="none"]';
@@ -845,6 +857,7 @@ fileInput.addEventListener('input', function() {
   // remove mii name and input value
   fileLoaded.style.display = 'none';
   fileDataInput.value = '';
+  fileDataReal.disabled = true;
   // clear validity
   fileInput.setCustomValidity('');
   dataInput.setCustomValidity('');
@@ -871,6 +884,7 @@ fileInput.addEventListener('input', function() {
     }
     // assuming success
     fileDataInput.value = base64Data;
+    setDataConvertInline(data, type, fileDataInput, fileDataReal);
     //if(data.length != 96) return;
     // extract name and show loaded text
     displayNameFromSupportedType(data, fileLoaded, type, (checkResult === 2));
@@ -904,10 +918,15 @@ const parseHexOrB64TextStringToUint8Array = text => {
   return inputData;
 };
 
+const dataInput = document.getElementById('data');
+const dataInputReal = document.getElementById('data-real');
+const dataLoaded = document.getElementById('data-loaded');
+
 // same but for base64 mii data
 dataInput.addEventListener('input', function() {
   // remove mii name
   dataLoaded.style.display = 'none';
+  dataInputReal.disabled = true;
   // unset validity on both fields
   fileInput.setCustomValidity('');
   dataInput.setCustomValidity('');
@@ -958,6 +977,8 @@ dataInput.addEventListener('input', function() {
     return;
   }
   // assuming success
+  setDataConvertInline(data, type, dataInput, dataInputReal);
+
   // extract name and show loaded text
   displayNameFromSupportedType(data, dataLoaded, type, (checkResult === 2));
   return;
@@ -976,14 +997,15 @@ function hideAllErrors() {
 // Helper function to set active input
 function setActiveInput(input) {
   activeInput = input;
+  const parent = input.parentElement; //.closest('.input-switch-container');
   // Update classes and names for all inputs in the data group
   document.querySelectorAll('#data-group input').forEach(inp => {
     // if this input isn't the active input...
     if(inp !== activeInput
       // and
       &&
-      // active input is not file AND this input is not file-data
-      !(activeInput.id === 'file' && inp.id === 'file-data')) {
+      // is not a sibling of the current input?
+      inp.parentElement !== parent) {
       // disable this input!
       inp.classList.remove('green-border');
       if(inp.name) {
@@ -1226,7 +1248,7 @@ function checkSupportedTypeBySize(data, type, checkCRC16) {
     const expectedCrc16 = crc16(data.slice(0, type.offsetCRC16));
 
     if (expectedCrc16 !== dataCrc16u16) {
-      if(checkCRC16) {
+      if (checkCRC16) {
         fileErrorInvalidChecksum.style.display = '';
         return false;
       }
@@ -1237,6 +1259,31 @@ function checkSupportedTypeBySize(data, type, checkCRC16) {
   }
 
   return true;
+}
+
+function setDataConvertInline(data, type, dataField, dataRealField = undefined) {
+  if (!type.specialCaseConvertTo || dataRealField === undefined) {
+    // ig it is already set
+    //dataField.value = uint8ArrayToBase64(data);
+    return;
+  }
+
+  // convert to stuuuuuudioooooo
+
+  // run the function to convert the data from the image to raw studio data
+  // NOTE: assuming function and studioFormat const are already defined
+  const studioData = convertDataToType(data, studioFormat);
+  // "studio code" = raw studio data in hex
+  // NOTE: three dots are only required if it is a uint8array which
+  // it is only one if the input data is studio data directly
+  const studioCode = [...studioData].map(byteToHex).join('');
+
+  // set data field
+  dataField.value = studioCode;
+
+  // set real value that will be read by conversion
+  dataRealField.disabled = false;
+  dataRealField.value = uint8ArrayToBase64(data);
 }
 
 const shaderType = document.getElementById('shaderType');

@@ -458,7 +458,7 @@ document.querySelector('input').addEventListener('change', event => {
 // file type input
 const nfpFileInput = document.getElementById('nfp-file');
 const nfpFileDataInput = document.getElementById('nfp-file-data');
-const nfpFileDataInputWithExt = document.getElementById('nfp-file-data-with-ext');
+const nfpFileDataInputReal = document.getElementById('nfp-file-data-real');
 // separate fields holding name and figure name
 const nfpDataLoaded = document.getElementById('nfp-data-loaded');
 const nfpFigureLoaded = document.getElementById('nfp-figure-loaded');
@@ -475,7 +475,7 @@ nfpFileInput.addEventListener('input', function() {
   nfpFigureLoaded.style.display = 'none';
   nfpError.style.display = 'none';
   nfpFileDataInput.value = '';
-  nfpFileDataInputWithExt.value = '';
+  nfpFileDataInputReal.disabled = true;
   // clear validity
   nfpFileInput.setCustomValidity('');
   const reader = new FileReader();
@@ -487,7 +487,7 @@ nfpFileInput.addEventListener('input', function() {
     const unpackedU8 = new Uint8Array(unpacked);
     const figureName = extractUTF16Text(unpackedU8, NFP_NAME_OFFSET, true);
 
-    const storeData = unpackedU8.slice(NFP_STOREDATA_OFFSET, NFP_STOREDATA_OFFSET+NFP_STOREDATA_SIZE);
+    let storeData = unpackedU8.slice(NFP_STOREDATA_OFFSET, NFP_STOREDATA_OFFSET+NFP_STOREDATA_SIZE);
 
     // TODO: SUPPORT DECRYPTED AMIIBO? (DETECT BY CRC16?)
     // TODO: VERIFY NfpStoreDataExtentionRaw::IsValid
@@ -502,6 +502,37 @@ nfpFileInput.addEventListener('input', function() {
     // maybe I was just doing something wrong
     // here I'm going to use the fact that the
     // beginning of app data seems to be blank on Switch
+
+    // NOW apply store data extension
+    const afterStoreDataExtensionWithinAppDataShouldBeZero = unpacked.slice(NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET+NFP_NFPSTOREDATAEXTENTIONRAW_SIZE,
+    NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET+NFP_NFPSTOREDATAEXTENTIONRAW_SIZE+0x14);
+
+    const afterStoreDataExtensionWithinAppDataIsZero = afterStoreDataExtensionWithinAppDataShouldBeZero.every(number => number === 0)
+
+    const useStoreDataExtension = afterStoreDataExtensionWithinAppDataIsZero
+    // As well as an area of AppData after the extension being zero...
+    // I found that if you write to an amiibo on (new) 3DS...
+    // ... it will leave the extension there. Wii U doesn't.
+
+    // This is the country code, which I found is zero from my Switch.
+    && unpacked[NFP_COUNTRY_CODE_OFFSET] === 0;
+
+    //console.log('storedata:', storeData)
+    if(useStoreDataExtension) {
+      const storeDataExtension = unpacked.slice(NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET, NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET+NFP_NFPSTOREDATAEXTENTIONRAW_SIZE);
+      //console.log('nfpstoredataextention (this data uses it):', storeDataExtension)
+      // nn::mii::detail::NfpStoreDataExtentionRaw (sic)
+      // this struct should also be defined in Citra or Yuzu, forgot which at this point
+
+      // make new buffer for it,
+      const storeDataCopy = storeData;
+      storeData = new Uint8Array(
+        storeData.length + NFP_NFPSTOREDATAEXTENTIONRAW_SIZE);
+      storeData.set(storeDataCopy, 0);
+      storeData.set(storeDataExtension, NFP_STOREDATA_SIZE);
+    } else
+      nfpFileDataInput.value = uint8ArrayToBase64(storeData);
+      // if this IS using extension then setDataConvertInline will set the value
 
     // TODO: stub
     const type = findSupportedTypeBySize(storeData.length);
@@ -525,52 +556,7 @@ nfpFileInput.addEventListener('input', function() {
     // extract name and show loaded text
     displayNameFromSupportedType(storeData, nfpDataLoaded, type, (checkResult === 2));
 
-    // NOW apply store data extension
-    let storeDataWithExtension = storeData;
-
-    const afterStoreDataExtensionWithinAppDataShouldBeZero = unpacked.slice(NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET+NFP_NFPSTOREDATAEXTENTIONRAW_SIZE,
-    NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET+NFP_NFPSTOREDATAEXTENTIONRAW_SIZE+0x14);
-
-    const afterStoreDataExtensionWithinAppDataIsZero = afterStoreDataExtensionWithinAppDataShouldBeZero.every(number => number === 0)
-
-    const useStoreDataExtension = afterStoreDataExtensionWithinAppDataIsZero
-    // As well as an area of AppData after the extension being zero...
-    // I found that if you write to an amiibo on (new) 3DS...
-    // ... it will leave the extension there. Wii U doesn't.
-
-    // This is the country code, which I found is zero from my Switch.
-    && unpacked[NFP_COUNTRY_CODE_OFFSET] === 0;
-
-    //console.log('storedata:', storeData)
-    if(useStoreDataExtension) {
-      const storeDataExtension = unpacked.slice(NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET, NFP_NFPSTOREDATAEXTENTIONRAW_OFFSET+NFP_NFPSTOREDATAEXTENTIONRAW_SIZE);
-      //console.log('nfpstoredataextention (this data uses it):', storeDataExtension)
-      // nn::mii::detail::NfpStoreDataExtentionRaw (sic)
-      // this struct should also be defined in Citra or Yuzu, forgot which at this point
-
-      // make new buffer for it,
-      storeDataWithExtension = new Uint8Array(
-        storeData.length + NFP_NFPSTOREDATAEXTENTIONRAW_SIZE);
-      storeDataWithExtension.set(storeData, 0);
-      storeDataWithExtension.set(storeDataExtension, storeData.length);
-
-      // convert to stuuuuuudioooooo
-
-      // run the function to convert the data from the image to raw studio data
-      // NOTE: assuming function and studioFormat const are already defined
-      const studioData = convertDataToType(storeDataWithExtension, studioFormat);
-      // "studio code" = raw studio data in hex
-      // NOTE: three dots are only required if it is a uint8array which
-      // it is only one if the input data is studio data directly
-      const studioCode = [...studioData].map(byteToHex).join('');
-
-      nfpFileDataInput.value = studioCode;
-      // set real value that will be read by conversion
-      nfpFileDataInputWithExt.value = uint8ArrayToBase64(storeDataWithExtension);
-    } else
-      // if there is no storedata extension then just set to storedata
-      nfpFileDataInput.value = uint8ArrayToBase64(storeData);
-    // should be done
+    setDataConvertInline(storeData, type, nfpFileDataInput, nfpFileDataInputReal);
   };
 
   const unpackCallback = function(originalBuffer) {
