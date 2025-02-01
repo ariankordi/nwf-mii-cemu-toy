@@ -210,6 +210,8 @@ paths:
         - default
         - middle
         - high
+        - very_high
+        - low
         in: query
         name: resourceType
         type: string
@@ -229,6 +231,7 @@ paths:
         - wiiu
         - switch
         - ffliconwithbody
+        - 3ds
         in: query
         name: bodyType
         type: string
@@ -251,6 +254,8 @@ paths:
         - xlu_only
         - mask_only
         - xlu_depth_mask
+        - body_only
+        - body_inv_depth_mask
         in: query
         name: drawStageMode
         type: string
@@ -478,6 +483,8 @@ paths:
         - default
         - middle
         - high
+        - very_high
+        - low
         in: query
         name: resourceType
         type: string
@@ -497,6 +504,7 @@ paths:
         - wiiu
         - switch
         - ffliconwithbody
+        - 3ds
         in: query
         name: bodyType
         type: string
@@ -519,6 +527,8 @@ paths:
         - xlu_only
         - mask_only
         - xlu_depth_mask
+        - body_only
+        - body_inv_depth_mask
         in: query
         name: drawStageMode
         type: string
@@ -746,6 +756,8 @@ paths:
         - default
         - middle
         - high
+        - very_high
+        - low
         in: query
         name: resourceType
         type: string
@@ -765,6 +777,7 @@ paths:
         - wiiu
         - switch
         - ffliconwithbody
+        - 3ds
         in: query
         name: bodyType
         type: string
@@ -787,6 +800,8 @@ paths:
         - xlu_only
         - mask_only
         - xlu_depth_mask
+        - body_only
+        - body_inv_depth_mask
         in: query
         name: drawStageMode
         type: string

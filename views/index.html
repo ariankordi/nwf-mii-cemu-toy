@@ -376,6 +376,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
         <select name="shaderType" id="shaderType" data-default-value="wiiu" data-save>
             <option value="wiiu" selected>{{T("option_wii_u_miiverse")}}</option>
             <option value="wiiu_blinn">{{T("option_wii_u_miiverse")}} (Blinn)</option>
+            <option value="ffliconwithbody">{{T("option_wii_u_miiverse")}} (Bright)</option>
             <option value="switch">Switch</option>
             <option value="miitomo">{{T("option_miitomo_mii_studio")}}</option>
             <!--<option value="3">3DS</option>-->
@@ -543,9 +544,16 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
 
             <label for="resourceType">{{T("resource_type_label")}}</label>
             <select name="resourceType" id="resourceType" data-default-value="default">
-                <option value="default">{{T("default")}}</option>
+            <!--
+                <option value="default" selected>{{T("default")}} Resource</option>
+                <option value="low">Low (CFL_Res)</option>
+                <option value="middle">Middle (FFLResMiddle)</option>
+                <option value="high">High (AFLResHigh_2_3)</option>
+                <option value="very_high">Very High (FFLResPoster)</option>
+            -->
+                <option value="default" selected>{{T("default")}}</option>
                 <option value="middle">FFL_RESOURCE_TYPE_MIDDLE</option>
-                <option value="high" selected>FFL_RESOURCE_TYPE_HIGH</option>
+                <option value="high">FFL_RESOURCE_TYPE_HIGH</option>
             </select><br>
             <div class="smaller">{{T("resource_type_note")}}</div>
 
@@ -604,8 +612,8 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
                 <option value="58">Confused</option>
                 <option value="59">Cheerful mouth straight</option>
                 <option value="60">Cheerful</option>
-                <!-- <option value="61">Normal duplicate, maybe blank?</option> -->
-                <!-- <option value="62">Normal duplicate, maybe blank? duplicate</option> -->
+                <option value="61">Blank</option>
+                <!-- <option value="62">Blank duplicate</option> -->
                 <option value="63">Grumble mouth straight</option>
                 <option value="64">Grumble</option>
                 <option value="65">Moved mouth straight</option>
@@ -643,6 +651,8 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
                 <option value="xlu_only">{{T("draw_xlu_only")}}</option>
                 <option value="xlu_depth_mask">{{T("draw_xlu_only")}} (+ Depth)</option>
                 <option value="mask_only">{{T("mask_only")}}</option>
+                <option value="body_only">Body only</option>
+                <option value="body_inv_depth_mask">Body only (+ Depth)</option>
             </select><br>
             <div class="smaller">{{T("draw_stage_note")}}</div>
 
