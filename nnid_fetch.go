@@ -415,6 +415,14 @@ func handleMiiDataResponse(w http.ResponseWriter, data interface{}, miiDataBytes
 			return
 		}
 	} else {
+		// Check if data is a single error response
+		if singleResponse, ok := data.(map[string]string); ok && len(singleResponse) == 1 {
+			if _, exists := singleResponse["error"]; exists {
+				// write error header
+				// NOTE: default error code is 404
+				w.WriteHeader(http.StatusNotFound)
+			}
+		}
 		response, err := json.Marshal(data)
 		if err != nil {
 			http.Error(w, "Failed to marshal JSON: "+err.Error(), http.StatusInternalServerError)
@@ -715,7 +723,8 @@ use ?api_id=1 for pretendo`, http.StatusBadRequest)
 
 
 			if acceptsOctetStream {
-				http.Error(w, errorMessage, http.StatusInternalServerError)
+				// NOTE: default error code is 404
+				http.Error(w, errorMessage, http.StatusNotFound)
 				return
 			}
 

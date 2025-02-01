@@ -249,7 +249,9 @@ const docTemplate = `{
                         "enum": [
                             "default",
                             "middle",
-                            "high"
+                            "high",
+                            "very_high",
+                            "low"
                         ],
                         "type": "string",
                         "description": "Resource Type",
@@ -274,7 +276,8 @@ const docTemplate = `{
                             "default",
                             "wiiu",
                             "switch",
-                            "ffliconwithbody"
+                            "ffliconwithbody",
+                            "3ds"
                         ],
                         "type": "string",
                         "description": "Body Type",
@@ -304,7 +307,9 @@ const docTemplate = `{
                             "opa_only",
                             "xlu_only",
                             "mask_only",
-                            "xlu_depth_mask"
+                            "xlu_depth_mask",
+                            "body_only",
+                            "body_inv_depth_mask"
                         ],
                         "type": "string",
                         "description": "Draw Stage Mode",
@@ -602,7 +607,9 @@ const docTemplate = `{
                         "enum": [
                             "default",
                             "middle",
-                            "high"
+                            "high",
+                            "very_high",
+                            "low"
                         ],
                         "type": "string",
                         "description": "Resource Type",
@@ -627,7 +634,8 @@ const docTemplate = `{
                             "default",
                             "wiiu",
                             "switch",
-                            "ffliconwithbody"
+                            "ffliconwithbody",
+                            "3ds"
                         ],
                         "type": "string",
                         "description": "Body Type",
@@ -657,7 +665,9 @@ const docTemplate = `{
                             "opa_only",
                             "xlu_only",
                             "mask_only",
-                            "xlu_depth_mask"
+                            "xlu_depth_mask",
+                            "body_only",
+                            "body_inv_depth_mask"
                         ],
                         "type": "string",
                         "description": "Draw Stage Mode",
@@ -955,7 +965,9 @@ const docTemplate = `{
                         "enum": [
                             "default",
                             "middle",
-                            "high"
+                            "high",
+                            "very_high",
+                            "low"
                         ],
                         "type": "string",
                         "description": "Resource Type",
@@ -980,7 +992,8 @@ const docTemplate = `{
                             "default",
                             "wiiu",
                             "switch",
-                            "ffliconwithbody"
+                            "ffliconwithbody",
+                            "3ds"
                         ],
                         "type": "string",
                         "description": "Body Type",
@@ -1010,7 +1023,9 @@ const docTemplate = `{
                             "opa_only",
                             "xlu_only",
                             "mask_only",
-                            "xlu_depth_mask"
+                            "xlu_depth_mask",
+                            "body_only",
+                            "body_inv_depth_mask"
                         ],
                         "type": "string",
                         "description": "Draw Stage Mode",

@@ -2,10 +2,7 @@ package main
 
 import (
 	"bytes"
-	"log"
 	"time"
-
-	//"database/sql"
 	"bufio"
 	"encoding/base64"
 	"encoding/binary"
@@ -14,6 +11,7 @@ import (
 	"image"
 	"image/png"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -21,20 +19,21 @@ import (
 
 	// ApproxBiLinear for CPU SSAA
 	"golang.org/x/image/draw"
-	"gorm.io/gorm"
 
 	"errors"
 	"image/color"
 	"syscall"
 
-	roundrobin "github.com/hlts2/round-robin"
-
+	"gorm.io/gorm"
 	_ "github.com/go-sql-driver/mysql"
+
+	roundrobin "github.com/hlts2/round-robin"
 )
 
 var (
 	upstreamTCP      string
 	useXForwardedFor bool
+	loggingEnabled   bool = false
 	rr               roundrobin.RoundRobin
 )
 
@@ -63,13 +62,14 @@ type RenderRequest struct {
 	ClothesColor         int8 // default: -1
 	PantsColor           int8 // ^^
 	BodyType             int8 // ^^
+
+	HeadwearIndex        int8
+	HeadwearColor        int8
+
 	InstanceCount        uint8
 	InstanceRotationMode uint8
 	LightDirection       [3]int16 // default/unset: -1
 	SplitMode            uint8
-
-	// NOTE: needs to be adjusted on EVERY update:
-	//_                    [3]byte // padding for alignment
 }
 
 const FFL_EXPRESSION_LIMIT = 70
@@ -147,11 +147,28 @@ var splitModes = map[string]int{
 }
 
 var drawStageModes = map[string]int{
-	"all":            0,
-	"opa_only":       1,
-	"xlu_only":       2,
-	"mask_only":      3,
-	"xlu_depth_mask": 4,
+	"all":                 0,
+	"opa_only":            1,
+	"xlu_only":            2,
+	"mask_only":           3,
+	"xlu_depth_mask":      4,
+	"body_only":           5,
+	"body_inv_depth_mask": 6,
+}
+
+func beginTimeMeasure() *time.Time {
+	if !loggingEnabled {
+		return nil
+	}
+	time := time.Now()
+	return &time
+}
+func logTimeSincePrintfln(inTime *time.Time, printString string) {
+	if inTime == nil {
+		return
+	}
+	ms := time.Since(*inTime).Milliseconds()
+	log.Printf(printString+"\n", ms)
 }
 
 // decodeBase64 decodes a Base64 string, handling both standard and URL-safe Base64.
@@ -312,12 +329,12 @@ var encoder = png.Encoder{CompressionLevel: png.BestSpeed}
 // @Param scale query int false "Upscale Factor - Set to 1 for no upscaling"
 // @Param texResolution query int false "Mask/Faceline Texture Resolution"
 // @Param mipmapEnable query bool false "Enable Mipmaps for Mask//Faceline"
-// @Param resourceType query string false "Resource Type" Enums(default, middle, high)
+// @Param resourceType query string false "Resource Type" Enums(default, middle, high, very_high, low)
 // @Param shaderType query string false "Shader Type" Enums(wiiu, switch, miitomo, wiiu_blinn, ffliconwithbody)
-// @Param bodyType query string false "Body Type" Enums(default, wiiu, switch, ffliconwithbody)
+// @Param bodyType query string false "Body Type" Enums(default, wiiu, switch, ffliconwithbody, 3ds)
 // @Param modelType query string false "Head Model Type" Enums(normal, hat, face_only)
 // @Param flattenNose query bool false "Flatten Nose (For helmets)"
-// @Param drawStageMode query string false "Draw Stage Mode" Enums(all, opa_only, xlu_only, mask_only, xlu_depth_mask)
+// @Param drawStageMode query string false "Draw Stage Mode" Enums(all, opa_only, xlu_only, mask_only, xlu_depth_mask, body_only, body_inv_depth_mask)
 // @Param clothesColor query string false "Clothes/Shirt Color" Enums(default, red, orange, yellow, yellowgreen, green, blue, skyblue, pink, purple, brown, white, black)
 // @Param pantsColor query string false "Pants Color" Enums(default, gray, blue, red, gold, body, none)
 // @Param splitMode query string false "Split Depth Mode" Enums(none, front, back, both)
@@ -342,7 +359,9 @@ var encoder = png.Encoder{CompressionLevel: png.BestSpeed}
 // @Router /miis/image.tga [get]
 // @Router /miis/image.glb [get]
 func renderImage(ow http.ResponseWriter, r *http.Request) {
+
 	header := ow.Header()
+	// Add permissive CORS headers.
 	header.Set("Access-Control-Allow-Private-Network", "true")
 	header.Set("Access-Control-Allow-Origin", "*")
 	header.Set("Access-Control-Allow-Methods", "POST")
@@ -394,7 +413,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		overrideTexResolution = true
 	}
 	nnid := query.Get("nnid")
-	pidStr := query.Get("pid")
+
 	resourceTypeStr := query.Get("resourceType")
 	if resourceTypeStr == "" {
 		resourceTypeStr = "default"
@@ -417,6 +436,16 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		pantsColorStr = "default"
 	}
 
+
+	headwearIndexStr := query.Get("headwearIndex")
+	if headwearIndexStr == "" {
+		headwearIndexStr = "-1"
+	}
+	headwearColorStr := query.Get("headwearColor")
+	if headwearColorStr == "" {
+		headwearColorStr = ""
+	}
+
 	var responseFormat uint8 = 0
 	if strings.HasSuffix(r.URL.Path, ".glb") {
 		responseFormat = 1 // output is gltf
@@ -432,6 +461,10 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		http.Error(w, "specify a width", http.StatusBadRequest)
 		return
 	}*/
+
+	pidStr := query.Get("pid")
+
+	// show usage
 	if data == "" && nnid == "" && pidStr == "" {
 		http.Error(w, "specify \"data\" as FFLStoreData/mii studio data in hex/base64, or \"nnid\" as an nnid (add &api_id=1 if it is a pnid), finally specify \"width\" as the resolution", http.StatusBadRequest)
 		return
@@ -550,11 +583,11 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	}
 
 	// parse background color
-	var bgColor color.NRGBA
+	var bgColor color.RGBA
 	// set default background color
 	// NOTE: DEFAULT BACKGROUND COLOR IS NOT ALL ZEROES!!!!
 	// IT IS TRANSPARENT WHITE. NOT USING THAT MAKES GLASSES TINTS WRONG
-	bgColor = color.NRGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0x0}
+	bgColor = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0x0}
 	// taken from nwf-mii-cemu-toy miiPostHandler
 	bgColorParam := query.Get("bgColor")
 	// only process bgColor if it  exists
@@ -697,10 +730,16 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		pantsColor = getMapToInt(pantsColorStr, pantsColorMap, -1)
 	}
 
+	var headwearColor int
+	headwearColor, err = strconv.Atoi(headwearColorStr)
+	if err != nil {
+		headwearColor = getMapToInt(headwearColorStr, clothesColorMap, -1)
+	}
+
 	// Parsing and validating width
 	width, err := strconv.Atoi(widthStr)
 	if err != nil {
-		http.Error(w, "width = resolution, int, no limit on this lmao,", http.StatusBadRequest)
+		http.Error(w, "width = resolution, int", http.StatusBadRequest)
 		return
 	}
 	if width > 4096 {
@@ -724,6 +763,12 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	ssaaFactor, err := strconv.Atoi(ssaaFactorStr)
 	if err != nil || ssaaFactor > 2 {
 		http.Error(w, "scale must be a number less than 2", http.StatusBadRequest)
+		return
+	}
+
+	headwearIndex, err := strconv.Atoi(headwearIndexStr)
+	if err != nil {
+		http.Error(w, "headwearIndex is not a number", http.StatusBadRequest)
 		return
 	}
 
@@ -855,6 +900,8 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		ClothesColor:    int8(clothesColor),
 		PantsColor:      int8(pantsColor),
 		BodyType:        int8(bodyType),
+		HeadwearIndex:   int8(headwearIndex),
+		HeadwearColor:   int8(headwearColor),
 		InstanceCount:   uint8(instanceCount),
 		InstanceRotationMode: 0, // TODO
 		LightDirection:  lightDirectionVec3i,
@@ -869,6 +916,9 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	// Copying store data into the request data buffer
 	copy(renderRequest.Data[:], storeData)
 
+	// Time taken for sendRenderRequest to respond
+	durationSendRequest := beginTimeMeasure()
+
 	var bufferData []byte
 	var reader io.Reader
 	// Send the render request and receive the initial buffer and reader
@@ -881,6 +931,7 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	fullReader := bufio.NewReader(io.MultiReader(bytes.NewReader(bufferData), reader)) // use bufio to allow discard
 
 	if responseFormat == 1 { // gltf
+		logTimeSincePrintfln(durationSendRequest, "Time for streamRenderRequest (glTF export): %d ms")
 		// Read size from GLB header
 		var glbHeader GLBHeader
 		if err := binary.Read(bytes.NewReader(bufferData), binary.LittleEndian, &glbHeader); err != nil {
@@ -910,6 +961,8 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		}
 
 		return // done copying the gltf response
+	} else {
+		logTimeSincePrintfln(durationSendRequest, "Time for sendRenderRequest: %d ms")
 	}
 
 	// If no error, interpret initial buffer as TGA header
@@ -929,6 +982,8 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logTimeSincePrintfln(durationSendRequest, "Time from send to image read full: %d ms")
+
 	// Create an image directly using the read data
 	img := &image.NRGBA{
 		Pix: imageData,
@@ -939,6 +994,8 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 	}
 
 	if ssaaFactor != 1 {
+		// Start measuring time for scaling the image
+		startScaling := beginTimeMeasure()
 		// Scale down image by the ssaaFactor
 		width := int(tgaHeader.Width) / ssaaFactor
 		height := int(tgaHeader.Height) / ssaaFactor
@@ -948,6 +1005,9 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		draw.ApproxBiLinear.Scale(scaledImg, scaledImg.Bounds(), img, img.Bounds(), draw.Over, nil)
 		// replace the image with the scaled version
 		img = scaledImg
+
+		// Time taken for sendRenderRequest to respond
+		logTimeSincePrintfln(startScaling, "Time to scale the image: %d ms")
 	}
 
 	if responseFormat == 2 { // tga
@@ -977,11 +1037,13 @@ func renderImage(ow http.ResponseWriter, r *http.Request) {
 		return // done copying the tga response
 	}
 	// otherwise encode as png
+	startEncoding := beginTimeMeasure()
 
 	// Sending the image as a PNG response
 	header.Set("Content-Type", "image/png")
 
-	png.Encode(w, img)
+	encoder.Encode(w, img) // png.Encoder
+	logTimeSincePrintfln(startEncoding, "Time to encode PNG: %d ms")
 }
 
 // Expression constants
@@ -1022,6 +1084,7 @@ var bodyTypeMap = map[string]int{
 	"switch":     1,
 	"miitomo":    2,
 	"fflbodyres": 3,
+	"3ds":        4,
 }
 
 // Map of expression strings to their respective flags
@@ -1083,10 +1146,11 @@ var pantsColorMap = map[string]int{
 }
 
 var resourceTypeMap = map[string]int{
-	"default": -1, // server will select preferred
-	"middle":  0,  // FFL_RESOURCE_TYPE_MIDDLE
-	"high":    1,  // FFL_RESOURCE_TYPE_HIGH
-	//"low":     2,
+	"default":   -1, // server will select preferred
+	"middle":    0,  // FFL_RESOURCE_TYPE_MIDDLE
+	"high":      1,  // FFL_RESOURCE_TYPE_HIGH
+	"very_high": 2,
+	"low":       3,
 }
 
 func getMapToInt(input string, theMap map[string]int, defaultValue int) int {
@@ -1105,7 +1169,7 @@ func getMapToInt(input string, theMap map[string]int, defaultValue int) int {
 var errInvalidFormat = errors.New("invalid format")
 var errAlphaZero = errors.New("alpha component is zero")
 
-func ParseHexColorFast(s string) (c color.NRGBA, err error) {
+func ParseHexColorFast(s string) (c color.RGBA, err error) {
 	// initialize A to full opacity
 	c.A = 0xff
 

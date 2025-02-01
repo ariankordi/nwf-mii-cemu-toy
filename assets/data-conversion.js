@@ -433,14 +433,22 @@ conversionMethods.encodeKaitaiStructToUint8Array = struct => {
 // above function to encode to uint8array, but generating
 // a random create ID (in this kaitai called "unknownData") first
 conversionMethods.encodeSwitchCharInfo = struct => {
-  // if create id is not null, then fill it with randomness
+  // if create id is not null, fill it in
   if(!struct.unknownData || isArrayNull(struct.unknownData)) {
     for(let i = 0; i < 16; i++) {
+      // random 16 bytes
       struct.unknownData[i] = Math.floor(Math.random() * 256);
     }
-    // from miiport: These two leftmost bits must be 0b10 for the ID to be valid.
-    struct.unknownData[8] &= 0b10111111;  // Clear the 7th bit
-    struct.unknownData[8] |= 0b10000000;  // Set the 8th bit
+    // The Switch nn::mii::CreateId type is just nn::util::Uuid
+    // and created by: struct nn::util::Uuid __cdecl nn::util::`anonymous namespace'::GenerateUuidVersion4(void)
+    // It sets extra network?? related data in: struct nn::util::Uuid __cdecl nn::util::`anonymous namespace'::InternalUuid::Serialize(void)
+    // but: nn::mii::CreateId::IsValid() just checks clock_seq_hi_and_reserved (8th byte) as seen below
+    //struct.unknownData[6] &= (0b00001111 | 0b01000000);
+
+    // Set two leftmost bits in order for this to be valid.
+    struct.unknownData[8] &= 0b00111111; // Clear bits 7, 8
+    struct.unknownData[8] |= 0b10000000; // Set bit 8
+    // ^^^ Filling clock_seq_hi_and_reserved field from RFC 4122.
   }
   // fill in mii name if it is null
   if(!struct.miiName || isStringNull(struct.miiName))
@@ -581,12 +589,12 @@ const handleConvertDetailsToggle = event => {
     typeof inputFormat.technicalName === 'string')
     inputTypeElement.textContent = inputFormat.technicalName;
 
-  const ver3StoreData = convertDataToType(inputData, ver3Format, inputFormat.className);
+  const ver3StoreData = convertDataToType(inputData, ver3Format, inputFormat);
   const ver3StoreDataB64 = uint8ArrayToBase64(ver3StoreData);
   ver3StoreDataElement.textContent = ver3StoreDataB64;
   // finally make a qr code
   if(window.QRCode !== undefined) {
-    const ver3StoreDataForQR = convertDataToType(inputData, ver3Format, inputFormat.className, true); // set "forQRCode" true
+    const ver3StoreDataForQR = convertDataToType(inputData, ver3Format, inputFormat, true); // set "forQRCode" true
     const ver3QRCodeDataArray = encryptAndEncodeVer3StoreDataToQRCodeFormat(ver3StoreDataForQR);
     const qrCodeImage = event.target.getElementsByClassName('image-qr')[0];
     qrCodeImage.src = QRCode.generatePNG(ver3QRCodeDataArray, {
@@ -620,12 +628,12 @@ const handleConvertDetailsToggle = event => {
   }
 
   const switchCharInfoDownloadButton = event.target.getElementsByClassName('download-switch-charinfo')[0];
-  convertDataAndBindToDLButton(switchCharInfoDownloadButton, inputData, 'Gen3Switchgame', inputFormat.className);
+  convertDataAndBindToDLButton(switchCharInfoDownloadButton, inputData, 'Gen3Switchgame', inputFormat);
   switchCharInfoDownloadButton.setAttribute('data-filename',
                                             fileBaseName + '.charinfo');
 
   const studioDataDownloadButton = event.target.getElementsByClassName('download-studio-data')[0];
-  convertDataAndBindToDLButton(studioDataDownloadButton, inputData, 'Gen3Studio', inputFormat.className);
+  convertDataAndBindToDLButton(studioDataDownloadButton, inputData, 'Gen3Studio', inputFormat);
   studioDataDownloadButton.setAttribute('data-filename',
                                         fileBaseName + '.mnms');
 
@@ -639,9 +647,9 @@ const handleConvertDetailsToggle = event => {
   event.target.setAttribute('data-revealed', '1');
 };
 
-const convertDataAndBindToDLButton = (button, inputData, formatName, inputFormatName) => {
+const convertDataAndBindToDLButton = (button, inputData, formatName, inputFormat) => {
   const format = supportedFormats.find(f => f.className === formatName);
-  const data = convertDataToType(inputData, format, inputFormatName);
+  const data = convertDataToType(inputData, format, inputFormat);
 
   const dataString = uint8ArrayToBase64(data);
   button.setAttribute('data-data', dataString);
@@ -862,7 +870,7 @@ const mapObjectFieldsOneToOne = (src, dest) => {
 // if not provided then the size is used to auto detect
 // length of obfuscated studio data
 const STUDIO_OBFUSCATED_LENGTH = 47;
-const convertDataToType = (data, outputFormat, inputFormatName, optionalBoolToEncodeFunc) => {
+const convertDataToType = (data, outputFormat, inputFormat, optionalBoolToEncodeFunc) => {
   // ensure that data is an ArrayBuffer
   /*if(!(data instanceof ArrayBuffer))
   	throw new Error('data must be ArrayBuffer or compatible.');
@@ -871,17 +879,19 @@ const convertDataToType = (data, outputFormat, inputFormatName, optionalBoolToEn
   // format comes from either findInputFormatFromSize
   // or it comes directly from supportedFormats itself
   let format;
-  // if inputFormatName is NOT a valid string, so it's undefined...
-  if(typeof inputFormatName !== 'string')
+  if(typeof inputFormat === 'object')
+    format = inputFormat; // assume it is the format specification
+  // if inputFormat is NOT a valid string, so it's undefined...
+  else if(typeof inputFormat !== 'string')
     // ... auto detect based on size
     format = findInputFormatFromSize(data.length);
   // that will throw an error so we don't need to handle it ourselves
   else
-    // otherwise, inputFormatName is assumed to be className
-    format = supportedFormats.find(f => f.className === inputFormatName);
+    // otherwise, inputFormat is assumed to be className
+    format = supportedFormats.find(f => f.className === inputFormat);
   if(!format) // find() will make it null or undefined
     // unsupported/non-existent formatName was passed in
-    throw new Error('Unknown input format name: ' + inputFormatName);
+    throw new Error('Unknown input format name: ' + inputFormat);
 
   // NOTE: SPECIAL CASE: DEOBFUSCATE STUDIO DATA
   if(data && data.length === STUDIO_OBFUSCATED_LENGTH)

@@ -3,11 +3,11 @@
         <p>Current goals are to perfectly reproduce Wii U Mii Maker/NNID renders, Mii Studio/Miitomo renders, and Switch icon renders.</p>
         <ul class="left-aligned-ul">
             <li>
-            ❌ Body is not scaled uniformly using vertex groups/bone indices
+            ❌ Body scaling is applied to Wii U/Switch bodies but not Miitomo/Mii Studio body models
             <ul>
-                <li>This is why the body's hands and legs may look a little wonky and unnatural.</li>
-                <li>(Dec. 28, 2024) Status update: As of writing this, I have made major strides in this, as I now have a sample reversed from the nn::mii::VariableIconBody class that does this.</li>
-                <li>Meaning that now the process is: getting <a target="_blank" href="https://forum.pretendo.network/t/3d-web-full-blown-mii-maker-and-mii-unsecure-site-updates/7445/14?u=arian">that PoC I made</a> to work </li>
+                <li>This is why the body's hands and legs may look a little wonky and unnatural for that shader.</li>
+                <li>Arms will not "separate" as much as they're supposed to with height, and the hands are not perfect spheres when stretched.</li>
+                <li>Solving this for the Miitomo/Mii Studio body model is a matter of porting its skeleton which is TBD.</li>
             </ul>
             </li>
             <!--
@@ -36,22 +36,17 @@
                         <li>Was also considering making a variant (as another instanceRotationMode?) for the same render but multiple expressions.</li>
                         <li>I did attempt this at some point but couldn't wrap my head around getting it right.. I'll probably try it again soon.</li>
                     </ul>
-                    -->
-                    <li>splitMode, splitDepthOffset(??)
+                    <li>splitDepthOffset(??)
                     <ul>
                         <li>Feel like splitDepthOffset doesn't do anything? It maaaay have done something on cdn-mii 1.0.0 though...??</li>
-                        <li>I've tried to implement splitMode a handful of times using glDepthRange but did not do anything at all...</li>
-                        <li>Either using the shader or clipping the projection matrix's far plane may work but, there has to be a better way to do this...</li>
-                        <li>...Not a huge priority now. Is it for you? Please <a href="#contact">contact me</a> and that'll put some pressure on me to add this once and for all.</li>
                     </ul></li>
+                    -->
                     <li>lightXDirection, lightYDirection, lightZDirection, lightDirectionMode(??)
                     <ul>
-                        <li>I officially don't like the light direction parameters, I legitimately don't think anyone uses it right.</li>
-                        <li>Both mii-js AND pf2m.com/tools/mii at some point used to initialize it to zero...</li>
-                        <li>... while zero is not the default, so it just gives you a terrible result.</li>
+                        <li>I attempted to implement these (with an exception to not apply if all params are 0), but...</li>
+                        <li>I actually don't know exactly how it's calculated, some math is being done to turn the degrees into a vector of sorts that is not being done by me, so it doesn't apply one-to-one for any shader.</li>
                         <li>There's also lightDirectionMode, which cdn-mii 2.0.0/Mii Studio completely ignore. We don't know what its options do and, while setting it to "none" (the sites above were also doing this so eh where's the blame supposed to go) is SUPPOSED to not make the light directions apply, well, they do.</li>
                         <li class="small">Was light direction even a thing on cdn-mii 1.0.0...??? I feel like pf2m.com/tools/mii specifically said it only worked on 2.0.0.</li>
-                        <li>The light direction parameter on cdn-mii/Mii Studio is also clearly not the real light direction uniform being passed to the shader, it would have more intense effects.</li>
                     </ul></li>
                     <li>If you find anything else I should implement from cdn-mii/Mii Studio (other than Miitomo clothing/headgear), <a href="#contact">ping me.</a></li>
                 </ul>
@@ -71,15 +66,18 @@
                     <li>Either way, I'm continuing to delay and hold off on this until getting body scaling perfect. Sigh.</li>
                 </ul>
             <details>
-                <summary>❔Need to reverse the Tomodachi Life and Miitopia QR code formats. Miitomo codes are planned as soon as Kaerutomo properly implements them.</summary>
+                <summary>❔Miitomo codes are planned as soon as Kaerutomo properly implements them. Miitopia codes just need to be reverse engineered.</summary>
 
                 <ul>
                     <li>To be clear, this is not referring to being able to merely scan their codes, but rather make use of the extra game-specific data within.</li>
                     <li> ... For example, applying the custom colors (hair color, etc.) within, displaying their voice or personality traits...
                         <ul><li>In the case of Miitomo, this means extracting the "nx_mii_core_data" Switch data that QR codes are supposed to give you, for the wider colors.</ul></li>
-                    <li>I actually did find the AES key and was able to make an encoder/decoder for the extra data within these codes for all of those games, check it out: <a target="_blank" href="https://jsfiddle.net/arian_/ckya346z/8/">https://jsfiddle.net/arian_/ckya346z/8/</a></li>
-                    <li>For Tomodachi Life and Miitopia, all of the data is within the code and just needs to be reversed. For Miitomo, it's more complicated, and sadly existing codes won't work, because:</li>
-                    <li>It looks like the only thing Miitomo stores in the QR code is some sort of ID ("token_for_json_data") - it expects the server to store the extra data with this ID and will use it to retrieve that data back from the server.</li>
+                    <li>I actually did find the AES key and was able to make an encoder/decoder for the extra data within these codes for all of those games, check it out: <a target="_blank" href="https://jsfiddle.net/arian_/ckya346z/12/">https://jsfiddle.net/arian_/ckya346z/12/</a></li>
+                    <li>For Tomodachi Life and Miitopia, all of the data is within the code and just needs to be reversed.</li>
+                    <li>In fact, Tomodachi Life codes are now implemented and show custom hair colors. But for Miitomo, it's more complicated, and sadly existing codes won't work, because:</li>
+                    <li>It looks like the only thing Miitomo stores in the QR code is some sort of ID ("token_for_json_data") - it expects the server to store the extra data with this ID and will use it to retrieve that data back from the server.
+                    <ul><li class="small">... Except that this value is constant on Miitomo for some reason, meaning Nintendo probably used the CreateID/AuthorID fields instead. However the value is arbitrary.</li></ul>
+                    </li>
                     <li>Problem is, Kaerutomo does not store or retrieve this data for you. At all. And since it's not open source, nobody can add it except for them, and they aren't interested. 😐</li>
                     <li>(If you are a Kaeru dev reading this, <a href="#contact">PLEEEASEEEE get in touch!!!</a> 😭)</li>
                 </ul>
