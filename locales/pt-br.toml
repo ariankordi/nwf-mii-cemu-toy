@@ -244,7 +244,7 @@ other = "Estes dados têm uma soma de verificação CRC16 inválida."
 other = "Os dados estão vazios. Vixe!"
 
 [miis_from_nnids_prior_notice]
-other = "Isso mostrará apenas Miis de NNIDs como eram antes de 8 de abril de 2024."
+other = "Os Miis dos NNIDs vêm de um arquivo criado em 7 de abril de 2024 e atualizado em 17 de abril de 2025."
 
 [welcome_to_site_header]
 other = "Bem-vindo ao meu site!"
@@ -597,3 +597,22 @@ other = "Se você for entrar em contato, não me pergunte sobre o site que come�
 
 [not_associated_nin]
 other = "Este projeto não está de forma alguma associado com a Nintendo."
+
+
+
+
+[pants_color_label]
+other = "Cor da calça:"
+
+[gray]
+other = "Cinza"
+
+[gold]
+other = "Dourado"
+
+[body_model_label]
+other = "Modelo de corpo:"
+
+[miitomo_expression_label]
+other = "Expressão Miitomo:"
+

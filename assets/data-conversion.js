@@ -275,7 +275,7 @@ conversionMethods.applyHairDyeAsVer4HairColor = data => {
   // hair dye value = bits range 2-7 (5 bits, 32 max)
 
   //if(typeof data.hairDye !== 'number')
-  if(!data.hairDyeEnable) // if it's false or undefined
+  if(!data.hairDyeMode || data.hairDyeMode > 2) // if it's zero or undefined
     // Return unmodified:
     return;
 
@@ -328,12 +328,14 @@ conversionMethods.applyHairDyeAsVer4HairColor = data => {
   Object.defineProperty(data, 'hairColor', {
     value: hairDyeCommonColor
   });
-  Object.defineProperty(data, 'eyebrowColor', {
-    value: hairDyeCommonColor
-  });
-  Object.defineProperty(data, 'facialHairColor', {
-    value: hairDyeCommonColor
-  });
+  if (data.hairDyeMode !== 1) { // If mode is not hair only...
+    Object.defineProperty(data, 'eyebrowColor', {
+      value: hairDyeCommonColor
+    });
+    Object.defineProperty(data, 'facialHairColor', {
+      value: hairDyeCommonColor
+    });
+  }
 };
 
 
@@ -738,7 +740,7 @@ conversionMethods.encodeVer3StoreData = (dataStruct, forQRCode) => {
   // A HASH OF THE MII STUDIO DATA OR SOMETHING I THINK MAYBE
   //debugger
   if(!dataStruct.avatarId || isArrayNull(dataStruct.avatarId)) {
-    dataStruct.avatarId = [0b10000000, // set normal bit
+    dataStruct.avatarId = [0b11010000, // set normal/wiiu bit
       0, 0, 0];
     //dataStruct.clientId = [0, 0, 0, 0, 0, 0];
     dataStruct.clientId = randomUint8Array(6);

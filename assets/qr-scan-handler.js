@@ -290,7 +290,7 @@ async function handleTomodachiLife3DSData(bytes, data) {
   qrLoadedTL.children[0].textContent = dataObj.firstName;
   qrLoadedTL.children[1].textContent = dataObj.lastName;
   qrLoadedTL.children[2].textContent = dataObj.islandName;
-  qrLoadedTLHairDye.style.display = dataObj.hairDyeEnable ? '' : 'none';
+  qrLoadedTLHairDye.style.display = dataObj.hairDyeMode ? '' : 'none';
 
 
   return data;

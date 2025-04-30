@@ -54,6 +54,7 @@ import (
 	// import swaggo documentation:
 	"github.com/swaggo/http-swagger"
 	_ "ffl-testing-frontend-http/docs"
+	"slices"
 )
 
 var (
@@ -462,10 +463,8 @@ func main() {
 		// If we have a list of allowed TLS SNI names, configure GetConfigForClient
 		if len(hostnamesSniAllow) > 0 && hostnamesSniAllow[0] != "" {
 			tlsConfig.GetConfigForClient = func(helloInfo *tls.ClientHelloInfo) (*tls.Config, error) {
-				for _, hostname := range hostnamesSniAllow {
-					if helloInfo.ServerName == hostname {
-						return nil, nil // Proceed with normal config
-					}
+				if slices.Contains(hostnamesSniAllow, helloInfo.ServerName) {
+					return nil, nil // Proceed with normal config
 				}
 				// TODO YOU WANT TO MAKE THIS LOG BETTER
 				log.Println(helloInfo.Conn.RemoteAddr(), "sent unrecognized hostname from client:", helloInfo.ServerName)
@@ -554,6 +553,20 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get modification date of the binary
+	exePath, err := os.Executable()
+	if err != nil {
+		log.Println("Failed to get executable path:", err)
+	}
+	fileInfo, err := os.Stat(exePath)
+	if err != nil {
+		log.Println("Failed to stat file:", err)
+	}
+	lastUpdated := ""
+	if err == nil {
+		lastUpdated = fileInfo.ModTime().Format("January 2, 2006")
+	}
+
 	// default group that is enabled, controlled by cookie
 	groupEnabled := getSelectedInputTypeCookie(r, "nnid")
 	data := map[string]interface{}{
@@ -566,6 +579,7 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 		"GroupEnabled": groupEnabled,
 		"LanguageStrings": languageStrings,
 		"LanguageStringsUnderscore": languageStringsUnderscore,
+		"LastUpdated": lastUpdated,
 	}
 	// functions need to be in vars i think
 	vars := jet.VarMap{}

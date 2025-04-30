@@ -4,5 +4,8 @@ other = "Background colour:"
 [clothes_color]
 other = "Clothes colour:"
 
+[pants_color_label]
+other = "Pants colour:"
+
 [html_lang]
 other = "en-GB"

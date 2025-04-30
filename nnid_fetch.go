@@ -236,7 +236,11 @@ func nnasHTTPRequest(endpoint string, apiID int) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	return io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if len(body) < 1 {
+		return nil, errors.New("nnas http request returned empty content")
+	}
+	return body, err
 }
 
 func fetchNNIDToPID(nnid string, apiID int) (uint64, error) {
