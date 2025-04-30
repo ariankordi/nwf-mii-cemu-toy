@@ -244,7 +244,7 @@ other = "このデータには無効なCRC16チェックサムがあります。
 other = "データが空です。おっと！"
 
 [miis_from_nnids_prior_notice]
-other = "これにより、2024年4月8日以前のNNIDのMiiのみが表示されます。"
+other = "NNIDのMiiは、2024年4月7日に作成され、2025年4月17日に更新されたアーカイブから取得されています。"
 
 [welcome_to_site_header]
 other = "サイトへようこそ！"
@@ -534,3 +534,19 @@ other = "Switchでの再現方法の説明を参照"
 
 [flatten_nose]
 other = "鼻を平らにする："
+
+[pants_color_label]
+other = "パンツの色："
+
+[gray]
+other = "グレー"
+
+[gold]
+other = "ゴールド"
+
+[body_model_label]
+other = "ボディモデル："
+
+[miitomo_expression_label]
+other = "Miitomo 表情："
+

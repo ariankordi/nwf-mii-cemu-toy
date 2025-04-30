@@ -244,7 +244,7 @@ other = "Estos datos tienen una suma de verificación CRC16 inválida."
 other = "Los datos están vacíos. ¡Ups!"
 
 [miis_from_nnids_prior_notice]
-other = "Esto solo mostrará Miis de NNIDs tal como eran antes del 8 de abril de 2024."
+other = "Los Miis de los NNID provienen de un archivo creado el 7 de abril de 2024 y actualizado el 17 de abril de 2025."
 
 [bienvenido_al_sitio_header]
 other = "¡Bienvenido a mi sitio!"
@@ -534,3 +534,19 @@ other = "Ver las instrucciones para recrearlo en la Switch"
 
 [flatten_nose]
 other = "Aplanar nariz:"
+
+[pants_color_label]
+other = "Color del pantalón:"
+
+[gray]
+other = "Gris"
+
+[gold]
+other = "Oro"
+
+[body_model_label]
+other = "Modelo de cuerpo:"
+
+[miitomo_expression_label]
+other = "Expresión Miitomo:"
+

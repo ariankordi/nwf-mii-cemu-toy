@@ -328,7 +328,7 @@ var encoder = png.Encoder{CompressionLevel: png.BestSpeed}
 // @Param width query int false "Resolution"
 // @Param scale query int false "Upscale Factor - Set to 1 for no upscaling"
 // @Param texResolution query int false "Mask/Faceline Texture Resolution"
-// @Param mipmapEnable query bool false "Enable Mipmaps for Mask//Faceline"
+// @Param mipmapEnable query bool false "Enable Mipmaps for Mask/Faceline"
 // @Param resourceType query string false "Resource Type" Enums(default, middle, high, very_high, low)
 // @Param shaderType query string false "Shader Type" Enums(wiiu, switch, miitomo, wiiu_blinn, ffliconwithbody)
 // @Param bodyType query string false "Body Type" Enums(default, wiiu, switch, ffliconwithbody, 3ds)

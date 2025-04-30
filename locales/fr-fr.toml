@@ -244,7 +244,7 @@ other = "Ces données ont un CRC16 invalide."
 other = "Les données sont vides. Oups !"
 
 [miis_from_nnids_prior_notice]
-other = "Cela n'affichera que les Mii des NNID tels qu'ils étaient avant le 8 avril 2024."
+other = "Les Mii des NNID proviennent d'une archive créée le 7 avril 2024 et mise à jour le 17 avril 2025."
 
 
 [welcome_to_site_header]
@@ -540,3 +540,18 @@ other = "Voir les instructions pour la recréer sur la Switch"
 
 [flatten_nose]
 other = "Aplatir le nez :"
+
+[pants_color_label]
+other = "Couleur du pantalon :"
+
+[gray]
+other = "Gris"
+
+[gold]
+other = "Or"
+
+[body_model_label]
+other = "Modèle de corps :"
+
+[miitomo_expression_label]
+other = "Expression Miitomo :"

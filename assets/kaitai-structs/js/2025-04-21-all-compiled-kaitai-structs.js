@@ -515,6 +515,16 @@ return Gen2Wiiu3dsMiitomo;
   }
 }(typeof self !== 'undefined' ? self : this, function (KaitaiStream) {
 var TomodachiLifeQrCode = (function() {
+  TomodachiLifeQrCode.HairDyeMode = Object.freeze({
+    OFF: 0,
+    HAIR_ONLY: 1,
+    HAIR_EYEBROWS: 2,
+
+    0: "OFF",
+    1: "HAIR_ONLY",
+    2: "HAIR_EYEBROWS",
+  });
+
   function TomodachiLifeQrCode(_io, _parent, _root) {
     this._io = _io;
     this._parent = _parent;
@@ -525,23 +535,23 @@ var TomodachiLifeQrCode = (function() {
   TomodachiLifeQrCode.prototype._read = function() {
     this.firstName = KaitaiStream.bytesToStr(this._io.readBytes(32), "UTF-16LE");
     this.lastName = KaitaiStream.bytesToStr(this._io.readBytes(32), "UTF-16LE");
-    this.unknown = [];
-    for (var i = 0; i < 3; i++) {
-      this.unknown.push(this._io.readU1());
-    }
-    this.hairDyeEnable = this._io.readBitsIntBe(1) != 0;
-    this.unknownb1 = this._io.readBitsIntBe(1) != 0;
+    this.unknownBirthdayAge = this._io.readBytes(3);
+    this.hairDyeMode = this._io.readBitsIntBe(2);
     this.hairDye = this._io.readBitsIntBe(5);
     this.unknownb2 = this._io.readBitsIntBe(1) != 0;
     this._io.alignToByte();
-    this.unknown2 = [];
-    for (var i = 0; i < 12; i++) {
-      this.unknown2.push(this._io.readU1());
-    }
+    this.unknown2 = this._io.readBytes(12);
     this.catchphrase = KaitaiStream.bytesToStr(this._io.readBytes(32), "UTF-16LE");
-    this.unknown3 = [];
-    for (var i = 0; i < 58; i++) {
-      this.unknown3.push(this._io.readU1());
+    this.unknown3Clothing = this._io.readBytes(8);
+    this.islandId1 = new IslandId(this._io, this, this._root);
+    this.islandId2 = new IslandId(this._io, this, this._root);
+    this.miiAuthorId = [];
+    for (var i = 0; i < 8; i++) {
+      this.miiAuthorId.push(this._io.readU1());
+    }
+    this.miiCreateId = [];
+    for (var i = 0; i < 10; i++) {
+      this.miiCreateId.push(this._io.readU1());
     }
     this.voicePitch = this._io.readU1();
     this.voiceSpeed = this._io.readU1();
@@ -554,17 +564,61 @@ var TomodachiLifeQrCode = (function() {
     this.characterExpressiveness = this._io.readU1();
     this.characterAttitude = this._io.readU1();
     this.characterOverall = this._io.readU1();
-    this.unknown4 = [];
-    for (var i = 0; i < 35; i++) {
-      this.unknown4.push(this._io.readU1());
-    }
-    this.islandName = KaitaiStream.bytesToStr(this._io.readBytes(20), "UTF-16LE");
+    this.unknown5 = this._io.readBytes(19);
+    this.islandId3 = new IslandId(this._io, this, this._root);
+    this.islandName = KaitaiStream.bytesToStr(this._io.readBytes(18), "UTF-16LE");
+    this.unknown6 = this._io.readBytes(6);
   }
+
+  var IslandId = TomodachiLifeQrCode.IslandId = (function() {
+    function IslandId(_io, _parent, _root) {
+      this._io = _io;
+      this._parent = _parent;
+      this._root = _root || this;
+
+      this._read();
+    }
+    IslandId.prototype._read = function() {
+      this.data = this._io.readBytes(16);
+    }
+
+    return IslandId;
+  })();
+
+  /**
+   * contains birthday and Kid/Grown-Up flag
+   */
+
+  /**
+   * always begins with 00000000, effectively 8 bytes
+   * changing doesnt affect appearance on scan
+   */
+
+  /**
+   * indices for clothing, headwear, room are stored here
+   */
+
+  /**
+   * game is using this to identify miis, so if you replace it with
+   * one from an islander already present it will prompt to replace
+   * if you say yes it'll replace mii and voice/character param etc
+   * but clothing, relationship, item owned data is left unchanged
+   */
+
+  /**
+   * ends with constant "7600FEFF0F20FFFF0F" (undefined)?
+   * effectively 10 bytes. changing doesnt affect appearance on scan
+   */
+
+  /**
+   * constant "AC44094C00"? may be for region/version idk
+   */
 
   return TomodachiLifeQrCode;
 })();
 return TomodachiLifeQrCode;
 }));
+
 // This is a generated file! Please edit source .ksy file and use kaitai-struct-compiler to rebuild
 
 (function (root, factory) {

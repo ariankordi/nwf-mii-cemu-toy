@@ -147,6 +147,15 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
             <option value="nfp"
                 {{if .GroupEnabled == "nfp"}}selected{{end}}
                 >{{T("option_amiibo")}}</option>
+
+<!--
+            <option value="cmoc"
+                {{if .GroupEnabled == "cmoc"}}selected{{end}}
+                >Check Mii Out Channel</option>
+            <option value="miitomo-player-id"
+                {{if .GroupEnabled == "miitomo-player-id"}}selected{{end}}
+                >Import from Kaerutomo</option>
+-->
         </select>
         <br>
         <!-- NOTE: even though the html is setting style for groups... -->
@@ -187,7 +196,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
                             <ul><li><b>NOTE: </b>.ffsd is the same as .cfsd.</li></ul>
                         </li>
                         <li>92 bytes: .3dsmii, .cfcd</li>
-                        <li>Miis stored in Mii Maker databases (Wii U/maybe 3DS) are 92 bytes, but big endian - won't work here for now.</li>
+                        <li>If you need to extract a Wii U Mii Maker database (/usr/save/00050010/1004a100/user/common/db/FFL_ODB.dat) or 3DS Mii Maker database (CFL_DB.dat), try <a target="_blank" href="https://jsfiddle.net/arian_/jxo0z1bw/2/">this fiddle I made. </a></li>
                     </ul>
                 </li>
                 <li>Wii
@@ -195,7 +204,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
                         <li>RFLCharData, RFLStoreData</li>
                         <li>74 bytes: .rcd, .miigx, .mii, .mae</li>
                         <li>76 bytes: .rsd</li>
-                        <li>DS data is the same structure as RFLCharData but all fields are little endian - it is not supported.</li>
+                        <li>If you want to extract data from Tomodachi Collection on DS, try <a target="_blank" href="https://jsfiddle.net/arian_/jxo0z1bw/2/">this fiddle I made.</a></li>
                     </ul>
                 </li>
                 <li>Switch
@@ -318,6 +327,45 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
               <a target="_blank" href="https://pretendo.network/">pretendo.network</a>
             </span>
         </div>
+
+
+
+
+<!--
+        <div id="cmoc-group" {{if .GroupEnabled != "cmoc"}}style="display: none;" {{end}}>
+            <input id="cmoc" class="long-field" type="text"
+                placeholder="Check Mii Out Channel code format: 1234-5678-1234"
+                maxlength="15" pattern="^\d{4}-\d{4}-\d{4}$" required
+                value="" data-action="/cmoc_lookup/">
+
+            <div id="cmoc-loaded" style="font-weight: bold; color: green; display: none;">{{T("qr_status_loaded")}}<span></span></div>
+
+            <br><span>This input takes codes from the <a target="_blank" href="https://miicontest.wiilink.ca/">WiiLink Check Mii Out Channel site.</a> Please note that we are not affiliated with WiiLink, though they should definitely use this and not completely f*cking ignore a custom Mii renderer being developed right in front of them like last time. Love yourself. Ugh.
+            </span>
+        </div>
+
+
+        <div id="miitomo-player-id-group" {{if .GroupEnabled != "miitomo-player-id"}}style="display: none;" {{end}}>
+            <input id="miitomo-player-id" class="long-field" type="text"
+                placeholder="Paste your Kaerutomo friend invite link here."
+                required
+                value="" data-action="/miitomo_get_player_data/">
+
+            <div id="miitomo-player-id-loaded" style="font-weight: bold; color: green; display: none;">{{T("qr_status_loaded")}}<span></span></div>
+
+            <details>
+                <summary>This lets you import from Kaerutomo by pasting your friend invite link into the field. Click here for more details.</summary>
+                <ul style="padding: 0; text-align: left; font-size: 13px; line-height: 150%;">
+                    <li>theres nothing here sorry for gaslighting you bro</li>
+                </ul>
+            </details>
+            <span>But what is Kaerutomo? It f*cking sucks and its source code has been gatekept for 4 whole years with 0 benefit for them or us but
+              <a target="_blank" href="https://kaeru.world/projects/kaerutomo">here you go anyway</a>
+            </span>
+        </div>
+-->
+
+
         <div id="nfp-group" {{if .GroupEnabled != "nfp"}}style="display: none;" {{end}}>
             <label class="small" for="nfp-file"><b>{{T("nfp_file_label")}}</b></label><br>
             <input class="long-field" type="file" id="nfp-file" required>
@@ -485,13 +533,13 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
             <option value="black">{{T("black")}}</option>
         </select>
         <br>
-        <label for="pantsColor">Pants color: </label>
+        <label for="pantsColor">{{T("pants_color_label")}}</label>
         <select id="pantsColor" name="pantsColor" data-save data-default-value="default">
             <option value="default" selected>{{T("default")}}</option>
-            <option value="gray">Gray</option>
+            <option value="gray">{{T("gray")}}</option>
             <option value="red">{{T("red")}}</option>
             <option value="blue">{{T("dark_blue")}}</option>
-            <option value="gold">Gold</option>
+            <option value="gold">{{T("gold")}}</option>
         </select>
 
         <div id="pants-colors-with-switch-shader-inaccurate" style="color: red; display: none;" class="small hide-iframe-mode">Note that red and blue pants don't work on the Switch shader thanks to the stupid hardcoded sssColor and specularColor tables that I don't know how to recalculate</div>
@@ -544,28 +592,29 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
 
             <label for="resourceType">{{T("resource_type_label")}}</label>
             <select name="resourceType" id="resourceType" data-default-value="default">
-            <!--
-                <option value="default" selected>{{T("default")}} Resource</option>
+                <option value="default" selected>{{T("default")}}</option>
                 <option value="low">Low (CFL_Res)</option>
                 <option value="middle">Middle (FFLResMiddle)</option>
                 <option value="high">High (AFLResHigh_2_3)</option>
                 <option value="very_high">Very High (FFLResPoster)</option>
-            -->
+            <!--
                 <option value="default" selected>{{T("default")}}</option>
                 <option value="middle">FFL_RESOURCE_TYPE_MIDDLE</option>
                 <option value="high">FFL_RESOURCE_TYPE_HIGH</option>
+            -->
             </select><br>
             <div class="smaller">{{T("resource_type_note")}}</div>
 
-            <label for="bodyType">Body model:</label>
+            <label for="bodyType">{{T("body_model_label")}}</label>
             <select name="bodyType" id="bodyType" data-default-value="default" data-save>
                 <option value="default" selected>{{T("default")}} (Shader)</option>
                 <option value="wiiu">{{T("option_wii_u_miiverse")}}</option>
+                <option value="3ds">3DS</option>
                 <option value="switch">Switch</option>
                 <option value="miitomo">{{T("option_miitomo_mii_studio")}}</option>
             </select><br class="hide-iframe-mode">
 
-            <label for="expression2">Miitomo expression:</label>
+            <label for="expression2">{{T("miitomo_expression_label")}}</label>
 
             <select id="expression2" data-override="expression" data-default-value="">
                 <option value="">(Use original expression)</option>
@@ -754,13 +803,6 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
                 </li>
                 <li><a class="mii-instructions-link" target="_blank" href="https://miiinstructions.sticksweb.site/?data=">{{T("see_instructions")}}</a></li>
                 <li>{{T("post_convert_fflstoredata_label")}}<code class="ver3storedata code-block"></code></li>
-                <!-- TODO 2024-08-25: IMPLEMENT THIS ASAP IF YOU WANT WII MIIS TO SCAN ON 3DS SYSTEMS ..........
-                <li>
-                    <label>Always regenerate Mii ID: </label>
-                    <input type="checkbox" name="remake-mii-id">
-                    <div style="font-size: 10px;">Check this if the QR below doesn't scan on a 3DS. I apologize if it didn't! (Assigns CreateID to hash of data, always done for Switch/Studio input)</div>
-                </li>
-                -->
                 <li style="margin: 5px;" class="image-qr-container">{{T("post_convert_qr_code_label")}}<div style="text-align: center;"><img class="image-qr" alt="{{T("post_convert_qr_code_label")}}"></div>
                 </li>
                 </ul>
@@ -838,7 +880,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
     <script async src="/{{asset("assets/kaitai-structs/js/TomodachiLifeQrCode.js")}}"></script>
     <script async src="/{{asset("assets/kaitai-structs/js/Gen3Switchgame.js")}}"></script>
     -->
-    <script async src="/{{asset("assets/kaitai-structs/js/2025-01-06-all-compiled-kaitai-structs.min.js")}}"></script>
+    <script async src="/{{asset("assets/kaitai-structs/js/2025-04-21-all-compiled-kaitai-structs.min.js")}}"></script>
     <!-- qr code encoder for data conversion -->
 {{ if .IframeMode == false }}
     <script async src="/{{asset("assets/vendor-js/qr.min.js")}}"></script>
@@ -866,9 +908,9 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
     <ul class="left-aligned-ul hide-iframe-mode">
         <li>You just found a Mii renderer powered by N*ntendo's official FFL library, decompiled by <a href="https://github.com/aboood40091">AboodXD</a>.</li>
         <li>See it on GitHub: <a href="https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype">ariankordi/FFL-Testing (renderer-server-prototype branch)</a></li>
-        <li>It has new shaders, support for all* Mii data types as well as Switch Miis, and it is completely self-hosted. If your site uses Mii icons, you can now render them on your own server!
+        <li>It has new shaders, support for all (known) Mii data types as well as Switch Miis, and it is completely self-hosted. If your site uses Mii icons, you can now render them on your own server*!
         <ul>
-            <li class="smaller">* Exceptions: DS (just Wii but endian-flipped to LE), Miis in 3DS/Wii U databases (also endian-flipped but to BE), any unofficial format, game-specific formats or any other one I'm not aware of.</li>
+            <li class="smaller">* Not exactly easy to rehost. If you can help improve it, please do.</li>
             <li>See the GitHub linked above for more details.</li>
         </ul></li>
         <li>There is a <a target="_blank" href="/swagger/">Swagger page</a> for API documentation - I've tried to make it similar to Mii Studio, should be usable as a drop-in replacement.</li>
@@ -879,10 +921,8 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
     <h2>{{T("contact_me_header")}}</h2>
     <div id="contact" class="hide-iframe-mode">
         <ul class="left-aligned-ul">
-            <li>This project/site is maintained by just me, Arian Kordi - yes, that one...
+            <li>This project/site is maintained by me, Arian Kordi.
             <ul>
-            <li class="smaller">If you're going to contact me, don't ask me about the site that rhymes with "Clone Worst", alright?</li>
-            </ul></li>
             <li>{{T("contact_info_label")}}
             <ul>
                 <li><b>Discord: ".arian."</b>
@@ -906,6 +946,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
     </ul>
     <h4>For client-side site:</h4>
     <ul class="left-aligned-ul">
+        <!-- TODO: if remove any of these, then leave as html comment and explain why -->
         <li>
             mii2studio authors: <a href="https://github.com/bennyman123abc">bendevnull</a>, <a href="https://github.com/HEYimHeroic">HEYimHeroic</a>, <a href="https://github.com/larsenv">Larsenv</a>, <a href="https://github.com/matthe815">Matthe815</a>
         <ul>
@@ -951,7 +992,8 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
     </form>
 
     <br class="hide-iframe-mode"><hr class="hide-iframe-mode">
-    <p>This project is not associated with Nintendo.</p>
+    <p>This project is not associated with Nintendo.
+        <br> Last Updated: {{.LastUpdated}}</p>
 
     <meta itemprop="arianhandler-html-path" content="/{{asset("assets/warioland3/complicated.html")}}">
 

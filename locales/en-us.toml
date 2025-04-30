@@ -244,7 +244,7 @@ other = "This data has an invalid CRC16 checksum."
 other = "The data is empty. Oops!"
 
 [miis_from_nnids_prior_notice]
-other = "This will only show Miis from NNIDs as they were prior to April 8th, 2024."
+other = "Miis from NNIDs come from an archive made on April 7, 2024 and updated on April 17, 2025."
 
 
 [welcome_to_site_header]
@@ -541,3 +541,19 @@ other = "See instructions for how to recreate on the Switch"
 
 [flatten_nose]
 other = "Flatten nose:"
+
+[pants_color_label]
+other = "Pants color:"
+
+[gray]
+other = "Gray"
+
+[gold]
+other = "Gold"
+
+[body_model_label]
+other = "Body model:"
+
+[miitomo_expression_label]
+other = "Miitomo expression:"
+

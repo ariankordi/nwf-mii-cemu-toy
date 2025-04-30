@@ -5,7 +5,6 @@
             <li>
             ❌ Body scaling is applied to Wii U/Switch bodies but not Miitomo/Mii Studio body models
             <ul>
-                <li>This is why the body's hands and legs may look a little wonky and unnatural for that shader.</li>
                 <li>Arms will not "separate" as much as they're supposed to with height, and the hands are not perfect spheres when stretched.</li>
                 <li>Solving this for the Miitomo/Mii Studio body model is a matter of porting its skeleton which is TBD.</li>
             </ul>
@@ -55,18 +54,17 @@
 
         <details id="planned">
             <summary>
-            <h3 style="display: inline;">More Planned Items/Issues: <span class="small">click to expand</span></h3>
+            <h3 style="display: inline;">Planned Items/Issues: <span class="small">click to expand</span></h3>
             </summary>
             <ul class="left-aligned-ul">
 
-            <li>❔Poses from the Wii U Mii Maker are planned as soon as skeletal animations work.
+            <li>❔Poses from Wii U and Switch are fully doable, but I haven't gotten around to adding them.
                 <ul>
-                    <li>Every pose is just a single-frame animation from MiiAnim.bfres, same source as everything else.</li>
                     <li>I'm pretty sure the camera positions are in JpgPoseCam.bfres, but Switch Toolbox cannot open it, so... not sure what I'm going to do about that.</li>
-                    <li>Either way, I'm continuing to delay and hold off on this until getting body scaling perfect. Sigh.</li>
+                    <li>Other than that, I experimented with this a while ago <a target="_blank" href="assets/2025-01-QrJump00-demo.png">got it working with one pose</a>. So it just needs more work.</li>
                 </ul>
             <details>
-                <summary>❔Miitomo codes are planned as soon as Kaerutomo properly implements them. Miitopia codes just need to be reverse engineered.</summary>
+                <summary>❔Miitomo QR codes are planned as soon as Kaerutomo properly implements them. Miitopia QR codes just need to be reverse engineered.</summary>
 
                 <ul>
                     <li>To be clear, this is not referring to being able to merely scan their codes, but rather make use of the extra game-specific data within.</li>
@@ -84,14 +82,14 @@
             </details></li>
 
             <details>
-                <summary>❔Replicating 3DS and Wii renders has been considered but isn't easy or a priority.</summary>
+                <summary>❔Replicating 3DS and Wii renders has been considered but isn't a priority.</summary>
                 <ul>
-                    <li>This requires extracting the meshes (and textures? but those can be downscaled from the new ones) from CFL_Res.dat, but its header hasn't been reversed.</li>
-                    <li>As of October 2024, the Kadokawa leak includes debug versions of niconico with DWARF information for CFL - Contains all of the structures needed to extract the resource. Cool, right?</li>
+                    <li>As of January 2025, there's now <a target="_blank" href="https://github.com/ariankordi/ffl/blob/nsmbu-win-port-linux64/tools/shape_from_cfl.py">a script in the FFL repo</a> that can help import 3DS meshes into FFL. (Not for Wii/RFL which has very slightly more triangles but IMO doesn't matter)</li>
+                    <!--
                     <li>I think it would be nice to have an extractor for CFL and RFL resources (since they are so similar), especially since <a target="_blank" href="https://wiki.tockdom.com/wiki/RFL_Res.dat_Editor">the one RFL_Res.dat editor everyone uses</a> both isn't open source and I have also heard that the creator lost the source code.</li>
-                    <li>This is not something I have gotten around to doing, though if you <a href="#contact">contact me</a>, I would love to elaborate on all of this and give details.</li>
-
-                    <li>Aside from that obstacle is shaders, neither of the Wii or 3DS use GLSL-compatible shaders. This can probably be worked around (or remade since it's very basic) but is still annoying and just one more reason not to do it.</li>
+                    -->
+                    <li>I have used a combination of this and modifications to the FFL shader to <a target="_blank" href="assets/2025-01-3ds-render-attempt.png">attempt a look similar to 3DS</a>, but it's not perfect yet.</li>
+                    <li>If I put more time into it the look can definitely be matched, it's just that I haven't spent much time on it. Even then it probably isn't that practical to port the <i>exact</i> shader so, it may always look wrong like that.</li>
                 </ul>
             </details></li>
 
@@ -100,7 +98,7 @@
                 <li>Don't expect any of these any time soon, especially clothing.</li>
                 <li>Do keep in mind that these body models are different from the Wii U/Switch models and therefore the clothing may not work on those.</li>
             </ul>
-
+            <!--
             <details>
                 <summary>❔Fully rendering Miis in the browser is a longterm goal of mine. I can't promise anything, but I am steadily working towards it.</summary>
                 <ul>
@@ -114,7 +112,6 @@
                 </ul>
             </details></li>
 
-            <!--
             <li>❔I've thought about making a Mii Maker-like app with the FFL decomp, but... don't get your hopes up too far about this.</li>
             <ul>
                 <li>However, if you like the sound of this...</li>
@@ -129,7 +126,7 @@
             <ul class="left-aligned-ul">
             <li>Custom hairstyles or frankly custom anything</li>
             <li>Miitopia makeup, or custom expressions (sorry)
-                <ul><li>Miitomo expressions are the only exception, since they're built into AFL (its version of FFL). <a target="_blank" href="/miis/image.png?data=AwBgMIJUICvpzY4vnWYVrXy7ikd01AAAWR1KAGEAcwBtAGkAbgBlAAAAAAAAABw3EhB7ASFuQxwNZMcYAAgegg0AMEGzW4JtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAML0&amp;expression=33">See?</a></li></ul>
+                <ul><li>Miitomo expressions are the only exception, since they're built into AFL (its version of FFL).</li></ul>
             </li>
             <li>BoTW/TOTK models, or "semi-Miis"</li>
             <li>Xbox Miis, Apple Miis, Samsung Miis, any other stupid bootleg Miis
