@@ -8,7 +8,7 @@
 
 // @ts-check
 //import {
-//  convertDataToType, studioFormat, encodeStudioToObfuscatedHex, byteToHex
+//  convertDataToType, studioFormat, studioURLEncodeHex, bytesToHex
 //} from './data-conversion.js';
 
 // handle unhandled promise rejections as well as errors
@@ -507,7 +507,7 @@ if (!iframeMode) {
 
       // run the function to convert the data from the image to raw studio data
       const studioData = convertDataToType(inputData, studioFormat);
-      const studioURLData = encodeStudioToObfuscatedHex(studioData);
+      const studioURLData = studioURLEncodeHex(studioData);
       searchParams.append('studioData', studioURLData);
     }
 
@@ -1439,7 +1439,7 @@ function setDataConvertInline(data, type, dataField, dataRealField = undefined) 
   // "studio code" = raw studio data in hex
   // NOTE: three dots are only required if it is a uint8array which
   // it is only one if the input data is studio data directly
-  const studioCode = [...studioData].map(byteToHex).join('');
+  const studioCode = bytesToHex(studioData);
 
   // set data field
   dataField.value = studioCode;
@@ -1579,10 +1579,9 @@ const handleCopyButtonAndUpdateText = (event, data, paramsToRemove) => {
   */
   textCopiedElement.style.display = '';
 };
-/*
-export {
-  hexToUint8Array, crc16, setDataConvertInline, findSupportedTypeBySize,
-  parseHexOrB64ToUint8Array, uint8ArrayToBase64, base64ToUint8Array,
-  handleCopyButtonAndUpdateText // from HTML
-};
-*/
+
+//export {
+//  hexToUint8Array, crc16, setDataConvertInline, findSupportedTypeBySize,
+//  parseHexOrB64ToUint8Array, uint8ArrayToBase64, base64ToUint8Array,
+//  handleCopyButtonAndUpdateText // from HTML
+//};
