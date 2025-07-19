@@ -32,7 +32,7 @@ import (
 	"github.com/leonelquinteros/gotext"
 
 	// compresses static assets but not dynamic pages
-	"codeberg.org/meta/gzipped/v2"
+	"github.com/lpar/gzipped/v2"
 
 	//"slices" // for slices.Delete which did not even work
 
