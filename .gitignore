@@ -27,6 +27,8 @@ assets/vendor-js/*.gz
 # node_modules
 node_modules
 *.*tmp*
+coverage
+.nyc_output
 
 # swap, misc
 *swp
