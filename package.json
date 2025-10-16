@@ -9,6 +9,7 @@
     "@stylistic/eslint-plugin": "^4.2.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.19",
+    "csv-parse": "^6.1.0",
     "eslint": "^9.25.1",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jsdoc": "^50.6.11",
