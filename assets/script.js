@@ -106,7 +106,7 @@ const realMax = 1200;
 
 /** Function to update max resolution based on scale */
 function updateMaxResolution() {
-  const scale = parseInt(scaleInput.value, 10);
+  const scale = Number.parseInt(scaleInput.value, 10);
   const maxResolution = realMax / scale;
 
   // Adjust current values if they exceed the new max
@@ -153,7 +153,7 @@ function connectErrorReportingSSE() {
         listItem.textContent = error.message;
         const listImg = listItem.querySelector('img');
         if (listImg) {
-          listItem.parentElement.removeChild(listImg);
+          listImg.remove();
         }
       } else {
         errorResponses.set(error.requestID, error.message);
@@ -183,10 +183,10 @@ function saveSpecifiedFieldsToLocalStorage() {
   // go through every input that is to be saved
   // and those will have the data-save attribute
   // if they are not disabled, put their value in localstorage
-  document.querySelectorAll('[data-save]').forEach(function (element) {
+  for (const element of document.querySelectorAll('[data-save]')) {
     // do not save if it is disabled (not active group)
     if (element.disabled) {
-      return;
+      continue;
     }
     let inputValue = element.value;
     // if this is a checkbox, then the value is if it is checked
@@ -203,23 +203,23 @@ function saveSpecifiedFieldsToLocalStorage() {
     // if it's still null then ERROR!!! out
     if (!inputName) {
       console.error('this element doesn\'t have name or id:', element);
-      return;
+      continue;
     }
     // if it is default, check if it is there and remove it
-    if (element.getAttribute('data-default-value') == inputValue) {
+    if (element.dataset.defaultValue == inputValue) {
       localStorage.removeItem('form-value-' + inputName);
-      return;
+      continue;
     }
     const encodedValue = JSON.stringify(inputValue);
 
     localStorage.setItem('form-value-' + inputName, encodedValue);
-  });
+  }
 }
 
 /** Loads fields from local storage that have HTML elements with data-save property attached. */
 function loadSpecifiedFieldsFromLocalStorage() {
   // go through every input that has the data-save attribute
-  document.querySelectorAll('[data-save]').forEach(function (element) {
+  for (const element of document.querySelectorAll('[data-save]')) {
     let inputName = element.name;
     if (!inputName) {
       // use id as name if the name is not available
@@ -229,12 +229,12 @@ function loadSpecifiedFieldsFromLocalStorage() {
     // if it's still null, log an error and skip this element
     if (!inputName) {
       console.error('this element doesn\'t have a name or id:', element);
-      return;
+      continue;
     }
     const savedValue = localStorage.getItem('form-value-' + inputName);
     // If there is no saved value, skip this element
     if (!savedValue) {
-      return;
+      continue;
     }
     // Parse the saved value from JSON
     const decodedValue = JSON.parse(savedValue);
@@ -252,11 +252,11 @@ function loadSpecifiedFieldsFromLocalStorage() {
     if (element.type === 'details') {
       element.dispatchEvent(new Event('toggle', { bubbles: true }));
     }
-  });
+  }
 }
 
 // iframe mode - do not submit to server but submit to outer frame
-const iframeMode = document.body.hasAttribute('data-iframe-mode');
+const iframeMode = Object.hasOwn(document.body.dataset, 'iframeMode');
 // assumes there is only ONE form on the page or at least the one we want is the first one
 const form = document.forms[0];
 const resultList = document.getElementById('results');
@@ -276,7 +276,7 @@ function onFormSubmit(event) {
   event.preventDefault(); // Prevent the default form submission via HTTP
   formSubmitting = true;
   submitButton.disabled = true; // Disable the button
-  submitButton.setAttribute('value', submitButton.getAttribute('data-value'));
+  submitButton.setAttribute('value', submitButton.dataset.value);
 
   let arianHandlerResult = false;
   if (ACTIVATE_ARIAN_HANDLER &&
@@ -296,7 +296,7 @@ function onFormSubmit(event) {
       */
       const errorLiOriginal = document.getElementsByClassName('load-error');
       // get last error li, the original
-      const errorLi = errorLiOriginal[errorLiOriginal.length - 1].cloneNode(true);
+      const errorLi = errorLiOriginal.at(-1).cloneNode(true);
       errorLi.textContent = error.message;
       errorLi.style.display = '';
 
@@ -347,8 +347,8 @@ function onFormSubmit(event) {
   // iterate through elements with data-default-value attribute
   // for each of these inputs, if the value matches the default...
   // then they will be excluded from the search params to clean it up
-  document.querySelectorAll('[data-default-value]').forEach(function (element) {
-    const defaultValue = element.getAttribute('data-default-value');
+  for (const element of document.querySelectorAll('[data-default-value]')) {
+    const defaultValue = element.dataset.defaultValue;
 
     let inputValue = element.value;
     // if this is a checkbox, then the value is if it is checked
@@ -360,19 +360,19 @@ function onFormSubmit(event) {
     if (inputValue == defaultValue) {
       searchParams.delete(element.name);
     }
-  });
+  }
 
   // allow fields to override others if their value is not default
-  document.querySelectorAll('[data-override]').forEach(function (overridingElement) {
-    const overrideTargetName = overridingElement.getAttribute('data-override');
+  for (const overridingElement of document.querySelectorAll('[data-override]')) {
+    const overrideTargetName = overridingElement.dataset.override;
     const overrideValue = overridingElement.value;
-    const overrideDefaultValue = overridingElement.getAttribute('data-default-value') || '';
+    const overrideDefaultValue = overridingElement.dataset.defaultValue || '';
 
     if (overrideValue !== overrideDefaultValue) {
       // Set the override value, replacing any existing value for the target field
       searchParams.set(overrideTargetName, overrideValue);
     }
-  });
+  }
 
   // data-REAL overrides the data for conversion
   const dataForConversion = formData.get('data-REAL');
@@ -380,7 +380,7 @@ function onFormSubmit(event) {
     // delete it so it is not sent to the server, only used for js
     searchParams.delete('data-REAL');
   }
-  const data = !dataForConversion ? formData.get('data') : dataForConversion;
+  const data = dataForConversion ? dataForConversion : formData.get('data');
   console.log('data input:', data);
   const params = searchParams.toString();
   // more compatible? version taken from: https://stackoverflow.com/a/43000398
@@ -406,9 +406,9 @@ function onFormSubmit(event) {
       // Handle image loading error
       const errorLiOriginal = document.getElementsByClassName('load-error');
       // get last error li, the original
-      const errorLi = errorLiOriginal[errorLiOriginal.length - 1].cloneNode(true);
+      const errorLi = errorLiOriginal.at(-1).cloneNode(true);
       // Generic error message unless overwritten by SSE message
-      errorLi.setAttribute('data-error-request-id', requestID);
+      errorLi.dataset.errorRequestId = requestID;
       const errorResponse = errorResponses.get(requestID);
       if (errorResponse !== undefined) {
         errorLi.textContent = errorResponse;
@@ -421,11 +421,11 @@ function onFormSubmit(event) {
       submitButton.removeAttribute('value');
 
       if (errorResponse === undefined) {
-        errorLi.appendChild(img);
+        errorLi.append(img);
       } // Append the <img> inside of the the error li
       resultList.insertBefore(errorLi, resultList.firstChild); // Insert at the top
     };
-    img.onload = function () {
+    img.addEventListener('load', function () {
       // Re-enable the button upon successful image load
       formSubmitting = false;
       submitButton.disabled = false;
@@ -450,7 +450,7 @@ function onFormSubmit(event) {
       const detailsInResult = resultTemplateClone.getElementsByTagName('details')[0];
       if (data) {
         // only if it isn't falsey of course
-        detailsInResult.setAttribute('data-data', data);
+        detailsInResult.dataset.data = data;
         fillNameInDetailsFromDataString(resultTemplateClone, data);
       } else {
         console.warn('why is data falsey here????');
@@ -459,7 +459,7 @@ function onFormSubmit(event) {
         detailsInResult.style.display = 'none';
       }
       const resultImageContainer = resultTemplateClone.getElementsByClassName('image-template')[0];
-      resultImageContainer.appendChild(img); // Append the <img> to the <li>
+      resultImageContainer.append(img); // Append the <img> to the <li>
 
       // finally, reveal and prepend it
       resultTemplateClone.style.display = '';
@@ -469,18 +469,16 @@ function onFormSubmit(event) {
       // remove on successful load
       const tutorial = document.getElementById('tutorial');
       if (tutorial) {
-        tutorial.parentElement.removeChild(tutorial);
+        tutorial.remove();
       }
 
       // save fields for saving, only after image successfully loaded
       saveSpecifiedFieldsToLocalStorage();
-    };
+    });
   }
 }
 
-if (!iframeMode) {
-  form.addEventListener('submit', onFormSubmit);
-} else {
+if (iframeMode) {
   // special form handler for iframe mode
   form.addEventListener('submit', function (event) {
     event.preventDefault(); // Prevent the default form submission via HTTP
@@ -499,7 +497,7 @@ if (!iframeMode) {
       // delete it so it is not sent to the server, only used for js
       searchParams.delete('data-REAL');
     }
-    const data = !dataForConversion ? formData.get('data') : dataForConversion;
+    const data = dataForConversion ? dataForConversion : formData.get('data');
     console.log('data input:', data);
 
     if (data) { // not empty, null, or undefined
@@ -514,8 +512,8 @@ if (!iframeMode) {
     // iterate through elements with data-default-value attribute
     // for each of these inputs, if the value matches the default...
     // then they will be excluded from the search params to clean it up
-    document.querySelectorAll('[data-default-value]').forEach(function (element) {
-      const defaultValue = element.getAttribute('data-default-value');
+    for (const element of document.querySelectorAll('[data-default-value]')) {
+      const defaultValue = element.dataset.defaultValue;
 
       let inputValue = element.value;
       // if this is a checkbox, then the value is if it is checked
@@ -527,7 +525,7 @@ if (!iframeMode) {
       if (inputValue == defaultValue) {
         searchParams.delete(element.name);
       }
-    });
+    }
 
     const params = Object.fromEntries(searchParams);
     // post to above iframe
@@ -544,6 +542,8 @@ if (!iframeMode) {
     }
     */
   };
+} else {
+  form.addEventListener('submit', onFormSubmit);
 }
 
 /** @enum number */
@@ -612,7 +612,7 @@ async function handleNNIDDataFetch(apiUrl, nnidInput, nnidLoaded, nnidDataInput,
         decodedData = data.data;
       } else {
         if (typeof data.error === 'string') {
-          throw new Error(data.error);
+          throw new TypeError(data.error);
         } else if (!data.data) {
           throw new Error('No data attribute in response');
         }
@@ -653,7 +653,7 @@ nnidInput.addEventListener('input', function () {
 
   nnidDebounceTimeout = setTimeout(function () {
     const nnidValue = nnidInput.value.trim();
-    const apiUrl = nnidInput.getAttribute('data-action') + nnidValue;
+    const apiUrl = nnidInput.dataset.action + nnidValue;
 
     if (nnidValue.length > 0) {
       handleNNIDDataFetch(apiUrl, nnidInput, nnidLoaded, nnidDataInput, nnidLastModified)
@@ -680,7 +680,7 @@ pnidInput.addEventListener('input', function () {
 
   pnidDebounceTimeout = setTimeout(function () {
     const pnidValue = pnidInput.value.trim();
-    const apiUrl = pnidInput.getAttribute('data-action') + pnidValue +
+    const apiUrl = pnidInput.dataset.action + pnidValue +
       '?api_id=1';
 
     if (pnidValue.length > 0) {
@@ -703,7 +703,7 @@ pnidInput.addEventListener('input', function () {
 });
 
 nnidRandomButton.addEventListener('click', function () {
-  const apiUrl = nnidRandomButton.getAttribute('data-action');
+  const apiUrl = nnidRandomButton.dataset.action;
   nnidInput.disabled = true;
   submitButton.disabled = true;
   nnidRandomButton.disabled = true;
@@ -712,7 +712,7 @@ nnidRandomButton.addEventListener('click', function () {
     .catch((error) => {
       // Create and append the error message
       const errorLiOriginal = document.getElementsByClassName('load-error');
-      const errorLi = errorLiOriginal[errorLiOriginal.length - 1].cloneNode(true);
+      const errorLi = errorLiOriginal.at(-1).cloneNode(true);
       errorLi.style.display = '';
       errorLi.textContent = error.message;
       resultList.insertBefore(errorLi, resultList.firstChild);
@@ -818,7 +818,7 @@ const supportedTypes = [
  * @returns {SupportedTypeDefinition|undefined}
  */
 const findSupportedTypeBySize =
-  size => supportedTypes.find(type => type.sizes.indexOf(size) !== -1);
+  size => supportedTypes.find(type => type.sizes.includes(size));
 
 let globalVerifyCRC16 = true;
 
@@ -873,7 +873,7 @@ const crc16ChecksumFailedText = document.getElementById('crc16-checksum-failed-t
  */
 function extractUTF16Text(data, startOffset, isBigEndian, nameLength) {
   // Default to 10 characters (20 bytes) if nameLength is not provided
-  const length = nameLength !== undefined ? nameLength * 2 : 20;
+  const length = nameLength === undefined ? 20 : nameLength * 2;
   let endPosition = startOffset;
 
   // Determine the byte order based on the isBigEndian flag
@@ -935,7 +935,7 @@ function displayNameFromSupportedType(data, nameElement, type, crc16NotPassed) {
   // Handle the case where there's no offsetName
   nameElement.firstElementChild.textContent =
     // use the type name if the name is null (type has no name offset)
-    nameString !== null ? nameString : type.name;
+    nameString === null ? type.name : nameString;
 
   nameElement.style.display = '';
   if (crc16NotPassed) {
@@ -973,7 +973,7 @@ fileInput.addEventListener('input', function () {
   fileInput.setCustomValidity('');
   dataInput.setCustomValidity('');
   const reader = new FileReader();
-  reader.onload = function (e) {
+  reader.addEventListener('load', function (e) {
     // When file is read, replace/add the 'data' parameter with the file content in Base64
     /** Remove the 'data:;base64,' part */
     const base64Data = e.target.result.split(',')[1];
@@ -1002,13 +1002,13 @@ fileInput.addEventListener('input', function () {
     // if(data.length != 96) return;
     // extract name and show loaded text
     displayNameFromSupportedType(data, fileLoaded, type, (checkResult === 2));
-  };
+  });
   reader.readAsDataURL(fileInput.files[0]);
   return;
 });
 
 const stripSpaces = str => str.replace(/\s+/g, '');
-const hexToUint8Array = hex => new Uint8Array(hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+const hexToUint8Array = hex => new Uint8Array(hex.match(/.{1,2}/g).map(byte => Number.parseInt(byte, 16)));
 const base64ToUint8Array = (base64) => {
   // Replace URL-safe Base64 characters
   const normalizedBase64 = base64.replace(/-/g, '+').replace(/_/g, '/');
@@ -1023,11 +1023,7 @@ const parseHexOrB64ToUint8Array = (text) => {
   // decode it to a uint8array whether it's hex or base64
   const textData = stripSpaces(text);
   // check if it's base 16 exclusively, otherwise assume base64
-  if (/^[0-9a-fA-F]+$/.test(textData)) {
-    inputData = hexToUint8Array(textData);
-  } else {
-    inputData = base64ToUint8Array(textData);
-  }
+  inputData = /^[0-9a-fA-F]+$/.test(textData) ? hexToUint8Array(textData) : base64ToUint8Array(textData);
 
   return inputData;
 };
@@ -1105,9 +1101,9 @@ let activeInput = null;
 
 /** hide all file statuses/errors whenever you switch input types */
 function hideAllErrors() {
-  document.querySelectorAll('[id^="data-error-"]').forEach(function (element) {
+  for (const element of document.querySelectorAll('[id^="data-error-"]')) {
     element.style.display = 'none';
-  });
+  }
 }
 
 /**
@@ -1119,7 +1115,7 @@ function setActiveInput(input) {
   /** .closest('.input-switch-container'); */
   const parent = input.parentElement;
   // Update classes and names for all inputs in the data group
-  document.querySelectorAll('#data-group input').forEach((inp) => {
+  for (const inp of document.querySelectorAll('#data-group input')) {
     // if this input isn't the active input...
     if (inp !== activeInput && // and
       // is not a sibling of the current input?
@@ -1127,18 +1123,18 @@ function setActiveInput(input) {
       // disable this input!
       inp.classList.remove('green-border');
       if (inp.name) {
-        inp.setAttribute('data-name-disabled', inp.name);
+        inp.dataset.nameDisabled = inp.name;
         inp.removeAttribute('name');
         inp.setCustomValidity('');
       }
     } else {
       inp.classList.add('green-border');
-      if (inp.getAttribute('data-name-disabled')) {
-        inp.setAttribute('name', inp.getAttribute('data-name-disabled'));
-        inp.removeAttribute('data-name-disabled');
+      if (inp.dataset.nameDisabled) {
+        inp.setAttribute('name', inp.dataset.nameDisabled);
+        delete inp.dataset.nameDisabled;
       }
     }
-  });
+  }
 
   // if you didn't just upload a file just now...
   // and if the file has a file input but not data...
@@ -1166,7 +1162,7 @@ function fillNameInDetailsFromDataString(parent, dataString) {
   const nameString = getNameFromSupportedType(data, type);
 
   nameFieldElement.textContent =
-    nameString !== null ? nameString : type.name;
+    nameString === null ? type.name : nameString;
 
   // if name string is falsey (null) then STOP HERE!
   // bc it will set it to a string "null"
@@ -1175,7 +1171,7 @@ function fillNameInDetailsFromDataString(parent, dataString) {
   }
   // set data-name to be objective name which can be blank
   const firstDetailsInParent = parent.getElementsByTagName('details')[0];
-  firstDetailsInParent.setAttribute('data-name', nameString);
+  firstDetailsInParent.dataset.name = nameString;
 }
 
 // Event listener for file input
@@ -1215,11 +1211,11 @@ function updateVisibility() {
   const selectedValue = inputTypeSelect.value;
 
   // Loop through all options in the dropdown.
-  Array.from(inputTypeSelect.options).forEach((option) => {
+  for (const option of Array.from(inputTypeSelect.options)) {
     const group = document.getElementById(option.value + '-group');
     // Skip if no group element is found.
     if (!group) {
-      return;
+      continue;
     }
 
     // Determine if this group should be visible.
@@ -1227,7 +1223,7 @@ function updateVisibility() {
     group.style.display = isVisible ? '' : 'none';
 
     // Update all input elements within the group.
-    Array.from(group.getElementsByTagName('input')).forEach((input) => {
+    for (const input of Array.from(group.getElementsByTagName('input'))) {
       // if it's NOT visible, disable it
       input.disabled = !isVisible;
       // input.required = isVisible;
@@ -1235,8 +1231,8 @@ function updateVisibility() {
       if (isVisible) {
         input.dispatchEvent(new Event('input'));
       }
-    });
-  });
+    }
+  }
 }
 
 /**
@@ -1424,7 +1420,7 @@ function checkSupportedTypeBySize(data, type, checkCRC16) {
  * @param {HTMLInputElement} dataField
  * @param {HTMLInputElement} dataRealField
  */
-function setDataConvertInline(data, type, dataField, dataRealField = undefined) {
+function setDataConvertInline(data, type, dataField, dataRealField) {
   if (!type.specialCaseConvertTo || dataRealField === undefined) {
     // ig it is already set
     // dataField.value = uint8ArrayToBase64(data);
@@ -1455,12 +1451,10 @@ const pantsColor = document.getElementById('pantsColor');
 const pantsColorsWithSwitchShaderInaccurate = document.getElementById('pants-colors-with-switch-shader-inaccurate');
 
 pantsColor.addEventListener('change', function () {
-  if (shaderType.value === '1' &&
-    pantsColor.value === 'red' && pantsColor.value == 'blue') {
-    pantsColorsWithSwitchShaderInaccurate.style.display = '';
-  } else {
-    pantsColorsWithSwitchShaderInaccurate.style.display = 'none';
-  }
+  pantsColorsWithSwitchShaderInaccurate.style.display = shaderType.value === '1' &&
+    pantsColor.value === 'red' && pantsColor.value == 'blue'
+    ? ''
+    : 'none';
 });
 
 /**
@@ -1489,7 +1483,7 @@ function arianHandler() {
     .then((html) => {
       const div = document.createElement('div');
       div.innerHTML = html;
-      document.body.appendChild(div);
+      document.body.append(div);
 
       // Determine the ROM URL based on the current document's language
       const romMetaName = document.documentElement.lang.startsWith('es') ? 'rom-path-es' : 'rom-path';
@@ -1500,13 +1494,13 @@ function arianHandler() {
 
       // Load the scripts defined in complicated.html
       const scripts = div.getElementsByTagName('script');
-      Array.from(scripts).forEach((script) => {
+      for (const script of Array.from(scripts)) {
         if (script.src) {
           const newScript = document.createElement('script');
           newScript.src = script.src;
-          document.head.appendChild(newScript);
+          document.head.append(newScript);
         }
-      });
+      }
     });
   return true;
 }
@@ -1530,7 +1524,9 @@ const handleCopyButtonAndUpdateText = (event, data, paramsToRemove) => {
   const removeQueryParams = (url, params) => {
     const urlObj = new URL(url);
     if (Array.isArray(params)) {
-      params.forEach(param => urlObj.searchParams.delete(param));
+      for (const param of params) {
+        urlObj.searchParams.delete(param);
+      }
     } else {
       urlObj.searchParams.delete(params);
     }
@@ -1544,10 +1540,7 @@ const handleCopyButtonAndUpdateText = (event, data, paramsToRemove) => {
   const parent = target.parentElement;
 
   // if there is data then just return that as a string
-  if (data !== undefined) {
-    navigator.clipboard.writeText(data);
-    // NOTE: not used for anything rn
-  } else {
+  if (data === undefined) {
     // there is one img in the parent, where we want to copy the src element
     const img = parent.getElementsByTagName('img')[0];
     if (!img || !img.src) { // is it undefined, null, or empty?
@@ -1564,6 +1557,9 @@ const handleCopyButtonAndUpdateText = (event, data, paramsToRemove) => {
       // copy :)
       navigator.clipboard.writeText(srcToCopy);
     }
+  } else {
+    navigator.clipboard.writeText(data);
+    // NOTE: not used for anything rn
   }
 
   // ... and THEN, there is a counter.

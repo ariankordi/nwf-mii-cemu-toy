@@ -154,9 +154,9 @@ const stopCameraLabel = document.getElementById('stop-camera-label');
  */
 function showStatus(statusId, message = '') {
   // hide all statuses first, all ids beginning with qr-status-
-  document.querySelectorAll('[id^=qr-status-]').forEach((element) => {
+  for (const element of document.querySelectorAll('[id^=qr-status-]')) {
     element.style.display = 'none';
-  });
+  }
   const statusElement = document.getElementById('qr-status-' + statusId);
   if (statusElement) {
     statusElement.style.display = ''; // Make it visible
@@ -210,17 +210,19 @@ startCameraButton.addEventListener('click', () => {
     // Note that we can also start the scanner after listCameras, we just have it this way around in the demo to
     // start the scanner earlier.
     const existingCameras = document.getElementsByClassName('device-camera');
-    [...existingCameras].forEach((camera) => {
+    for (const camera of existingCameras) {
       // go ahead and remove all existing cameras to repopulate camera list
       camera.remove();
+    }
+    QrScanner.listCameras(true).then((cameras) => {
+      for (const camera of cameras) {
+        const option = document.createElement('option');
+        option.value = camera.id;
+        option.text = camera.label;
+        option.className = 'device-camera';
+        camList.add(option);
+      }
     });
-    QrScanner.listCameras(true).then(cameras => cameras.forEach((camera) => {
-      const option = document.createElement('option');
-      option.value = camera.id;
-      option.text = camera.label;
-      option.className = 'device-camera';
-      camList.add(option);
-    }));
     showStatus('scanning');
   })
     .catch((error) => {
