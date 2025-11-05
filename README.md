@@ -12,8 +12,8 @@ This is neat because it actually contains Miis of deleted NNIDs and even NNIDs t
 I have made both my scrapes (in Python pickle format), as well as the MariaDB database I populated with it, available through these MEGA links!
 
 **Get them while they're fresh, won't last forever:**
-* MariaDB database: https://mega.nz/file/HWJh2BrA#qoJ4Vn_Sdy7b1vWJqjGR9uVvs-yYRQJLaPmu2g2nMdE
-* Original dump and scripts should be here too (**grab this one**): https://mega.nz/file/SboWHRrK#_5vuSzFAkyvz9lGy7RBqwAh3CN0OHCRQ9AbYn-Kd09s
+* MariaDB database: https://mega.nz/file/SboWHRrK#_5vuSzFAkyvz9lGy7RBqwAh3CN0OHCRQ9AbYn-Kd09s
+* Original dump and scripts should be here too (**grab this one**): https://mega.nz/file/HWJh2BrA#qoJ4Vn_Sdy7b1vWJqjGR9uVvs-yYRQJLaPmu2g2nMdE
 
 <details>
 <summary>Some words on the setup process if you want to try:</summary>
