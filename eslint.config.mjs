@@ -38,7 +38,16 @@ export default [
       'no-var': 'error',
       // TODO: 'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^ignore' }],
       'one-var': ['error', 'never'],
-      'curly': ['error', 'all'] // Always require curly braces
+      'curly': ['error', 'all'], // Always require curly braces
+      // https://evanhahn.com/using-eslint-to-help-avoid-non-deterministic-randomness/
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'Math',
+          property: 'random',
+          message: 'Use a seeded random.'
+        }
+      ]
     }
   },
 

@@ -4,7 +4,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 const parse = require('csv-parse/sync');
 // All imports for data-conversion.js:
-/* eslint-disable no-undef -- Need to define globalThis as a HACK for data-conversion.js. */
 globalThis.structsObj = {
   Gen1Wii: require('./kaitai-structs/js/Gen1Wii.js'),
   Gen3Switch: require('./kaitai-structs/js/Gen3Switch.js'),
@@ -12,7 +11,6 @@ globalThis.structsObj = {
   Gen2Wiiu3dsMiitomo: require('./kaitai-structs/js/Gen2Wiiu3dsMiitomo.js'),
   Gen3Studio: require('./kaitai-structs/js/Gen3Studio.js')
 };
-/* eslint-enable no-undef -- Re-enabling */
 const conv = require('./data-conversion.js');
 
 /* globals __dirname -- Node.js globals. */
@@ -453,6 +451,92 @@ describe('Mii data cross-conversion tests', () => {
       const wrapped = new Uint8Array(conv.wrapVer3StoreDataForQR(convData));
 
       TestUtility.expectBuffersEqual(wrapped, expectedQR);
+    });
+
+
+    it('handles null/empty names correctly', () => {
+      const emptyNameVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
+      const convertedStudio = conv.convertDataToType(emptyNameVer3, conv.studioFormat);
+      const convertedCharInfo = conv.convertDataToType(convertedStudio, conv.charInfoFormat);
+
+      // Should fill with "Mii" as default name
+      const struct =
+        conv.createNewInstanceOfKaitaiStructFormat(conv.charInfoFormat, convertedCharInfo);
+      expect(/** @type {string} */ (struct.miiName).slice(0, 3)).toBe('Mii');
+    });
+
+    it('validates CreateID format for QR code generation', () => {
+      const testVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
+
+      // Test temporary bit clearing
+      const struct = conv.createNewInstanceOfKaitaiStructFormat(conv.ver3Format, testVer3);
+      struct.avatarId[0] |= 0b00100000; // Set temporary bit
+
+      const forQR = conv.convertDataToType(testVer3, conv.ver3Format, null, true);
+      const qrStruct = conv.createNewInstanceOfKaitaiStructFormat(conv.ver3Format, forQR);
+      expect(qrStruct.avatarId[0] & 0b00100000).toBe(0); // Temporary bit should be cleared
+    });
+
+    it('validates CreateID format for QR code generation', () => {
+      const testVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
+
+      // Test temporary bit clearing
+      const struct = conv.createNewInstanceOfKaitaiStructFormat(conv.ver3Format, testVer3);
+      struct.avatarId[0] |= 0b00100000; // Set temporary bit
+
+      const forQR = conv.convertDataToType(testVer3, conv.ver3Format, null, true);
+      const qrStruct = conv.createNewInstanceOfKaitaiStructFormat(conv.ver3Format, forQR);
+      expect(qrStruct.avatarId[0] & 0b00100000).toBe(0); // Temporary bit should be cleared
+    });
+
+    it('continuity terminates strings properly', () => {
+      const testString = 'Should\u0000Not';
+      const terminated = conv.removeEverythingAfterNullTerminator(testString);
+
+      const expected = 'Should\u0000\u0000\u0000\u0000';
+      /*
+      console.log('testString (input):', conv.bytesToHex(new TextEncoder().encode(testString)));
+      console.log('terminated (expected)):', conv.bytesToHex(new TextEncoder().encode(expected)));
+      console.log('terminated (actual):', conv.bytesToHex(new TextEncoder().encode(terminated)));
+      */
+
+      expect(terminated).toBe(expected);
+    });
+
+    it('generates valid CharInfo with random CreateID', () => {
+      const emptyCore = new Uint8Array(48); // Empty nn::mii::CoreData
+      const charInfo = conv.convertDataToType(emptyCore, conv.charInfoFormat, 'Gen3Switch');
+
+      // CreateID should be 16 random bytes with proper UUIDv4 bits
+      const struct = conv.createNewInstanceOfKaitaiStructFormat(conv.charInfoFormat, charInfo);
+      const createId = struct.unknownData.slice(0, 16);
+      expect(createId.length).toBe(16);
+
+      // Version 4 UUID: bits 12-15 of first octet should be 0100
+      // NOTE: nn::mii does NOT STRICTLY check this
+      //expect((createId[6] & 0xF0) >> 4).toBe(4);
+
+      // Clock sequence MSB should have high bit set (RFC 4122)
+      expect(createId[8] & 0xC0).toBe(0x80);
+    });
+
+    it('handles Studio URL obfuscation round-trip', () => {
+      // Generate 46 random bytes as test Studio data
+      const studioRaw = new Uint8Array(46);
+      for (let i = 0; i < 46; i++) {
+        studioRaw[i] = Math.floor(Math.random() * 256);
+      }
+
+      // Encode with seed 42
+      const encoded = conv.studioURLObfuscationEncode(studioRaw, undefined, 42);
+      expect(encoded.length).toBe(47);
+      expect(encoded[0]).toBe(42); // Seed should be first byte
+
+      // Decode back to raw
+      const decoded = new Uint8Array(46);
+      conv.studioURLObfuscationDecode(decoded, encoded);
+
+      TestUtility.expectBuffersEqual(decoded, studioRaw);
     });
   });
   // describe

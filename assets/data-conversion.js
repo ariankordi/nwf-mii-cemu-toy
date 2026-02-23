@@ -1792,6 +1792,7 @@ return {
   wrapVer3StoreDataForQR,
   encode3DSStoreDataFromStruct,
   findInputFormatFromSize,
+  studioURLObfuscationDecode,
   createNewInstanceOfKaitaiStructFormat
 };
 }));
