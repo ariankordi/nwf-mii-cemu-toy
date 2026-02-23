@@ -344,6 +344,15 @@ function onFormSubmit(event) {
     searchParams.delete('bgColor');
   }
 
+  // handle light disable as a special case
+  // this was in response to switch shader
+  // with disable lighting option being unreliable
+  // so let's just make it separate altogether
+  if (shaderType.value === 'light_disable') {
+    searchParams.delete('shaderType');
+    searchParams.append('lightEnable', '0');
+  }
+
   // iterate through elements with data-default-value attribute
   // for each of these inputs, if the value matches the default...
   // then they will be excluded from the search params to clean it up
@@ -1451,7 +1460,7 @@ const pantsColor = document.getElementById('pantsColor');
 const pantsColorsWithSwitchShaderInaccurate = document.getElementById('pants-colors-with-switch-shader-inaccurate');
 
 pantsColor.addEventListener('change', function () {
-  pantsColorsWithSwitchShaderInaccurate.style.display = shaderType.value === '1' &&
+  pantsColorsWithSwitchShaderInaccurate.style.display = shaderType.value === 'switch' &&
     pantsColor.value === 'red' && pantsColor.value == 'blue'
     ? ''
     : 'none';

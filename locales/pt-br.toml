@@ -5,10 +5,10 @@ other = "Cor de fundo:"
 other = "Abrir arquivo de amiibo"
 
 [contact_info_label]
-other = "Para comentários, perguntas, preocupações, ajuda com este ou qualquer outro assunto relacionado a Mii, etc... Por favor, não HESITE em me contatar!"
+other = "Para comentários, perguntas, dúvidas, ajuda com este ou qualquer outro assunto relacionado a Mii, etc... Por favor, não hesite em me contatar!"
 
 [contact_info_post]
-other = "Eu recebo qualquer pessoa nova, estou aberto para discutir qualquer coisa, mesmo que não tenha a ver com esse projeto :)"
+other = "Recebo de braços abertos qualquer pessoa nova, estou aberto para discutir qualquer coisa, mesmo que não tenha a ver com esse projeto :)"
 
 [data_placeholder]
 # proper: hex, base64
@@ -153,7 +153,7 @@ other = "Pode acelerar a renderização em altas resoluções. Note que a escala
 other = "Renderizando..."
 
 [transparent_checkbox_label]
-other = "Transparente?"
+other = "Transparente"
 
 [tutorial_message]
 other = "Clique em \"Tipo de entrada do Mii\" para ver como você pode importar um Mii. Em seguida, clique em Enviar para começar."
@@ -539,10 +539,10 @@ other = "Achatar nariz:"
 [englishonly_label]
 other = "essa parte estará apenas disponível em inglês por enquanto :("
 
-# this was supposed to have links, for now the links are not present here. 
+# this was supposed to have links, for now the links are not present here.
 [welcome_to_site_text1]
 other = "Esse site é um Renderizador de Miis que é basicamente suportado pela library oficial da Nintendo, FFL (usada para renderizar Miis no Wii U), decompilada por %sAboodXD%s"
-# this was supposed to have links, for now the links are not present here. 
+# this was supposed to have links, for now the links are not present here.
 [welcome_to_site_text1_githublink]
 other = "Se quiser, veja no GitHub: %sariankordi/FFL-Testing (renderer-server-prototype branch)%s"
 
@@ -616,3 +616,5 @@ other = "Modelo de corpo:"
 [miitomo_expression_label]
 other = "Expressão Miitomo:"
 
+[no_lighting_label]
+other = "Sem sombreamento / Plano"
