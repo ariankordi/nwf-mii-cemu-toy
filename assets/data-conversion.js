@@ -1256,8 +1256,8 @@ const encode3DSStoreDataFromStruct = (data, skipCRC16) => {
     ((data.miiPositionSlotIndex & 0x0F) << 4); // slot index (4 bits)
 
   // version and unknown3 packed together
-  buf[0x03] = (data.version << 4) | // version (4 bits)
-    (data.unknown3 & 0x0F); // unknown, typically 0 (4 bits)
+  buf[0x03] = (data.version << 4); // | // version (4 bits)
+  // (data.unknown3 & 0x0F); // unknown, typically 0 (4 bits)
 
   // systemId: unique ID associated with the console, 8 bytes
   if (data.systemId !== undefined) {
@@ -1316,8 +1316,8 @@ const encode3DSStoreDataFromStruct = (data, skipCRC16) => {
   // hair type, color, and flip
   buf[0x32] = data.hairType || 0; // hair type (1 byte)
   buf[0x33] = (data.hairColor & 0x07) | // hair color (3 bits)
-    ((data.hairFlip ? 1 : 0) << 3) | // hair flip (1 bit)
-    ((data.unknown5 & 0x0F) << 4); // unknown (4 bits)
+    ((data.hairFlip ? 1 : 0) << 3); // | // hair flip (1 bit)
+  // ((data.unknown5 & 0x0F) << 4); // unknown (4 bits)
 
   // eye details: type, color, size, stretch, rotation, horizontal spacing, vertical position
   /** eye vertical position (5 bits) */
