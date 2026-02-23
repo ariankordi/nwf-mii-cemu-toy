@@ -6,7 +6,7 @@ def convert_toml_to_po(toml_path, po_path):
     data = toml.load(toml_path)
 
     lines = [
-        '# Automatically converted from go-i18n TOML to gettext .po',
+        #'# Automatically converted from go-i18n TOML to gettext .po',
         'msgid ""',
         'msgstr ""',
         '"Content-Type: text/plain; charset=UTF-8\\n"',

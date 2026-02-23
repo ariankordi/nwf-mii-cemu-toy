@@ -559,3 +559,6 @@ msgstr "Body model:"
 
 msgid "miitomo_expression_label"
 msgstr "Miitomo expression:"
+
+msgid "no_lighting_label"
+msgstr "No Shading/Flat"

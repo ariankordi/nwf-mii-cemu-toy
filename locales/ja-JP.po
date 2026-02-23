@@ -562,3 +562,6 @@ msgstr "ボディモデル："
 
 msgid "miitomo_expression_label"
 msgstr "Miitomo 表情："
+
+msgid "no_lighting_label"
+msgstr "陰影なし / フラット"
