@@ -9,10 +9,10 @@ msgid "button_open_amiibo_dump"
 msgstr "Abrir arquivo de amiibo"
 
 msgid "contact_info_label"
-msgstr "Para comentários, perguntas, preocupações, ajuda com este ou qualquer outro assunto relacionado a Mii, etc... Por favor, não HESITE em me contatar!"
+msgstr "Para comentários, perguntas, dúvidas, ajuda com este ou qualquer outro assunto relacionado a Mii, etc... Por favor, não hesite em me contatar!"
 
 msgid "contact_info_post"
-msgstr "Eu recebo qualquer pessoa nova, estou aberto para discutir qualquer coisa, mesmo que não tenha a ver com esse projeto :)"
+msgstr "Recebo de braços abertos qualquer pessoa nova, estou aberto para discutir qualquer coisa, mesmo que não tenha a ver com esse projeto :)"
 
 msgid "data_placeholder"
 msgstr "Insira os dados do seu Mii em hex ou Base64 aqui."
@@ -147,7 +147,7 @@ msgid "submit_button_text"
 msgstr "Renderizando..."
 
 msgid "transparent_checkbox_label"
-msgstr "Transparente?"
+msgstr "Transparente"
 
 msgid "tutorial_message"
 msgstr "Clique em \"Tipo de entrada do Mii\" para ver como você pode importar um Mii. Em seguida, clique em Enviar para começar."
@@ -622,3 +622,6 @@ msgstr "Modelo de corpo:"
 
 msgid "miitomo_expression_label"
 msgstr "Expressão Miitomo:"
+
+msgid "no_lighting_label"
+msgstr "Sem sombreamento / Plano"
