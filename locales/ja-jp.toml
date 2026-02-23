@@ -550,3 +550,5 @@ other = "ボディモデル："
 [miitomo_expression_label]
 other = "Miitomo 表情："
 
+[no_lighting_label]
+other = "陰影なし / フラット"

@@ -123,7 +123,64 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
         <pre id="error-stacktrace" style="display: none;"></pre>
         <pre id="error-at" style="display: none;">At <span></span></pre>
     </div>
+<!--
+        <style>
 
+
+        .speech-bubble {
+            display: inline-block; /* Allow side-by-side placement */
+            position: relative;
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 15px;
+            max-width: 400px;
+            text-align: left;
+            vertical-align: top; /* Align top with the image */
+            margin-right: 20px; /* Space between bubble and image */
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .speech-bubble {
+                background-color: #303030;
+            }
+        }
+
+
+        /* Create the speech bubble tail */
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            left: 100%; /* Position to the right of the bubble */
+            top: 20px; /* Adjust vertically as needed */
+            width: 0;
+            height: 0;
+            border: 10px solid transparent;
+            border-left-color: #f0f0f0; /* Match bubble background */
+        }
+
+        .image-mario {
+            display: inline-block; /* Allow side-by-side placement */
+            vertical-align: top; /* Align top with the bubble */
+            width: 200px; /* Adjust size as needed */
+            height: auto;
+        }
+
+        .audio-control {
+            display: block;
+            margin: 15px auto 0 auto; /* Center the audio control horizontally */
+        }
+    </style>
+    <div class="speech-bubble">
+        <strong>Mario Says...</strong><br><br>
+        Oh-Oh No! Tha Mama F*cker Server Went Down, and it caused Mii-Unsecure.Ariankordi.Net to downgrade from Intel Iris® Xᵉ Graphics™ to Sh*tty Mother F*cking LLVMpipe! Mamma Mia…<br><br>
+        Please-a keep in mind that NNID lookups and Mii rendering will be very slow, and the quality may even be reduced during this time. We apologize for the inconvenience. Please contact Arian on Discord if this is a problem to you. WAHOOOOOO!
+        <audio class="audio-control" controls preload="none">
+            <source src="path_to_audio_file.mp3" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+    <img class="image-mario" src="https://static.wikia.nocookie.net/the-sidaba-bunch/images/6/64/Mario_sad_-_SMRS.png/revision/latest?cb=20211223042535" alt="Mario Sad">
+-->
     <form action="/miis/image.png" method="GET">
         <input type="hidden" id="errorSessionAndRequestID" name="erri">
 
@@ -428,6 +485,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
             <option value="switch">Switch</option>
             <option value="miitomo">{{T("option_miitomo_mii_studio")}}</option>
             <!--<option value="3">3DS</option>-->
+            <option value="light_disable">No Shading/Flat</option>
         </select><br class="hide-iframe-mode">
 
         <label for="type" class="hide-iframe-mode">{{T("type_label")}}</label>
@@ -705,10 +763,11 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
             </select><br>
             <div class="smaller">{{T("draw_stage_note")}}</div>
 
-
+            <!--
             <label for="lightEnable">{{T("disable_lighting_label")}}</label>
             <input type="checkbox" name="lightEnable" id="lightEnable" value="0" data-default-value="0">
             <div class="smaller">{{T("disable_lighting_note")}}</div>
+            -->
 
             <!--
             <label for="mipmapEnable">Enable mipmapping:</label>
@@ -801,7 +860,12 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
                     {{T("download_prefix")}}.ffsd
                     </button>
                 </li>
-                <li><a class="mii-instructions-link" target="_blank" href="https://miiinstructions.sticksweb.site/?data=">{{T("see_instructions")}}</a></li>
+                <li>
+                    <!--
+                    <a class="mii-instructions-link" target="_blank" href="https://miiinstructions.sticksweb.site/?data=">{{T("see_instructions")}}</a>
+                    -->
+                    <a class="mii-instructions-link" target="_blank" href="/assets/mii-to-instructions/index.html?data=">{{T("see_instructions")}}</a>
+                </li>
                 <li>{{T("post_convert_fflstoredata_label")}}<code class="ver3storedata code-block"></code></li>
                 <li style="margin: 5px;" class="image-qr-container">{{T("post_convert_qr_code_label")}}<div style="text-align: center;"><img class="image-qr" alt="{{T("post_convert_qr_code_label")}}"></div>
                 </li>
@@ -935,7 +999,11 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
 
     {{ include "index-other-links-section.html" }}
 
+<!-- (2026-01-11) oh no ! :( do you miss this section? well i don't!
+     as of writing im planning on a rewrite, and to address this all publicly -->
+<div style="display: none;">
     {{ include "index-accuracy-section.html" }}
+</div>
 
     <h2>{{T("credits_header")}}</h2>
     <section id="credits" class="hide-iframe-mode">
@@ -970,7 +1038,9 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
                 <a href="https://github.com/educastellano/qr.js">qr.js (encoder)</a>
             </li>
         </ul></li>
-        <li class="small">(Translations for the site are machine translated. Please reach out if you want to improve them!)</li>
+        <li class="small">(Translations for the site are machine translated.<!-- Please reach out if you want to improve them!-->)</li>
+        <!-- * the only reason that is commented is because someone already reached out and I didn't get back to them :(
+             * I simply don't want to waste anyone's time, I've needed to swap my localization out with gettext for a while now, i  even did so in may but didn't merge back to main -->
     </ul>
     </section>
 
@@ -1002,3 +1072,4 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
 
 </body>
 </html>
+

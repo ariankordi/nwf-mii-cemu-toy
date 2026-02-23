@@ -557,3 +557,5 @@ other = "Body model:"
 [miitomo_expression_label]
 other = "Miitomo expression:"
 
+[no_lighting_label]
+other = "No Shading/Flat"

@@ -555,3 +555,6 @@ other = "Modèle de corps :"
 
 [miitomo_expression_label]
 other = "Expression Miitomo :"
+
+[no_lighting_label]
+other = "Sans ombrage / Plat"
