@@ -26,9 +26,9 @@
 // uint8ArrayToBase64, QRCode, base64ToUint8Array
 
 //import {
-  /** Text utility - used in {@link handleConvertDetailsToggle}, {@link handleDownloadDataFileButton} */
+/** Text utility - used in {@link handleConvertDetailsToggle}, {@link handleDownloadDataFileButton} */
 //  parseHexOrB64ToUint8Array, uint8ArrayToBase64, base64ToUint8Array,
-  /** CRC-16/CCITT - used in {@link encode3DSStoreDataFromStruct}, {@link wrapVer3StoreDataForQR} */
+/** CRC-16/CCITT - used in {@link encode3DSStoreDataFromStruct}, {@link wrapVer3StoreDataForQR} */
 //  crc16
 //} from './script.js';
 /** Used in {@link createNewInstanceOfKaitaiStructFormat}, {@link parseTomodachiLifeQRCodeData} */
@@ -37,6 +37,36 @@
 //import * as QRCode from './vendor-js/qr.min.js';
 /** For {@link wrapVer3StoreDataForQR} */
 //import * as sjcl from './vendor-js/sjcl-108-min-plus-codecBytes.js';
+
+// // ---------------------------------------------------------------------
+// //  UMD / factory setup
+// eslint-disable-next-line jsdoc/convert-to-jsdoc-comments -- not documenting the umd block
+// // ---------------------------------------------------------------------
+
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) {
+    // Node.js/CommonJS
+
+    // TODO: Only including KaitaiStream and nothing else.
+    module.exports = factory(require('kaitai-struct/KaitaiStream'), globalThis.structsObj);
+  } else {
+    // Browser globals (root is window)
+
+    const ret = factory(/** @type {*} */ (root).KaitaiStream, root);
+
+    // Set each returned property on root.
+    for (const key in ret) {
+      if (!Object.prototype.hasOwnProperty.call(ret, key)) {
+        continue;
+      }
+      /** @type {*} */ (root)[key] = /** @type {*} */ (ret)[key];
+    }
+  }
+}(typeof self !== 'undefined' ? self : this,
+  // NOTE: the ONLY injected dependency is KaitaiStream
+  // because the UMD block is ONLY for unit testing purposes - no crc, qr code... needed
+  function (KaitaiStream, structsObj) {
+'use strict';
 
 /**
  * NOTE: "to" functions need to be defined in conersionMethods
@@ -129,6 +159,59 @@ const supportedFormats = [{
 ];
 
 /**
+ * Object representing common fields shared by Kaitai structures.
+ * Properties are ordered in alphabetical order according to the
+ * real names of nn::mii::CharInfo.
+ * @typedef {Object} MiiVisualParam
+ * @property {number} facialHairColor
+ * @property {number} facialHairBeard
+ * @property {number} bodyWeight
+ * @property {number} eyeStretch
+ * @property {number} eyeColor
+ * @property {number} eyeRotation
+ * @property {number} eyeSize
+ * @property {number} eyeType
+ * @property {number} eyeHorizontal
+ * @property {number} eyeVertical
+ * @property {number} eyebrowStretch
+ * @property {number} eyebrowColor
+ * @property {number} eyebrowRotation
+ * @property {number} eyebrowSize
+ * @property {number} eyebrowType
+ * @property {number} eyebrowHorizontal
+ * @property {number} eyebrowVertical
+ * @property {number} faceColor
+ * @property {number} faceMakeup
+ * @property {number} faceType
+ * @property {number} faceWrinkles
+ * @property {number} favoriteColor
+ * @property {number} gender
+ * @property {number} glassesColor
+ * @property {number} glassesSize
+ * @property {number} glassesType
+ * @property {number} glassesVertical
+ * @property {number} hairColor
+ * @property {number} hairFlip
+ * @property {number} hairType
+ * @property {number} bodyHeight
+ * @property {number} moleSize
+ * @property {number} moleEnable
+ * @property {number} moleHorizontal
+ * @property {number} moleVertical
+ * @property {number} mouthStretch
+ * @property {number} mouthColor
+ * @property {number} mouthSize
+ * @property {number} mouthType
+ * @property {number} mouthVertical
+ * @property {number} facialHairSize
+ * @property {number} facialHairMustache
+ * @property {number} facialHairVertical
+ * @property {number} noseSize
+ * @property {number} noseType
+ * @property {number} noseVertical
+ */
+
+/**
  * ig you could also make this "no name" like FFL does
  * blanco (na) api sets mii studio miis' names to this
  */
@@ -177,7 +260,7 @@ const ver3ToVer4MouthColor = c => c + 19;
  * convert fields from ver3 and below to be compatible with switch/studio
  * the only fields that need to be made compatible, however,
  * , are the colors to convert them to the CommonColor type
- * @param {Object} data
+ * @param {MiiVisualParam} data
  */
 conversionMethods.convertVer3FieldsToVer4 = (data) => {
   // cannot just set these directly, have to set the properties
@@ -228,7 +311,7 @@ const ToVer3FacelineColorTable = [0, 1, 2, 3, 4, 5, 0, 1, 5, 5];
  * converting fields from ver4 to ver3, like vice versa,
  * involves reassigning colors, from CommonColor to the respective ver3 types
  * one of the differences is that this is also reassigning glass type as ver4 has more
- * @param {Object} data
+ * @param {MiiVisualParam} data
  */
 conversionMethods.convertVer4FieldsToVer3 = (data) => {
   // using the conversion tables defined above:
@@ -248,7 +331,7 @@ conversionMethods.convertVer4FieldsToVer3 = (data) => {
  * parses either NfpStoreDataExtention or
  * mii-creator custom extension/".miic" format
  * @param {Uint8Array} data
- * @param {Object} struct
+ * @param {MiiVisualParam} struct
  */
 conversionMethods.parseNfpStoreDataExtention = (data, struct) => {
   // begin reading after Ver3StoreData offset
@@ -306,7 +389,7 @@ conversionMethods.parseNfpStoreDataExtention = (data, struct) => {
 /**
  * apply extra "extension" fields at the end of this struct
  * back to the actual fields since the extension fields are ver4
- * @param {Object} data
+ * @param {MiiVisualParam} data
  */
 conversionMethods.useNfpStoreDataExtentionFieldsForVer4 = (data) => {
   Object.defineProperty(data, 'faceColor', {
@@ -343,7 +426,7 @@ conversionMethods.useNfpStoreDataExtentionFieldsForVer4 = (data) => {
  */
 const parseTomodachiLifeQRCodeData = (data, struct) => {
   const className = 'TomodachiLifeQrCode';
-  const structClass = window[className];
+  const structClass = structsObj[className];
 
   /** begins after cfsd */
   const qrCodeData = data.slice(96);
@@ -375,7 +458,7 @@ const parseTomodachiLifeQRCodeData = (data, struct) => {
 conversionMethods.parseTomodachiLifeQRCodeData = parseTomodachiLifeQRCodeData;
 
 /**
- * @param {Object} data
+ * @param {MiiVisualParam} data
  */
 conversionMethods.applyHairDyeAsVer4HairColor = (data) => {
   // all fields will be interpreted as common colors
@@ -452,7 +535,7 @@ conversionMethods.applyHairDyeAsVer4HairColor = (data) => {
 /**
  * add 3 to eyebrow vertical
  * @param {Object} _ - Output struct.
- * @param {Object} input
+ * @param {MiiVisualParam} input
  */
 conversionMethods.correctFromVer4CoreDataFields = (_, input) => {
   input.eyebrowVertical += 3;
@@ -595,8 +678,8 @@ conversionMethods.encodeSwitchCharInfo = (struct) => {
 
 /**
  * this will map the fields FROM the studio struct TO another one
- * @param {Object} output
- * @param {Object} [inputOptional]
+ * @param {MiiVisualParam} output
+ * @param {MiiVisualParam} [inputOptional]
  */
 conversionMethods.gen3studioDefineFacialHairFromBeardFields = (output, inputOptional) => {
   // if we are only acting on one struct then we will use output for both
@@ -627,8 +710,8 @@ conversionMethods.gen3studioDefineFacialHairFromBeardFields = (output, inputOpti
 };
 /**
  * this maps the fields TO the studio struct FROM any other one
- * @param {Object} output
- * @param {Object} input
+ * @param {MiiVisualParam} output
+ * @param {MiiVisualParam} input
  */
 conversionMethods.gen3studioDefineBeardFromFacialHairFields = (output, input) => {
   // if the studio fields are properly named according to the others then skip
@@ -646,8 +729,8 @@ conversionMethods.gen3studioDefineBeardFromFacialHairFields = (output, input) =>
 };
 
 /**
- * @param {Object} output
- * @param {Object} input
+ * @param {MiiVisualParam} output
+ * @param {MiiVisualParam} input
  */
 conversionMethods.forceEnableCopyingIfUndefined = (output, input) => {
   if (input.copying === undefined) {
@@ -710,7 +793,7 @@ const handleConvertDetailsToggle = (event) => {
   // "studio code" = raw studio data in hex
   // NOTE: three dots are only required if it is a uint8array which
   // it is only one if the input data is studio data directly
-  const studioCode = [...studioData].map(byteToHex).join('');
+  const studioCode = bytesToHex(studioData);
   studioCodeElement.textContent = studioCode;
 
   // TODO 2024-11-04: while the mii instructions site accepts studio
@@ -723,7 +806,7 @@ const handleConvertDetailsToggle = (event) => {
   const miiInstructionsLinkElement = target.getElementsByClassName('mii-instructions-link')[0];
   miiInstructionsLinkElement.href += studioCode; // switchCharInfoHex;
 
-  const studioURLData = encodeStudioToObfuscatedHex(studioData);
+  const studioURLData = studioURLEncodeHex(studioData);
   const studioURLRender = studioImageElement.getAttribute('data-src') + studioURLData;
   // studioURLDataElement.textContent = studioURLData;
   studioImageElement.setAttribute('src', studioURLRender);
@@ -865,7 +948,7 @@ const handleDownloadDataFileButton = (event) => {
  * sets MiiVersion to 0x03, and birth platform to 3DS
  * - both needed to scan as a qr code
  * skips crc16 but actually only bc qr encode routine does it itself
- * @param {Object} dataStruct
+ * @param {MiiVisualParam} dataStruct
  * @param {boolean} forQRCode
  * @returns {Uint8Array}
  */
@@ -976,10 +1059,10 @@ const findInputFormatFromSize = (size) => {
  */
 const createNewInstanceOfKaitaiStructFormat = (format, data) => {
   // className in the format is assumed to be a (kaitai struct) class in window
-  const structClass = window[format.className];
+  const structClass = structsObj[format.className];
   // ensure that this actually exists
   if (!structClass) {
-    throw new Error('Cannot find format class name in window: ' + format.className);
+    throw new Error('Cannot find format class name: ' + format.className);
   }
   // find the _read prototype that kaitai constructors usually have
   if (!structClass.prototype._read) {
@@ -1119,7 +1202,9 @@ const convertDataToType = (data, outputFormat, inputFormat, optionalBoolToEncode
 
   // NOTE: SPECIAL CASE: DEOBFUSCATE STUDIO DATA
   if (data && data.length === STUDIO_OBFUSCATED_LENGTH) {
-    data = studioURLObfuscationDecode(data);
+    const obfs = data; // Copy reference of old data.
+    data = new Uint8Array(46); // Replace data with new unobfuscated bytes.
+    studioURLObfuscationDecode(data, obfs); // Decode old data to new bytes.
   }
 
   // if this is the output format directly then no conversion is required
@@ -1203,45 +1288,14 @@ const convertDataToType = (data, outputFormat, inputFormat, optionalBoolToEncode
   return encodedOutput; // should be a uint8array
 };
 
-// yes I'm aware that typing this function name is as long as the snippet itself
-// const uint8ArrayToBase64 = data => btoa(String.fromCharCode.apply(null, data));
 
 /**
- * helper to map numbers to zero-padded hex
- * @param {number} num
- * @returns {string}
+ * U8 -> Hex / https://www.xaymar.com/articles/2020/12/08/fastest-uint8array-to-hex-string-conversion-in-javascript/
+ * @param {Array<number>|Uint8Array} bytes - Input data to encode.
+ * @returns {string} Hexadecimal representation of `buffer`.
  */
-const byteToHex = (num) => {
-  const hex = num.toString(16);
-  return hex.length === 1 ? '0' + hex : hex;
-};
-
-/**
- * encode from studio data, apply the studio url obfuscation and hex encode
- * @param {Uint8Array} data
- * @returns {string}
- */
-const encodeStudioToObfuscatedHex = (data) => {
-  // we actually need to clone input as to not act directly on it
-  const uint8Array = Object.assign([], data);
-  // generate a random initial value between 0 and 255
-  // NOTE: can make this 0 to disable randomization
-  const initialRandomValue = Math.floor(256 * Math.random());
-  let previousEncodedValue = initialRandomValue;
-
-  // iterate over the Uint8Array and encode each byte
-  for (let i = 0; i < uint8Array.length; i++) {
-    const currentValue = uint8Array[i];
-    // XOR the current value with the previous one and add 7, then take modulo 256
-    uint8Array[i] = (7 + (currentValue ^ previousEncodedValue)) % 256;
-    // update the previous value to the current encoded value
-    previousEncodedValue = uint8Array[i];
-  }
-
-  // prepend the initial random value to the array and convert to a hexadecimal string
-  return [initialRandomValue, ...uint8Array]
-    .map(byteToHex).join('');
-};
+const bytesToHex = bytes => Array.prototype.map.call(bytes,
+  (/** @type {{ toString: (arg0: number) => string; }} */ x) => x.toString(16).padStart(2, '0')).join('');
 
 // !! == ALL BELOW TAKEN FROM "mii2studio in js ai slop attempt 1" FIDDLE == !!
 
@@ -1287,7 +1341,7 @@ const isArrayNull = array => array.every(i => i === 0);
 /**
  * TODO: TODO: CHECK IF YOU CAN PUT THE TWO TABLES INTO ONE
  * converts Wii properties to ver3 compatible properties
- * @param {Object} data
+ * @param {MiiVisualParam} data
  */
 conversionMethods.convertWiiFieldsToVer3 = (data) => {
   // wii data does not support eye/mouth/eyebrow aspect/stretch so these are constant
@@ -1314,7 +1368,7 @@ conversionMethods.convertWiiFieldsToVer3 = (data) => {
  * ... and adapted from MiiInfoEditorCTR:
  * https://github.com/kazuki-4ys/kazuki-4ys.github.io/blob/148dc339974f8b7515bfdc1395ec1fc9becb68ab/web_apps/MiiInfoEditorCTR/mii.js#L348
  * 2024-08-10: tested to be accurate with: blanco, bro-mole-high, jasmine
- * @param {Object} data
+ * @param {MiiVisualParam} data
  * @param {boolean} skipCRC16
  * @returns {Uint8Array}
  */
@@ -1518,26 +1572,65 @@ const encode3DSStoreDataFromStruct = (data, skipCRC16) => {
 };
 
 /**
- * deobfuscate the obfuscated studio url format
- * from, and to, a Uint8Array (so requires converting from/to hex)
- * @param {Array<number>|Uint8Array} data
- * @returns {Uint8Array}
+ * Obfuscation code from: https://mii-studio.akamaized.net/static/js/editor.pc.46056ea432a4ef3974af.js
+ * Search ".prototype.encode".
+ * @param {Uint8Array} src - 46-byte source data before obfuscation.
+ * @param {Uint8Array} [dst] - 47-byte destination.
+ * @param {number} [seed] - Random byte value to use for obfuscation.
+ * @returns {Uint8Array} Destination array.
  */
-const studioURLObfuscationDecode = (data) => {
-  const decodedData = new Uint8Array(data);
-  const random = decodedData[0];
-  let previous = random;
-
-  // NOTE: THIS MAY GET AWAY WITH BEING 47, IDK
-  for (let i = 1; i < 48; i++) {
-    const encodedByte = decodedData[i];
-    const original = (encodedByte - 7 + 256) % 256;
-    decodedData[i - 1] = original ^ previous;
-    previous = encodedByte;
+function studioURLObfuscationEncode(src, dst, seed = 0) {
+  if (!dst) {
+    dst = new Uint8Array(47); // sizeof(charInfoStudio) + 1
+  }
+  // Assign seed from random byte.
+  if (typeof seed !== 'number') {
+    seed = Math.floor(256 * Math.random());
   }
 
-  return decodedData.slice(0, 46); // resize to normal studio data
-};
+  // Store the seed at index 0 of destination.
+  dst[0] = seed;
+  // Use seed as initial previous value.
+  let previous = seed;
+  // iterate over the source array length
+  for (let i = 0; i < 46; i++) { // 46 = sizeof(charInfoStudio)
+    const current = src[i];
+    // XOR the current value with the previous one, add 7, then take modulo 256
+    dst[i + 1] = (7 + (current ^ previous)) % 256;
+    // update the previous value to the current encoded value
+    previous = dst[i + 1];
+  }
+  return dst;
+}
+
+/**
+ * Obfuscates raw Studio data using {@link studioURLObfuscationEncode}
+ * and then returns the result as a hex string.
+ * @param {Uint8Array} src - 46-byte source data before obfuscation.
+ * @param {Uint8Array} [dst] - 47-byte destination.
+ * @param {number} [seed] - Random byte value to use for obfuscation.
+ * @returns {string} Obfuscated hex string to use in a Studio API URL.
+ */
+const studioURLEncodeHex = (src, dst, seed = 0) =>
+  bytesToHex(studioURLObfuscationEncode(src, dst, seed));
+
+/**
+ * deobfuscate the obfuscated studio url format
+ * from, and to, a Uint8Array (so requires converting from/to hex)
+ * @param {Array<number>|Uint8Array} dst
+ * @param {Array<number>|Uint8Array} src
+ */
+function studioURLObfuscationDecode(dst, src) {
+  const seed = src[0];
+  let previous = seed;
+
+  for (let i = 1; i < 47; i++) {
+    const encodedByte = src[i];
+    const original = (encodedByte - 7 + 256) % 256;
+    dst[i - 1] = original ^ previous;
+    previous = encodedByte;
+  }
+}
 
 /*
 function crc16(data) {
@@ -1594,15 +1687,19 @@ const wrapVer3StoreDataForQR = (data) => {
   // note: not a uint8array because qrjs takes arrays natively
   return result;
 };
-/*
-export {
+
+// export {
+return {
   convertDataToType,
+  supportedFormats,
   studioFormat,
-  encodeStudioToObfuscatedHex,
+  ver3Format,
+  studioURLObfuscationEncode,
+  studioURLEncodeHex,
   parseTomodachiLifeQRCodeData,
-  byteToHex,
+  bytesToHex,
   // from HTML:
   handleDownloadDataFileButton,
   handleConvertDetailsToggle
 };
-*/
+}));
