@@ -1,7 +1,7 @@
 // @ts-check
 
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const parse = require('csv-parse/sync');
 // All imports for data-conversion.js:
 /* eslint-disable no-undef -- Need to define globalThis as a HACK for data-conversion.js. */
@@ -38,7 +38,7 @@ const base64ToBytes = base64 => Uint8Array.from(atob(base64), c => c.charCodeAt(
  * @returns {Uint8Array} Decoded input data.
  */
 const hexToBytes = hex => Uint8Array.from({ length: hex.length >>> 1 }, (_, i) =>
-  parseInt(hex.slice(i << 1, (i << 1) + 2), 16));
+  Number.parseInt(hex.slice(i << 1, (i << 1) + 2), 16));
 
 /**
  * U8 -> Hex / https://www.xaymar.com/articles/2020/12/08/fastest-uint8array-to-hex-string-conversion-in-javascript/
@@ -417,25 +417,25 @@ const testConvEntry = (entry, fromNX = false) => () => {
 };
 
 describe('Mii data cross-conversion tests', () => {
-  testDataTable.forEach((entry) => {
+  for (const entry of testDataTable) {
     if (!entry.label) {
       if (entry.details) {
         console.info(entry.details);
       }
-      return;
+      continue;
     }
 
     const name = `${entry.label} / ${entry.details}`;
     describe(name, testConvEntry(entry));
     // describe
-  });
+  }
   // testDataTable.forEach
 
-  testDataTableFromNX.forEach((entry) => {
+  for (const entry of testDataTableFromNX) {
     const name = `${entry.label} / ${entry.details}`;
     describe(name, testConvEntry(entry, /* fromNX */ true));
     // describe
-  });
+  }
   // testDataTableFromNX.forEach
 
   // Individual cases.

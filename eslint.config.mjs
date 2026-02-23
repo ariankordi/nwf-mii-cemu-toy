@@ -1,10 +1,10 @@
 import eslint from '@eslint/js';
 import eslintCommentPlugin from '@eslint-community/eslint-plugin-eslint-comments/configs';
 import stylisticPlugin from '@stylistic/eslint-plugin';
-import importPlugin from 'eslint-plugin-import';
 import globals from 'globals';
+import importPlugin from 'eslint-plugin-import-x';
 import jsdoc from 'eslint-plugin-jsdoc';
-// npm i --save-dev eslint eslint-plugin-jsdoc globals @eslint/js @stylistic/eslint-plugin @eslint-community/eslint-plugin-eslint-comments eslint-plugin-import
+import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 
 const stylisticConfig = stylisticPlugin.configs.customize({
   indent: 2,
@@ -92,12 +92,12 @@ export default [
   importPlugin.flatConfigs.warnings,
   {
     rules: {
-      'import/order': ['warn', {
+      'import-x/order': ['warn', {
         'groups': ['builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'type'],
         'newlines-between': 'never'
       }],
-      'import/first': 'error',
-      'import/consistent-type-specifier-style': ['error', 'prefer-top-level']
+      'import-x/first': 'error',
+      'import-x/consistent-type-specifier-style': ['error', 'prefer-top-level']
     },
     languageOptions: {
       ecmaVersion // Default sets this to 2018???, so let's reset this to the default
@@ -106,6 +106,23 @@ export default [
 
   // https://www.npmjs.com/package/eslint-plugin-import - but specifically for TypeScript
   // (importPlugin.flatConfigs.typescript: unused)
+
+  // https://www.npmjs.com/package/eslint-plugin-unicorn
+  eslintPluginUnicorn.configs.unopinionated,
+  {
+    rules: {
+      // Not a fan of the numeric separators, since I don't think those are a thing in C/C++.
+      'unicorn/numeric-separators-style': 'off',
+      // The below enforces that hex is always uppercase.
+      'unicorn/number-literal-case': 'off',
+      // 'unicorn/no-static-only-class': 'off',
+      'unicorn/prefer-string-replace-all': 'off', // ES2021 only
+      'unicorn/no-array-sort': 'off', // ES2023 only
+      'unicorn/prefer-code-point': 'off', // Nullability does not match
+      // TODO: Transitional
+      'unicorn/prefer-module': 'off'
+    }
+  },
 
   // https://www.npmjs.com/package/eslint-plugin-jsdoc
   jsdoc.configs['flat/recommended'],
@@ -144,9 +161,8 @@ export default [
 
   {
     ignores: [
-      'struct-fu*.js', // Assume struct-fu is already linted.
-      'docs/**/*', // TypeDoc output
-
+      '**/vendor-js/',
+      '**/kaitai-structs/',
       // Defaults
       '**/dist/', // Common build output directory
       '**/*.min.js' // Minified JavaScript files

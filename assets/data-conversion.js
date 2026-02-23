@@ -315,10 +315,10 @@ conversionMethods.convertVer3FieldsToVer4 = (data) => {
   // clamp build/height to 127 if it's higher
   // because build/height max is 128 for ver3
   Object.defineProperty(data, 'bodyWeight', {
-    value: data.bodyWeight > 127 ? 127 : data.bodyWeight
+    value: Math.min(data.bodyWeight, 127)
   });
   Object.defineProperty(data, 'bodyHeight', {
-    value: data.bodyHeight > 127 ? 127 : data.bodyHeight
+    value: Math.min(data.bodyHeight, 127)
   });
 };
 
@@ -647,7 +647,7 @@ conversionMethods.encodeKaitaiStructToUint8Array = (struct) => {
       }
       case 'object':
         // actually, only arrays
-        if (!(value instanceof Array)) {
+        if (!(Array.isArray(value))) {
           if (!key.startsWith('_')) {
             console.warn('unknown field type on key object: ' + key);
           }
@@ -858,7 +858,6 @@ conversionMethods.encodeVer3StoreData = (dataStruct, forQRCode) => {
     }
   }
 
-
   // TODO: IF YOU ARE READING, it MAY BE A GOOD IDEA
   // to MAKE THE CREATE ID an actual HASH OF THE
   // ORIGINAL DATA or something so that it is CONSISTENT
@@ -926,7 +925,7 @@ conversionMethods.convertWiiFieldsToVer3 = (data) => {
  */
 const findInputFormatFromSize = (size) => {
   for (const format of supportedFormats) {
-    if (format.sizes.indexOf(size) !== -1) {
+    if (format.sizes.includes(size)) {
       return format;
     }
   }
@@ -1073,15 +1072,15 @@ const convertDataToType = (data, outputFormat, inputFormat, optionalBoolToEncode
   if (inputFormat && typeof inputFormat === 'object') {
     // assume it is the format specification
     format = inputFormat;
-  } else if (typeof inputFormat !== 'string') {
+  } else if (typeof inputFormat === 'string') {
+    // otherwise, inputFormat is assumed to be className
+    format = supportedFormats.find(f => f.className === inputFormat);
+    // find() will make it null or undefined
+  } else {
     // if inputFormat is NOT a valid string, so it's undefined...{
     format = findInputFormatFromSize(data.length);
     // ... auto detect based on size
     // that will throw an error so we don't need to handle it ourselves
-  } else {
-    // otherwise, inputFormat is assumed to be className
-    format = supportedFormats.find(f => f.className === inputFormat);
-    // find() will make it null or undefined
   }
   if (!format) {
     // unsupported/non-existent formatName was passed in
@@ -1114,7 +1113,7 @@ const convertDataToType = (data, outputFormat, inputFormat, optionalBoolToEncode
 
   // version is needed to evaluate which of the few conversion functions need to be run
   if (typeof outputFormat.version !== 'number') {
-    throw new Error(`Output format ${outputFormat.className} does not have a version field or it is not a number.`);
+    throw new TypeError(`Output format ${outputFormat.className} does not have a version field or it is not a number.`);
   }
   // encode function is run at the end here so it is needed
   if (outputFormat.encodeFunction === undefined ||
@@ -1525,7 +1524,6 @@ function crc16(data) {
   return crc;
 }
 
-
 /**
  * @param {Uint8Array} data
  * @returns {Array<number>}
@@ -1586,7 +1584,7 @@ const handleConvertDetailsToggle = (event) => {
   const target = /** @type {HTMLDetailsElement|null} */ (event.target);
   if (!target || !target.open || // not toggled open? ignore
     // or already revealed, we do not need to do anything
-    target.getAttribute('data-revealed')) {
+    target.dataset.revealed) {
     return;
   }
 
@@ -1606,11 +1604,11 @@ const handleConvertDetailsToggle = (event) => {
   if(!dataValue)
     throw new Error('image\'s source doesn\'t have data query parameter');
   */
-  const dataValue = target.getAttribute('data-data');
+  const dataValue = target.dataset.data;
   if (!dataValue) {
     throw new Error('data-data attribute on <details> is undefined, it is supposed to contain the data for this result');
   }
-  const name = target.getAttribute('data-name');
+  const name = target.dataset.name;
   // will be undefined if data-name is not there
 
   // the name of the input type will be put in this element
@@ -1641,7 +1639,7 @@ const handleConvertDetailsToggle = (event) => {
   miiInstructionsLinkElement.href += studioCode; // switchCharInfoHex;
 
   const studioURLData = studioURLEncodeHex(studioData);
-  const studioURLRender = studioImageElement.getAttribute('data-src') + studioURLData;
+  const studioURLRender = studioImageElement.dataset.src + studioURLData;
   // studioURLDataElement.textContent = studioURLData;
   studioImageElement.setAttribute('src', studioURLRender);
 
@@ -1706,21 +1704,18 @@ const handleConvertDetailsToggle = (event) => {
 
   const switchCharInfoDownloadButton = target.getElementsByClassName('download-switch-charinfo')[0];
   convertDataAndBindToDLButton(switchCharInfoDownloadButton, inputData, 'Gen3Switchgame', inputFormat);
-  switchCharInfoDownloadButton.setAttribute('data-filename',
-    fileBaseName + '.charinfo');
+  switchCharInfoDownloadButton.dataset.filename = fileBaseName + '.charinfo';
 
   const studioDataDownloadButton = target.getElementsByClassName('download-studio-data')[0];
   convertDataAndBindToDLButton(studioDataDownloadButton, inputData, 'Gen3Studio', inputFormat);
-  studioDataDownloadButton.setAttribute('data-filename',
-    fileBaseName + '.mnms');
+  studioDataDownloadButton.dataset.filename = fileBaseName + '.mnms';
 
   const ffsdDownloadButton = target.getElementsByClassName('download-ffsd')[0];
-  ffsdDownloadButton.setAttribute('data-data', ver3StoreDataB64);
-  ffsdDownloadButton.setAttribute('data-filename',
-    fileBaseName + '.ffsd');
+  ffsdDownloadButton.dataset.data = ver3StoreDataB64;
+  ffsdDownloadButton.dataset.filename = fileBaseName + '.ffsd';
 
   // mark as revealed at the end, i.e. do NOT RUN THE HANDLER ANYMORE
-  target.setAttribute('data-revealed', '1');
+  target.dataset.revealed = '1';
 };
 
 /**
@@ -1736,7 +1731,7 @@ const convertDataAndBindToDLButton = (button, inputData, formatName, inputFormat
     /** @type {FormatDefinition} */ (format), inputFormat);
 
   const dataString = uint8ArrayToBase64(data);
-  button.setAttribute('data-data', dataString);
+  button.dataset.data = dataString;
 };
 
 /**
@@ -1748,11 +1743,11 @@ const handleDownloadDataFileButton = (event) => {
     return;
   }
   // define a filename with the name, TBD: if name is generic then prepend date maybe?
-  const filename = /** @type {HTMLElement} */ (event.target).getAttribute('data-filename');
+  const filename = /** @type {HTMLElement} */ event.target.dataset.filename;
   if (!filename) {
     throw new Error('download button does not have data-filename attribute');
   }
-  const dataText = /** @type {HTMLElement} */ (event.target).getAttribute('data-data');
+  const dataText = /** @type {HTMLElement} */ event.target.dataset.data;
   if (!dataText) {
     throw new Error('download button does not have data-data attribute, where base64 data is supposed to go');
   }
