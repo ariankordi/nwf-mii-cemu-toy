@@ -1305,13 +1305,14 @@ if (!iframeMode) {
 }
 
 /**
- * Calculates a checksum of `data` using CRC-16/CCITT/XMODEM, with a polynomial of 0x1021.
+ * Calculates the CRC-16/CCITT/XMODEM checksum for the specified input data.
  * Courtesy of Luciano Barcaro: https://stackoverflow.com/a/30357446
  * @param {Uint8Array|Array<number>} data - The data to create a checksum of.
- * @returns {number} The CRC-16 checksum.
+ * @param {number} [current] - The starting CRC value, defaulting to 0.
+ * @returns {number} The calculated CRC-16 checksum.
  */
-function crc16(data) {
-  let crc = 0;
+function crc16(data, current = 0x0000) {
+  const crc = current;
   let msb = crc >> 8;
   let lsb = crc & 0xFF;
 
@@ -1323,8 +1324,7 @@ function crc16(data) {
     lsb = (x ^ (x << 5)) & 0xFF;
   }
 
-  crc = (msb << 8) + lsb;
-  return crc;
+  return (msb << 8) | lsb;
 }
 
 /*

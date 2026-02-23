@@ -38,21 +38,81 @@
 /** For {@link wrapVer3StoreDataForQR} */
 //import * as sjcl from './vendor-js/sjcl-108-min-plus-codecBytes.js';
 
+/**
+ * Object representing common fields shared by Kaitai structures.
+ * Properties are ordered in alphabetical order according to the
+ * real names of nn::mii::CharInfo.
+ * @typedef {Object} MiiVisualParam
+ * @property {number} facialHairColor
+ * @property {number} facialHairBeard
+ * @property {number} bodyWeight
+ * @property {number} eyeStretch
+ * @property {number} eyeColor
+ * @property {number} eyeRotation
+ * @property {number} eyeSize
+ * @property {number} eyeType
+ * @property {number} eyeHorizontal
+ * @property {number} eyeVertical
+ * @property {number} eyebrowStretch
+ * @property {number} eyebrowColor
+ * @property {number} eyebrowRotation
+ * @property {number} eyebrowSize
+ * @property {number} eyebrowType
+ * @property {number} eyebrowHorizontal
+ * @property {number} eyebrowVertical
+ * @property {number} faceColor
+ * @property {number} faceMakeup
+ * @property {number} faceType
+ * @property {number} faceWrinkles
+ * @property {number} favoriteColor
+ * @property {number} gender
+ * @property {number} glassesColor
+ * @property {number} glassesSize
+ * @property {number} glassesType
+ * @property {number} glassesVertical
+ * @property {number} hairColor
+ * @property {number} hairFlip
+ * @property {number} hairType
+ * @property {number} bodyHeight
+ * @property {number} moleSize
+ * @property {number} moleEnable
+ * @property {number} moleHorizontal
+ * @property {number} moleVertical
+ * @property {number} mouthStretch
+ * @property {number} mouthColor
+ * @property {number} mouthSize
+ * @property {number} mouthType
+ * @property {number} mouthVertical
+ * @property {number} facialHairSize
+ * @property {number} facialHairMustache
+ * @property {number} facialHairVertical
+ * @property {number} noseSize
+ * @property {number} noseType
+ * @property {number} noseVertical
+ */
+
 // // ---------------------------------------------------------------------
 // //  UMD / factory setup
 // eslint-disable-next-line jsdoc/convert-to-jsdoc-comments -- not documenting the umd block
 // // ---------------------------------------------------------------------
 
 (function (root, factory) {
+  /* istanbul ignore next */
   if (typeof module === 'object' && module.exports) {
     // Node.js/CommonJS
 
     // TODO: Only including KaitaiStream and nothing else.
-    module.exports = factory(require('kaitai-struct/KaitaiStream'), globalThis.structsObj);
+    module.exports = factory(
+      require('kaitai-struct/KaitaiStream'),
+      require('sjcl-with-all'),
+      globalThis.structsObj
+    );
   } else {
     // Browser globals (root is window)
 
-    const ret = factory(/** @type {*} */ (root).KaitaiStream, root);
+    const ret = factory(/** @type {*} */ (root).KaitaiStream,
+      /** @type {*} */ (root).sjcl,
+      root);
 
     // Set each returned property on root.
     for (const key in ret) {
@@ -65,8 +125,13 @@
 }(typeof self !== 'undefined' ? self : this,
   // NOTE: the ONLY injected dependency is KaitaiStream
   // because the UMD block is ONLY for unit testing purposes - no crc, qr code... needed
-  function (KaitaiStream, structsObj) {
+  function (KaitaiStream, sjcl, structsObj) {
 'use strict';
+
+// #region Format Definitions
+// // ---------------------------------------------------------------------
+// //  Format Definitions
+// // ---------------------------------------------------------------------
 
 /**
  * NOTE: "to" functions need to be defined in conersionMethods
@@ -158,64 +223,18 @@ const supportedFormats = [{
 }
 ];
 
-/**
- * Object representing common fields shared by Kaitai structures.
- * Properties are ordered in alphabetical order according to the
- * real names of nn::mii::CharInfo.
- * @typedef {Object} MiiVisualParam
- * @property {number} facialHairColor
- * @property {number} facialHairBeard
- * @property {number} bodyWeight
- * @property {number} eyeStretch
- * @property {number} eyeColor
- * @property {number} eyeRotation
- * @property {number} eyeSize
- * @property {number} eyeType
- * @property {number} eyeHorizontal
- * @property {number} eyeVertical
- * @property {number} eyebrowStretch
- * @property {number} eyebrowColor
- * @property {number} eyebrowRotation
- * @property {number} eyebrowSize
- * @property {number} eyebrowType
- * @property {number} eyebrowHorizontal
- * @property {number} eyebrowVertical
- * @property {number} faceColor
- * @property {number} faceMakeup
- * @property {number} faceType
- * @property {number} faceWrinkles
- * @property {number} favoriteColor
- * @property {number} gender
- * @property {number} glassesColor
- * @property {number} glassesSize
- * @property {number} glassesType
- * @property {number} glassesVertical
- * @property {number} hairColor
- * @property {number} hairFlip
- * @property {number} hairType
- * @property {number} bodyHeight
- * @property {number} moleSize
- * @property {number} moleEnable
- * @property {number} moleHorizontal
- * @property {number} moleVertical
- * @property {number} mouthStretch
- * @property {number} mouthColor
- * @property {number} mouthSize
- * @property {number} mouthType
- * @property {number} mouthVertical
- * @property {number} facialHairSize
- * @property {number} facialHairMustache
- * @property {number} facialHairVertical
- * @property {number} noseSize
- * @property {number} noseType
- * @property {number} noseVertical
- */
+// #endregion
 
 /**
  * ig you could also make this "no name" like FFL does
  * blanco (na) api sets mii studio miis' names to this
  */
 const DEFAULT_NAME_IF_NONE = 'Mii';
+
+// #region Conversion Methods
+// // ---------------------------------------------------------------------
+// //  Conversion Methods
+// // ---------------------------------------------------------------------
 
 /** conversion methods for supportedFormats are defined here instead of window now */
 const conversionMethods = {};
@@ -227,20 +246,20 @@ const conversionMethods = {};
 // facelineColor: maps identically, no conv needed
 /**
  * 0->8
- * @param {number} c
- * @returns {number}
+ * @param {number} c - Ver3 hair color.
+ * @returns {number} The corresponding common color.
  */
 const ver3ToVer4HairColor = c => c === 0 ? 8 : c;
 /**
  * offset 8
- * @param {number} c
- * @returns {number}
+ * @param {number} c - Ver3 eye color.
+ * @returns {number} The corresponding common color.
  */
 const ver3ToVer4EyeColor = c => c + 8;
 /**
  * Ver3GlassColorTable
- * @param {number} c
- * @returns {number}
+ * @param {number} c - Ver3 glass color.
+ * @returns {number} The corresponding common color.
  */
 const ver3ToVer4GlassColor = (c) => {
   // Ver3GlassColorTable
@@ -250,8 +269,8 @@ const ver3ToVer4GlassColor = (c) => {
 };
 /**
  * offset 19
- * @param {number} c
- * @returns {number}
+ * @param {number} c - Ver3 mouth color.
+ * @returns {number} The corresponding common color.
  */
 const ver3ToVer4MouthColor = c => c + 19;
 // glassType: maps identically, no conv needed
@@ -473,7 +492,11 @@ conversionMethods.applyHairDyeAsVer4HairColor = (data) => {
     return; // Return unmodified
   }
 
-  /* Hair dye table extracted by kat21 from RenderDoc (vec3):
+  /* Tomodachi Life hair dye color table from kat21 (vec3)
+     They are expressed as RGBA little-endian bytes in the binary. (0004000E0008C300 1.1.0)
+     There are 29 colors in the binary with the remaining 4 being defined inline.
+     Colors are defined in function: FUN_00706fa4, uint[29] begins at 00707134.
+     Extracted by capturing the color selector in RenderDoc.
     0.61569, 0.87451, 1.00
     0.40784, 0.80,    1.00
     0.23922, 0.52549, 1.00
@@ -507,7 +530,13 @@ conversionMethods.applyHairDyeAsVer4HairColor = (data) => {
     0.70588, 0.70588, 0.70588
     1.00,    1.00,    1.00
   */
-  // Lookup table courtesy of kat21.
+
+  /**
+   * Lookup table created using Euclidian distance to common colors. (courtesy of kat21)
+   * See also a version by HEYimHeroic: https://x.com/HEYimHeroic/status/1705662026398196073
+   * floats - https://discord.com/channels/360173962862395392/485919503369371648/1325604971072327712
+   * conversion - https://discord.com/channels/360173962862395392/485919503369371648/1325884578673463396
+   */
   const HairDyeToCommonColorTable = [
     // Corresponds to the in-game color selection layout:
     55, 51, 50, 12, 16, 12, 67, 61,
@@ -740,207 +769,6 @@ conversionMethods.forceEnableCopyingIfUndefined = (output, input) => {
   }
 };
 
-// current name of studio kaitai struct class being used
-const studioFormat = /** @type {FormatDefinition} */ (supportedFormats.find(f => f.className === 'Gen3Studio'));
-const ver3Format = /** @type {FormatDefinition} */ (supportedFormats.find(f => f.className === 'Gen2Wiiu3dsMiitomo'));
-console.assert(studioFormat !== undefined && ver3Format !== undefined);
-
-/**
- * @param {ToggleEvent} event
- */
-const handleConvertDetailsToggle = (event) => {
-  const target = /** @type {HTMLDetailsElement|null} */ (event.target);
-  if (!target || !target.open || // not toggled open? ignore
-    // or already revealed, we do not need to do anything
-    target.getAttribute('data-revealed')) {
-    return;
-  }
-
-  // NOTE: routine to find data in image, replaced by fetching from data attribute
-  /*
-  // we need to find the data
-  // .. for now, take this from the parent's image url
-  const hopefullyImage = event.target.parentElement.getElementsByTagName('img')[0];
-  const imageSrc = hopefullyImage.getAttribute('src');
-  if(!imageSrc)
-    // image src should not be undefined
-    throw new Error('why is the image\'s src undefined...???');
-
-  // get data param, if it even exists
-  const imageURLParams = new URLSearchParams(new URL(imageSrc).search);
-  const dataValue = imageURLParams.get('data');
-  if(!dataValue)
-    throw new Error('image\'s source doesn\'t have data query parameter');
-  */
-  const dataValue = target.getAttribute('data-data');
-  if (!dataValue) {
-    throw new Error('data-data attribute on <details> is undefined, it is supposed to contain the data for this result');
-  }
-  const name = target.getAttribute('data-name');
-  // will be undefined if data-name is not there
-
-  // the name of the input type will be put in this element
-  const inputTypeElement = target.getElementsByClassName('input-type')[0];
-
-  const inputData = parseHexOrB64ToUint8Array(dataValue);
-
-  // const studioURLDataElement = event.target.getElementsByClassName('studio-url-data')[0];
-  const studioImageElement = target.getElementsByClassName('image-80')[0];
-  const studioCodeElement = target.getElementsByClassName('studio-code')[0];
-
-  // run the function to convert the data from the image to raw studio data
-  const studioData = convertDataToType(inputData, studioFormat);
-  // "studio code" = raw studio data in hex
-  // NOTE: three dots are only required if it is a uint8array which
-  // it is only one if the input data is studio data directly
-  const studioCode = bytesToHex(studioData);
-  studioCodeElement.textContent = studioCode;
-
-  // TODO 2024-11-04: while the mii instructions site accepts studio
-  // data as well as charinfo which would be more convenient... for
-  // the time being charinfo will be used
-  /*
-  const switchCharInfoData = convertDataToType(inputData, supportedFormats.find(f => f.className === 'Gen3Switchgame'));
-  const switchCharInfoHex = [...switchCharInfoData].map(byteToHex).join('');
-  */
-  const miiInstructionsLinkElement = target.getElementsByClassName('mii-instructions-link')[0];
-  miiInstructionsLinkElement.href += studioCode; // switchCharInfoHex;
-
-  const studioURLData = studioURLEncodeHex(studioData);
-  const studioURLRender = studioImageElement.getAttribute('data-src') + studioURLData;
-  // studioURLDataElement.textContent = studioURLData;
-  studioImageElement.setAttribute('src', studioURLRender);
-
-  // do this at the end bc it is most likely to fail
-  const ver3StoreDataElement = target.getElementsByClassName('ver3storedata')[0];
-  const inputFormat = findInputFormatFromSize(inputData.length);
-
-  if (inputFormat !== undefined &&
-    typeof inputFormat.technicalName === 'string') {
-    inputTypeElement.textContent = inputFormat.technicalName;
-  }
-
-  const ver3StoreData = convertDataToType(inputData, ver3Format, inputFormat);
-  const ver3StoreDataB64 = uint8ArrayToBase64(ver3StoreData);
-  ver3StoreDataElement.textContent = ver3StoreDataB64;
-  // finally make a qr code
-  if (typeof QRCode !== 'undefined') {
-    /** set "forQRCode" true */
-    const ver3StoreDataForQR = convertDataToType(inputData, ver3Format, inputFormat, true);
-    const ver3QRCodeDataArray = wrapVer3StoreDataForQR(ver3StoreDataForQR);
-    const qrCodeImage = target.getElementsByClassName('image-qr')[0];
-    qrCodeImage.src = QRCode.generatePNG(ver3QRCodeDataArray, {
-      margin: null
-    }); // for whatever reason they check whether this
-    // property in options is null - but it is undefined
-  }
-
-  const modelDownloadButtons = target.getElementsByClassName('model-download-button');
-  const imgSearchIfItExists = target.parentElement.getElementsByTagName('img');
-  if (modelDownloadButtons.length && imgSearchIfItExists.length) {
-    const linkButWithGlbInsteadOfPng = imgSearchIfItExists[0].src
-    // switch shader has transparent faceline
-    // texture which will look wrong here
-    // so just remove it in order to avoid
-    // ppl who use that and don't know that
-      .replace('&shaderType=1', '')
-      .replace('.png?', '.glb?');
-    modelDownloadButtons[0].setAttribute('action', // actually a form lmao
-      linkButWithGlbInsteadOfPng);
-  }
-
-  // base name will be name if it is defined
-  let fileBaseName = name;
-  if (!fileBaseName) {
-    /**
-     * Pads a number with a leading zero if it's less than 10.
-     * @param {number} num - The number to pad.
-     * @returns {string} Padded string representation of the number.
-     */
-    const pad2 = num => (num < 10 ? '0' : '') + num;
-    // otherwise compose a base name from the date and type
-    const now = new Date();
-    const formattedTime = now.getFullYear() + '-' +
-      pad2(now.getMonth() + 1) + '-' +
-      pad2(now.getDate()) + '_' +
-      pad2(now.getHours()) + '-' +
-      pad2(now.getMinutes()) + '-' +
-      pad2(now.getSeconds());
-
-    fileBaseName = formattedTime + '-' + inputFormat.className;
-  }
-
-  const switchCharInfoDownloadButton = target.getElementsByClassName('download-switch-charinfo')[0];
-  convertDataAndBindToDLButton(switchCharInfoDownloadButton, inputData, 'Gen3Switchgame', inputFormat);
-  switchCharInfoDownloadButton.setAttribute('data-filename',
-    fileBaseName + '.charinfo');
-
-  const studioDataDownloadButton = target.getElementsByClassName('download-studio-data')[0];
-  convertDataAndBindToDLButton(studioDataDownloadButton, inputData, 'Gen3Studio', inputFormat);
-  studioDataDownloadButton.setAttribute('data-filename',
-    fileBaseName + '.mnms');
-
-  const ffsdDownloadButton = target.getElementsByClassName('download-ffsd')[0];
-  ffsdDownloadButton.setAttribute('data-data', ver3StoreDataB64);
-  ffsdDownloadButton.setAttribute('data-filename',
-    fileBaseName + '.ffsd');
-
-  // mark as revealed at the end, i.e. do NOT RUN THE HANDLER ANYMORE
-  target.setAttribute('data-revealed', '1');
-};
-
-/**
- * @param {HTMLButtonElement} button
- * @param {Uint8Array} inputData
- * @param {string} formatName
- * @param {FormatDefinition} inputFormat
- */
-const convertDataAndBindToDLButton = (button, inputData, formatName, inputFormat) => {
-  const format = supportedFormats.find(f => f.className === formatName);
-  console.assert(format !== undefined);
-  const data = convertDataToType(inputData,
-    /** @type {FormatDefinition} */ (format), inputFormat);
-
-  const dataString = uint8ArrayToBase64(data);
-  button.setAttribute('data-data', dataString);
-};
-
-/**
-* @param {MouseEvent} event
-*/
-const handleDownloadDataFileButton = (event) => {
-  event.preventDefault();
-  if (!event.target) {
-    return;
-  }
-  // define a filename with the name, TBD: if name is generic then prepend date maybe?
-  const filename = /** @type {HTMLElement} */ (event.target).getAttribute('data-filename');
-  if (!filename) {
-    throw new Error('download button does not have data-filename attribute');
-  }
-  const dataText = /** @type {HTMLElement} */ (event.target).getAttribute('data-data');
-  if (!dataText) {
-    throw new Error('download button does not have data-data attribute, where base64 data is supposed to go');
-  }
-
-  const data = base64ToUint8Array(dataText);
-
-  // create and download a new blob from the uint8array we made
-  const blob = new Blob([data]);
-  // , {type: 'application/octet-stream'});
-
-  // create a fake anchor so we can set the filename
-  const link = document.createElement('a');
-  // create a url from the blob, download from here
-  const url = URL.createObjectURL(blob);
-  link.href = url;
-  link.download = filename;
-  // begin the download
-  link.click();
-  // revoke the object url after the download is complete ideally
-  URL.revokeObjectURL(url);
-};
-
 /**
  * encodes a compatible struct to Ver3StoreData
  * NOTE: forQRCode DOES THESE (potentially undesirable) THINGS:
@@ -1005,9 +833,26 @@ conversionMethods.encodeVer3StoreData = (dataStruct, forQRCode) => {
     dataStruct.avatarId[0] &= ~0b00100000;
   } // unset this bit
 
-  // TODO: IF YOU ARE READING, ACTUALLY MAKE THIS
-  // A HASH OF THE MII STUDIO DATA OR SOMETHING I THINK MAYBE
-  // debugger
+  // check if create id indicates special mii
+  if (dataStruct.avatarId[0] !== 0 && // not just null
+    (dataStruct.avatarId[0] & 0b10000000) === 0) { // special mii bit is 0
+    // check for problems with the special mii and just warn
+    console.info('Encoding a Special Mii.');
+    // check localonly, must be true
+    if (!dataStruct.mingle) {
+      console.warn('For Special Miis, "mingling/sharing" must be OFF (localonly = true). This Special Mii has sharing enabled, therefore it will not work on any console.');
+    }
+    // now check if it is 3ds exclusive
+    if ((dataStruct.avatarId[0] & 0b01010000) == 0x10) { // ctr bit is set
+      // 0000 = wii / 0100 = ntr / 0001 = ctr / 0101 = wiiu
+      console.warn('This Special Mii was created on a 3DS, so it will not scan on a Wii U. Try setting the first and third bits of the Mii ID\'s first byte. Like this: storeData.createID.data[0] |= 0x80');
+    }
+  }
+
+
+  // TODO: IF YOU ARE READING, it MAY BE A GOOD IDEA
+  // to MAKE THE CREATE ID an actual HASH OF THE
+  // ORIGINAL DATA or something so that it is CONSISTENT
   if (!dataStruct.avatarId || isArrayNull(dataStruct.avatarId)) {
     dataStruct.avatarId = [0b11010000, // set normal/wiiu bit
       0, 0, 0];
@@ -1029,6 +874,37 @@ conversionMethods.encodeVer3StoreData = (dataStruct, forQRCode) => {
   return encode3DSStoreDataFromStruct(dataStruct,
     skipCRC16);
 };
+
+/**
+ * converts Wii properties to ver3 compatible properties
+ * @param {MiiVisualParam} data
+ */
+conversionMethods.convertWiiFieldsToVer3 = (data) => {
+  // wii data does not support eye/mouth/eyebrow aspect/stretch so these are constant
+  data.eyeStretch = 3;
+  data.mouthStretch = 3;
+  data.eyebrowStretch = 3;
+
+  /**
+   * Table to map faceTex field in RFLCharData to wrinkle and makeup fields.
+   * First column is wrinkle (faceTex), second is makeup (faceMake).
+   * See: https://github.com/aboood40091/ffl/blob/73fe9fc70c0f96ebea373122e50f6d3acc443180/src/FFLiMiiData.cpp#L353
+   */
+  const faceTexTable = [
+    [0, 0], [0, 1], [0, 6], [0, 9], [5, 0], [2, 0],
+    [3, 0], [7, 0], [8, 0], [0, 10], [9, 0], [11, 0]
+  ];
+
+  data.faceWrinkles = faceTexTable[data.facialFeature][0];
+  data.faceMakeup = faceTexTable[data.facialFeature][1];
+};
+
+// #endregion
+
+// #region Struct Parsing Utilities
+// // ---------------------------------------------------------------------
+// //  Struct Parsing Utilities
+// // ---------------------------------------------------------------------
 
 /**
  * iterate through format list, assumed to be called supportedFormats
@@ -1168,7 +1044,7 @@ const STUDIO_OBFUSCATED_LENGTH = 47;
  * if not provided then the size is used to auto detect
  * @param {Uint8Array} data
  * @param {FormatDefinition} outputFormat
- * @param {FormatDefinition|string|number} [inputFormat]
+ * @param {FormatDefinition|string|number|null} [inputFormat]
  * @param {boolean} [optionalBoolToEncodeFunc] - Passed to encode function.
  * @returns {Uint8Array}
  * @throws {Error} Throws if input format name is unknown, or outputFormat is not a valid format
@@ -1182,7 +1058,7 @@ const convertDataToType = (data, outputFormat, inputFormat, optionalBoolToEncode
   // format comes from either findInputFormatFromSize
   // or it comes directly from supportedFormats itself
   let format;
-  if (typeof inputFormat === 'object') {
+  if (inputFormat && typeof inputFormat === 'object') {
     // assume it is the format specification
     format = inputFormat;
   } else if (typeof inputFormat !== 'string') {
@@ -1288,6 +1164,12 @@ const convertDataToType = (data, outputFormat, inputFormat, optionalBoolToEncode
   return encodedOutput; // should be a uint8array
 };
 
+// #endregion
+
+// #region Codec Utilities, String Utilities
+// // ---------------------------------------------------------------------
+// //  Codec Utilities, String Utilities
+// // ---------------------------------------------------------------------
 
 /**
  * U8 -> Hex / https://www.xaymar.com/articles/2020/12/08/fastest-uint8array-to-hex-string-conversion-in-javascript/
@@ -1338,30 +1220,12 @@ const removeEverythingAfterNullTerminator = (str) => {
  */
 const isArrayNull = array => array.every(i => i === 0);
 
-/**
- * TODO: TODO: CHECK IF YOU CAN PUT THE TWO TABLES INTO ONE
- * converts Wii properties to ver3 compatible properties
- * @param {MiiVisualParam} data
- */
-conversionMethods.convertWiiFieldsToVer3 = (data) => {
-  // wii data does not support eye/mouth/eyebrow aspect/stretch so these are constant
-  data.eyeStretch = 3;
-  data.mouthStretch = 3;
-  data.eyebrowStretch = 3;
+// #endregion
 
-  /**
-   * Table to map faceTex field in RFLCharData to wrinkle and makeup fields.
-   * First column is wrinkle (faceTex), second is makeup (faceMake).
-   * See: https://github.com/aboood40091/ffl/blob/73fe9fc70c0f96ebea373122e50f6d3acc443180/src/FFLiMiiData.cpp#L353
-   */
-  const faceTexTable = [
-    [0, 0], [0, 1], [0, 6], [0, 9], [5, 0], [2, 0],
-    [3, 0], [7, 0], [8, 0], [0, 10], [9, 0], [11, 0]
-  ];
-
-  data.faceWrinkles = faceTexTable[data.facialFeature][0];
-  data.faceMakeup = faceTexTable[data.facialFeature][1];
-};
+// #region Encoding Methods
+// // ---------------------------------------------------------------------
+// //  Encoding Methods
+// // ---------------------------------------------------------------------
 
 /**
  * NOTE: customized for the kaitai by GPT-4o...
@@ -1581,7 +1445,7 @@ const encode3DSStoreDataFromStruct = (data, skipCRC16) => {
  */
 function studioURLObfuscationEncode(src, dst, seed = 0) {
   if (!dst) {
-    dst = new Uint8Array(47); // sizeof(charInfoStudio) + 1
+    dst = new Uint8Array(STUDIO_OBFUSCATED_LENGTH); // sizeof(charInfoStudio) + 1
   }
   // Assign seed from random byte.
   if (typeof seed !== 'number') {
@@ -1607,12 +1471,11 @@ function studioURLObfuscationEncode(src, dst, seed = 0) {
  * Obfuscates raw Studio data using {@link studioURLObfuscationEncode}
  * and then returns the result as a hex string.
  * @param {Uint8Array} src - 46-byte source data before obfuscation.
- * @param {Uint8Array} [dst] - 47-byte destination.
  * @param {number} [seed] - Random byte value to use for obfuscation.
  * @returns {string} Obfuscated hex string to use in a Studio API URL.
  */
-const studioURLEncodeHex = (src, dst, seed = 0) =>
-  bytesToHex(studioURLObfuscationEncode(src, dst, seed));
+const studioURLEncodeHex = (src, seed = 0) =>
+  bytesToHex(studioURLObfuscationEncode(src, undefined, seed));
 
 /**
  * deobfuscate the obfuscated studio url format
@@ -1624,7 +1487,7 @@ function studioURLObfuscationDecode(dst, src) {
   const seed = src[0];
   let previous = seed;
 
-  for (let i = 1; i < 47; i++) {
+  for (let i = 1; i < STUDIO_OBFUSCATED_LENGTH; i++) {
     const encodedByte = src[i];
     const original = (encodedByte - 7 + 256) % 256;
     dst[i - 1] = original ^ previous;
@@ -1632,14 +1495,14 @@ function studioURLObfuscationDecode(dst, src) {
   }
 }
 
-/*
+// TODO will this stay here?
 function crc16(data) {
   let crc = 0;
   let msb = crc >> 8;
   let lsb = crc & 0xFF;
 
-  for(let i = 0; i < data.length; i++) {
-    let c = data[i];
+  for (let i = 0; i < data.length; i++) {
+    const c = data[i];
     let x = c ^ msb;
     x ^= (x >> 4);
     msb = (lsb ^ (x >> 3) ^ (x << 4)) & 0xFF;
@@ -1649,7 +1512,7 @@ function crc16(data) {
   crc = (msb << 8) + lsb;
   return crc;
 }
-*/
+
 
 /**
  * @param {Uint8Array} data
@@ -1688,18 +1551,240 @@ const wrapVer3StoreDataForQR = (data) => {
   return result;
 };
 
+// #endregion
+
+// current name of studio kaitai struct class being used
+const studioFormat = /** @type {FormatDefinition} */ (supportedFormats.find(f => f.className === 'Gen3Studio'));
+const ver3Format = /** @type {FormatDefinition} */ (supportedFormats.find(f => f.className === 'Gen2Wiiu3dsMiitomo'));
+console.assert(studioFormat !== undefined && ver3Format !== undefined);
+
+// TODO ORGANIZE THIS BETTER
+const coreFormat = /** @type {FormatDefinition} */ (supportedFormats.find(f => f.className === 'Gen3Switch'));
+const charInfoFormat = /** @type {FormatDefinition} */ (supportedFormats.find(f => f.className === 'Gen3Switchgame'));
+
+// #region HTML UI Functions
+// // ---------------------------------------------------------------------
+// //  HTML UI Functions
+// // ---------------------------------------------------------------------
+
+/**
+ * @param {ToggleEvent} event
+ */
+const handleConvertDetailsToggle = (event) => {
+  const target = /** @type {HTMLDetailsElement|null} */ (event.target);
+  if (!target || !target.open || // not toggled open? ignore
+    // or already revealed, we do not need to do anything
+    target.getAttribute('data-revealed')) {
+    return;
+  }
+
+  // NOTE: routine to find data in image, replaced by fetching from data attribute
+  /*
+  // we need to find the data
+  // .. for now, take this from the parent's image url
+  const hopefullyImage = event.target.parentElement.getElementsByTagName('img')[0];
+  const imageSrc = hopefullyImage.getAttribute('src');
+  if(!imageSrc)
+    // image src should not be undefined
+    throw new Error('why is the image\'s src undefined...???');
+
+  // get data param, if it even exists
+  const imageURLParams = new URLSearchParams(new URL(imageSrc).search);
+  const dataValue = imageURLParams.get('data');
+  if(!dataValue)
+    throw new Error('image\'s source doesn\'t have data query parameter');
+  */
+  const dataValue = target.getAttribute('data-data');
+  if (!dataValue) {
+    throw new Error('data-data attribute on <details> is undefined, it is supposed to contain the data for this result');
+  }
+  const name = target.getAttribute('data-name');
+  // will be undefined if data-name is not there
+
+  // the name of the input type will be put in this element
+  const inputTypeElement = target.getElementsByClassName('input-type')[0];
+
+  const inputData = parseHexOrB64ToUint8Array(dataValue);
+
+  // const studioURLDataElement = event.target.getElementsByClassName('studio-url-data')[0];
+  const studioImageElement = target.getElementsByClassName('image-80')[0];
+  const studioCodeElement = target.getElementsByClassName('studio-code')[0];
+
+  // run the function to convert the data from the image to raw studio data
+  const studioData = convertDataToType(inputData, studioFormat);
+  // "studio code" = raw studio data in hex
+  // NOTE: three dots are only required if it is a uint8array which
+  // it is only one if the input data is studio data directly
+  const studioCode = bytesToHex(studioData);
+  studioCodeElement.textContent = studioCode;
+
+  // TODO 2024-11-04: while the mii instructions site accepts studio
+  // data as well as charinfo which would be more convenient... for
+  // the time being charinfo will be used
+  /*
+  const switchCharInfoData = convertDataToType(inputData, supportedFormats.find(f => f.className === 'Gen3Switchgame'));
+  const switchCharInfoHex = [...switchCharInfoData].map(byteToHex).join('');
+  */
+  const miiInstructionsLinkElement = target.getElementsByClassName('mii-instructions-link')[0];
+  miiInstructionsLinkElement.href += studioCode; // switchCharInfoHex;
+
+  const studioURLData = studioURLEncodeHex(studioData);
+  const studioURLRender = studioImageElement.getAttribute('data-src') + studioURLData;
+  // studioURLDataElement.textContent = studioURLData;
+  studioImageElement.setAttribute('src', studioURLRender);
+
+  // do this at the end bc it is most likely to fail
+  const ver3StoreDataElement = target.getElementsByClassName('ver3storedata')[0];
+  const inputFormat = findInputFormatFromSize(inputData.length);
+
+  if (inputFormat !== undefined &&
+    typeof inputFormat.technicalName === 'string') {
+    inputTypeElement.textContent = inputFormat.technicalName;
+  }
+
+  const ver3StoreData = convertDataToType(inputData, ver3Format, inputFormat);
+  const ver3StoreDataB64 = uint8ArrayToBase64(ver3StoreData);
+  ver3StoreDataElement.textContent = ver3StoreDataB64;
+  // finally make a qr code
+  if (typeof QRCode !== 'undefined') {
+    /** set "forQRCode" true */
+    const ver3StoreDataForQR = convertDataToType(inputData, ver3Format, inputFormat, true);
+    const ver3QRCodeDataArray = wrapVer3StoreDataForQR(ver3StoreDataForQR);
+    const qrCodeImage = target.getElementsByClassName('image-qr')[0];
+    qrCodeImage.src = QRCode.generatePNG(ver3QRCodeDataArray, {
+      margin: null
+    }); // for whatever reason they check whether this
+    // property in options is null - but it is undefined
+  }
+
+  const modelDownloadButtons = target.getElementsByClassName('model-download-button');
+  const imgSearchIfItExists = target.parentElement.getElementsByTagName('img');
+  if (modelDownloadButtons.length && imgSearchIfItExists.length) {
+    const linkButWithGlbInsteadOfPng = imgSearchIfItExists[0].src
+    // switch shader has transparent faceline
+    // texture which will look wrong here
+    // so just remove it in order to avoid
+    // ppl who use that and don't know that
+      .replace('&shaderType=1', '')
+      .replace('.png?', '.glb?');
+    modelDownloadButtons[0].setAttribute('action', // actually a form lmao
+      linkButWithGlbInsteadOfPng);
+  }
+
+  // base name will be name if it is defined
+  let fileBaseName = name;
+  if (!fileBaseName) {
+    /**
+     * Pads a number with a leading zero if it's less than 10.
+     * @param {number} num - The number to pad.
+     * @returns {string} Padded string representation of the number.
+     */
+    const pad2 = num => (num < 10 ? '0' : '') + num;
+    // otherwise compose a base name from the date and type
+    const now = new Date();
+    const formattedTime = now.getFullYear() + '-' +
+      pad2(now.getMonth() + 1) + '-' +
+      pad2(now.getDate()) + '_' +
+      pad2(now.getHours()) + '-' +
+      pad2(now.getMinutes()) + '-' +
+      pad2(now.getSeconds());
+
+    fileBaseName = formattedTime + '-' + inputFormat.className;
+  }
+
+  const switchCharInfoDownloadButton = target.getElementsByClassName('download-switch-charinfo')[0];
+  convertDataAndBindToDLButton(switchCharInfoDownloadButton, inputData, 'Gen3Switchgame', inputFormat);
+  switchCharInfoDownloadButton.setAttribute('data-filename',
+    fileBaseName + '.charinfo');
+
+  const studioDataDownloadButton = target.getElementsByClassName('download-studio-data')[0];
+  convertDataAndBindToDLButton(studioDataDownloadButton, inputData, 'Gen3Studio', inputFormat);
+  studioDataDownloadButton.setAttribute('data-filename',
+    fileBaseName + '.mnms');
+
+  const ffsdDownloadButton = target.getElementsByClassName('download-ffsd')[0];
+  ffsdDownloadButton.setAttribute('data-data', ver3StoreDataB64);
+  ffsdDownloadButton.setAttribute('data-filename',
+    fileBaseName + '.ffsd');
+
+  // mark as revealed at the end, i.e. do NOT RUN THE HANDLER ANYMORE
+  target.setAttribute('data-revealed', '1');
+};
+
+/**
+ * @param {HTMLButtonElement} button
+ * @param {Uint8Array} inputData
+ * @param {string} formatName
+ * @param {FormatDefinition} inputFormat
+ */
+const convertDataAndBindToDLButton = (button, inputData, formatName, inputFormat) => {
+  const format = supportedFormats.find(f => f.className === formatName);
+  console.assert(format !== undefined);
+  const data = convertDataToType(inputData,
+    /** @type {FormatDefinition} */ (format), inputFormat);
+
+  const dataString = uint8ArrayToBase64(data);
+  button.setAttribute('data-data', dataString);
+};
+
+/**
+* @param {MouseEvent} event
+*/
+const handleDownloadDataFileButton = (event) => {
+  event.preventDefault();
+  if (!event.target) {
+    return;
+  }
+  // define a filename with the name, TBD: if name is generic then prepend date maybe?
+  const filename = /** @type {HTMLElement} */ (event.target).getAttribute('data-filename');
+  if (!filename) {
+    throw new Error('download button does not have data-filename attribute');
+  }
+  const dataText = /** @type {HTMLElement} */ (event.target).getAttribute('data-data');
+  if (!dataText) {
+    throw new Error('download button does not have data-data attribute, where base64 data is supposed to go');
+  }
+
+  const data = base64ToUint8Array(dataText);
+
+  // create and download a new blob from the uint8array we made
+  const blob = new Blob([data]);
+  // , {type: 'application/octet-stream'});
+
+  // create a fake anchor so we can set the filename
+  const link = document.createElement('a');
+  // create a url from the blob, download from here
+  const url = URL.createObjectURL(blob);
+  link.href = url;
+  link.download = filename;
+  // begin the download
+  link.click();
+  // revoke the object url after the download is complete ideally
+  URL.revokeObjectURL(url);
+};
+
+// #endregion
+
 // export {
 return {
   convertDataToType,
   supportedFormats,
   studioFormat,
   ver3Format,
+  coreFormat,
+  charInfoFormat,
   studioURLObfuscationEncode,
   studioURLEncodeHex,
   parseTomodachiLifeQRCodeData,
   bytesToHex,
   // from HTML:
   handleDownloadDataFileButton,
-  handleConvertDetailsToggle
+  handleConvertDetailsToggle,
+  // for tests:
+  removeEverythingAfterNullTerminator,
+  wrapVer3StoreDataForQR,
+  encode3DSStoreDataFromStruct,
+  findInputFormatFromSize,
+  createNewInstanceOfKaitaiStructFormat
 };
 }));

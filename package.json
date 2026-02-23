@@ -13,9 +13,11 @@
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jsdoc": "^50.6.11",
     "globals": "^16.0.0",
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "jest-html-reporter": "^4.3.0"
   },
   "dependencies": {
-    "kaitai-struct": "^0.10.0"
+    "kaitai-struct": "^0.10.0",
+    "sjcl-with-all": "^1.0.8"
   }
 }
