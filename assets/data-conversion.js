@@ -311,6 +311,15 @@ conversionMethods.convertVer3FieldsToVer4 = (data) => {
   // NOTE: you cannot do the same vice-versa to convert ver4 colors back
   // ver4 also has new glass types, and...
   // ... faceline/skin color is not mapped (ver3 ones work on ver4)
+
+  // clamp build/height to 127 if it's higher
+  // because build/height max is 128 for ver3
+  Object.defineProperty(data, 'bodyWeight', {
+    value: data.bodyWeight > 127 ? 127 : data.bodyWeight
+  });
+  Object.defineProperty(data, 'bodyHeight', {
+    value: data.bodyHeight > 127 ? 127 : data.bodyHeight
+  });
 };
 
 // NOTE: tables are from MiiPort:
@@ -854,11 +863,13 @@ conversionMethods.encodeVer3StoreData = (dataStruct, forQRCode) => {
   // to MAKE THE CREATE ID an actual HASH OF THE
   // ORIGINAL DATA or something so that it is CONSISTENT
   if (!dataStruct.avatarId || isArrayNull(dataStruct.avatarId)) {
-    dataStruct.avatarId = [0b11010000, // set normal/wiiu bit
-      0, 0, 0];
-    // dataStruct.clientId = [0, 0, 0, 0, 0, 0];
-    dataStruct.clientId = randomUint8Array(6);
-    // NOTE: THIS ^^ is the SECOND part of CreateID
+    const randomCreateID = randomUint8Array(10); // Ver3CreateId
+
+    randomCreateID[0] = 0b11010000; // set normal/wiiu bit
+    randomCreateID[3] = 0;
+    dataStruct.avatarId = randomCreateID;
+    dataStruct.clientId = randomCreateID.slice(4);
+    // CreateID = avatarId + clientId
   }
 
   // force enable copying, but only if qr code mode is on
@@ -1058,6 +1069,7 @@ const convertDataToType = (data, outputFormat, inputFormat, optionalBoolToEncode
   // format comes from either findInputFormatFromSize
   // or it comes directly from supportedFormats itself
   let format;
+  // if non-null and is an object...
   if (inputFormat && typeof inputFormat === 'object') {
     // assume it is the format specification
     format = inputFormat;
@@ -1242,14 +1254,14 @@ const encode3DSStoreDataFromStruct = (data, skipCRC16) => {
   const buf = new Uint8Array(0x48 + 20 + 2 + 2);
 
   // unknown1 byte
-  buf[0x00] = data.unknown1 || 0;
+  buf[0x00] = data.unknown1;
 
   // characterSet, regionLock, profanityFlag, and copying all packed into one byte
   buf[0x01] = ((data.characterSet || 0) << 4) | // font region (2 bits),
     // typically 0=JPN+USA+EUR, 1=CHN, 2=KOR, 3=TWN
     (((data.regionLock || 0) & 0x03) << 2) | // region lock (2 bits), 0=no lock, 1=JPN, 2=USA, 3=EUR
-    ((data.profanityFlag ? 1 : 0) << 1) | // profanity flag (1 bit), 1 = contains profanity
-    (data.copying ? 1 : 0); // copying allowed (1 bit), 1 = copying allowed
+    (Number(data.profanityFlag) << 1) | // profanity flag (1 bit), 1 = contains profanity
+    Number(data.copying); // copying allowed (1 bit), 1 = copying allowed
 
   // mii position page index and slot index
   buf[0x02] = (data.miiPositionPageIndex & 0x0F) | // page index (4 bits)
@@ -1289,7 +1301,7 @@ const encode3DSStoreDataFromStruct = (data, skipCRC16) => {
 
   buf[0x19] = ((data.birthDay >> 3) & 0x03) | // continuation of birth day (2 bits)
     ((data.favoriteColor & 0x0F) << 2) | // favorite color (4 bits)
-    ((data.favorite ? 1 : 0) << 6); // favorite flag (1 bit)
+    (Number(data.favorite) << 6); // favorite flag (1 bit)
 
   // mii name (REQUIRED), UTF-16LE encoded
   const nameBytes = new Uint8Array(new ArrayBuffer(20));
@@ -1307,16 +1319,16 @@ const encode3DSStoreDataFromStruct = (data, skipCRC16) => {
   // face type (shape), skin color, and mingle settings
   buf[0x30] = ((data.faceColor & 0x07) << 5) | // skin color (3 bits)
     ((data.faceType & 0x0F) << 1) | // face shape (4 bits)
-    (data.mingle ? 1 : 0); // mingle (1 bit)
+    Number(data.mingle); // mingle (1 bit)
 
   // face makeup and wrinkles
   buf[0x31] = (data.faceWrinkles & 0x0F) | // face wrinkles (4 bits)
     ((data.faceMakeup & 0x0F) << 4); // face makeup (4 bits)
 
   // hair type, color, and flip
-  buf[0x32] = data.hairType || 0; // hair type (1 byte)
+  buf[0x32] = data.hairType; // hair type (1 byte)
   buf[0x33] = (data.hairColor & 0x07) | // hair color (3 bits)
-    ((data.hairFlip ? 1 : 0) << 3); // | // hair flip (1 bit)
+    (Number(data.hairFlip) << 3); // | // hair flip (1 bit)
   // ((data.unknown5 & 0x0F) << 4); // unknown (4 bits)
 
   // eye details: type, color, size, stretch, rotation, horizontal spacing, vertical position
