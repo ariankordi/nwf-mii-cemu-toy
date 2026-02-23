@@ -146,10 +146,19 @@ class TestUtility {
  * @property {string} [rflCharData] - Hex RFLCharData (Wii)
  */
 
-/** @type {TestDataTableElement[]} */
+/** @type {Array<TestDataTableElement>} */
 const testDataTable = parse.parse(
   fs.readFileSync(
     path.join(__dirname, 'fixtures/conversion-test-data.csv'), 'utf8'),
+  {
+    columns: true,
+    skip_empty_lines: true
+  });
+
+/** @type {Array<TestDataTableElement>} */
+const testDataTableFromNX = parse.parse(
+  fs.readFileSync(
+    path.join(__dirname, 'fixtures/conv-from-nx.csv'), 'utf8'),
   {
     columns: true,
     skip_empty_lines: true
@@ -212,8 +221,11 @@ class Normalize {
   }
 }
 
-/** @param {TestDataTableElement} entry */
-const testConvEntry = entry => () => {
+/**
+ * @param {TestDataTableElement} entry
+ * @param {boolean} [fromNX]
+ */
+const testConvEntry = (entry, fromNX = false) => () => {
   /** @type {Uint8Array} */ const srcBytes = new Uint8Array(96);
   /** @type {Uint8Array} */ let expectedCore;
   /** @type {Uint8Array} */ let expectedStudio;
@@ -276,11 +288,13 @@ const testConvEntry = entry => () => {
   // rflCharData
 
   if (entry.studioCharInfo) {
-    it('converts Ver3StoreData -> Studio CharInfo', () => {
-      const studio = conv.convertDataToType(srcBytes, conv.studioFormat, null);
+    if (!fromNX) {
+      it('converts Ver3StoreData -> Studio CharInfo', () => {
+        const studio = conv.convertDataToType(srcBytes, conv.studioFormat, null);
 
-      TestUtility.expectBuffersEqual(studio, expectedStudio);
-    });
+        TestUtility.expectBuffersEqual(studio, expectedStudio);
+      });
+    }
 
     it('converts Studio CharInfo -> Ver3StoreData', () => {
       // TODO: convertVer4FieldsToVer3
@@ -312,7 +326,7 @@ const testConvEntry = entry => () => {
   }
   // studioCharInfo
 
-  if (entry.nnmiiCoreData) {
+  if (entry.nnmiiCoreData && !fromNX) {
     it('converts nn::mii::CoreData -> Ver3StoreData', () => {
       // TODO: convertVer4FieldsToVer3
       /**
@@ -372,7 +386,7 @@ const testConvEntry = entry => () => {
   }
   // studioURLSeed0
 
-  if (entry.nnmiiCharInfo) {
+  if (entry.nnmiiCharInfo && !fromNX) {
     it('converts nn::mii::CoreData -> nn::mii::CharInfo', () => {
       const expectedCharInfo = hexToBytes(/** @type {string} */(entry.nnmiiCharInfo));
       const actualCharInfo = conv.convertDataToType(expectedCore,
@@ -416,6 +430,13 @@ describe('Mii data cross-conversion tests', () => {
     // describe
   });
   // testDataTable.forEach
+
+  testDataTableFromNX.forEach((entry) => {
+    const name = `${entry.label} / ${entry.details}`;
+    describe(name, testConvEntry(entry, /* fromNX */ true));
+    // describe
+  });
+  // testDataTableFromNX.forEach
 
   // Individual cases.
   describe('Miscellaneous one-shot tests', () => {
