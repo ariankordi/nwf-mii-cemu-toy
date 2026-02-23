@@ -1,0 +1,624 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "background_color_label"
+msgstr "Cor de fundo:"
+
+msgid "button_open_amiibo_dump"
+msgstr "Abrir arquivo de amiibo"
+
+msgid "contact_info_label"
+msgstr "Para comentários, perguntas, preocupações, ajuda com este ou qualquer outro assunto relacionado a Mii, etc... Por favor, não HESITE em me contatar!"
+
+msgid "contact_info_post"
+msgstr "Eu recebo qualquer pessoa nova, estou aberto para discutir qualquer coisa, mesmo que não tenha a ver com esse projeto :)"
+
+msgid "data_placeholder"
+msgstr "Insira os dados do seu Mii em hex ou Base64 aqui."
+
+msgid "expression_anger"
+msgstr "Raiva"
+
+msgid "expression_anger_open_mouth"
+msgstr "Raiva (boca aberta)"
+
+msgid "expression_blink"
+msgstr "Piscar"
+
+msgid "expression_blink_open_mouth"
+msgstr "Piscar (boca aberta)"
+
+msgid "expression_frustrated"
+msgstr "Frustrado"
+
+msgid "expression_label"
+msgstr "Expressão:"
+
+msgid "expression_like_wink_left"
+msgstr "Piscar (olho esquerdo aberto e sorrindo)"
+
+msgid "expression_like_wink_right"
+msgstr "Piscar (olho direito aberto e sorrindo)"
+
+msgid "expression_normal"
+msgstr "Normal"
+
+msgid "expression_normal_open_mouth"
+msgstr "Normal (boca aberta)"
+
+msgid "expression_smile"
+msgstr "Sorriso"
+
+msgid "expression_smile_open_mouth"
+msgstr "Sorriso (boca aberta)"
+
+msgid "expression_sorrow"
+msgstr "Tristeza"
+
+msgid "expression_sorrow_open_mouth"
+msgstr "Tristeza (boca aberta)"
+
+msgid "expression_surprise"
+msgstr "Surpresa"
+
+msgid "expression_surprise_open_mouth"
+msgstr "Surpresa (boca aberta)"
+
+msgid "expression_wink_left"
+msgstr "Piscar (olho esquerdo aberto)"
+
+msgid "expression_wink_left_open_mouth"
+msgstr "Piscar (olho esquerdo e boca abertos)"
+
+msgid "expression_wink_right"
+msgstr "Piscar (olho direito aberto)"
+
+msgid "expression_wink_right_open_mouth"
+msgstr "Piscar (olho direito e boca abertos)"
+
+msgid "force_refresh_description"
+msgstr "Esta opção atualizará seu Mii se continuarmos mostrando uma versão antiga dele."
+
+msgid "force_refresh_label"
+msgstr "Forçar atualização do Mii desta NNID (sem usar cache)"
+
+msgid "github_prefix"
+msgstr "O código (ou pelo menos o backend) está disponível no GitHub. Sinta-se à vontade para conferir:"
+
+msgid "heading_main"
+msgstr "Renderizador de Mii (É SÉRIO!)"
+
+msgid "label_input_type"
+msgstr "Tipo de entrada do Mii:"
+
+msgid "html_lang"
+msgstr "pt-BR"
+
+msgid "load_error_message"
+msgstr "A imagem abaixo falhou ao carregar! (Você provavelmente vai querer abrir a imagem em uma nova aba para ver o que deu errado)"
+
+msgid "nnid_placeholder"
+msgstr "Nintendo Network ID criado em um Wii U ou 3DS."
+
+msgid "option_amiibo"
+msgstr "Dados de amiibo"
+
+msgid "option_face"
+msgstr "Retrato"
+
+msgid "option_face_only"
+msgstr "Apenas Cabeça"
+
+msgid "option_fflmakeicon"
+msgstr "Apenas Cabeça Alternativa"
+
+msgid "option_nnid"
+msgstr "Nintendo Network ID"
+
+msgid "our_output_description"
+msgstr "Os ícones acima foram renderizados completamente por este site!"
+
+msgid "outputs_section_heading"
+msgstr "Saídas"
+
+msgid "page_title"
+msgstr "Renderizador de Mii (É SÉRIO!)"
+
+msgid "resolution_label"
+msgstr "Resolução:"
+
+msgid "resolution_slider_label"
+msgstr "Resolução:"
+
+msgid "samples_section_heading"
+msgstr "Amostras & Comparações"
+
+msgid "compare_with_official_renders_heading"
+msgstr "Comparar com renders oficiais:"
+
+msgid "scale_label"
+msgstr "Desativar supersampling 2x:"
+
+msgid "scale_label_small"
+msgstr "Pode acelerar a renderização em altas resoluções. Note que a escala é feita na CPU e não na GPU no momento devido a problemas internos."
+
+msgid "submit_button_text"
+msgstr "Renderizando..."
+
+msgid "transparent_checkbox_label"
+msgstr "Transparente?"
+
+msgid "tutorial_message"
+msgstr "Clique em \"Tipo de entrada do Mii\" para ver como você pode importar um Mii. Em seguida, clique em Enviar para começar."
+
+msgid "type_label"
+msgstr "Tipo de visualização:"
+
+msgid "option_pnid"
+msgstr "Pretendo Network ID"
+
+msgid "option_data"
+msgstr "Dados Mii/Arquivo/Código do Studio"
+
+msgid "option_qrcode"
+msgstr "Escanear Código QR do Mii"
+
+msgid "button_open_camera"
+msgstr "Abrir câmera"
+
+msgid "open_camera_label"
+msgstr "Abra a câmera para começar:"
+
+msgid "button_close_camera"
+msgstr "Fechar câmera"
+
+msgid "close_camera_label"
+msgstr "Feche a câmera para parar:"
+
+msgid "label_select_camera"
+msgstr "Selecionar câmera: "
+
+msgid "option_back_camera"
+msgstr "Câmera traseira (padrão)"
+
+msgid "option_front_camera"
+msgstr "Câmera frontal/do usuário"
+
+msgid "status_ready"
+msgstr "Status: Pronto para escanear."
+
+msgid "qr_status_scanning"
+msgstr "Escaneando... Você pode apontar sua câmera para um código QR."
+
+msgid "qr_status_waiting"
+msgstr "Aguardando o timeout de QrScanner.scanImage() de 10s..."
+
+msgid "qr_status_loaded"
+msgstr "Mii carregado: "
+
+msgid "qr_status_no_qr"
+msgstr "Nenhum código QR encontrado. Por favor, tente escanear este arquivo de imagem com uma câmera."
+
+msgid "qr_status_error"
+msgstr "Erro: "
+
+msgid "qr_status_no_mii"
+msgstr "Este código QR não contém um Mii."
+
+msgid "qr_status_no_camera"
+msgstr "Nenhuma câmera encontrada, ou permissões não foram concedidas."
+
+msgid "input_pnid_placeholder"
+msgstr "Pretendo Network ID criado em pretendo.network."
+
+msgid "label_force_refresh_pnid"
+msgstr "Forçar atualização do Mii desta PNID (sem usar cache)"
+
+msgid "pretendo_network_description"
+msgstr "Pretendo Network é uma recriação dos serviços da Nintendo Network e Miiverse para o Wii U e 3DS. Confira aqui: "
+
+msgid "mii_data_field_description"
+msgstr "Este campo aceita dados Mii de 96 bytes regulares em Base64 que você pode encontrar em account.nintendo.net ou na API do Miiverse."
+
+msgid "change_language"
+msgstr "Mudar idioma"
+
+msgid "file_photo_selection_prompt"
+msgstr "Você também pode selecionar um arquivo ou foto:"
+
+msgid "above_input_type_choose_text"
+msgstr "Escolha NNID, PNID, Código QR ou dados:"
+
+msgid "data_error_size_mismatch"
+msgstr "Não reconhecemos o tipo destes dados do Mii. Verifique a lista de tipos suportados. Tamanho: "
+
+msgid "data_error_invalid_checksum"
+msgstr "Estes dados têm uma soma de verificação CRC16 inválida."
+
+msgid "data_error_size_0"
+msgstr "Os dados estão vazios. Vixe!"
+
+msgid "miis_from_nnids_prior_notice"
+msgstr "Os Miis dos NNIDs vêm de um arquivo criado em 7 de abril de 2024 e atualizado em 17 de abril de 2025."
+
+msgid "welcome_to_site_header"
+msgstr "Bem-vindo ao meu site!"
+
+msgid "contact_me_header"
+msgstr "Fale comigo!"
+
+msgid "credits_header"
+msgstr "Créditos"
+
+msgid "button_random_nnid"
+msgstr "NNID Aleatório"
+
+msgid "last_modified"
+msgstr "Última modificação: "
+
+msgid "error_container_title"
+msgstr "😭 Erro no JavaScript!! 😭"
+
+msgid "crc16_failed"
+msgstr " (FALHA NA SOMA DE VERIFICAÇÃO CRC16)"
+
+msgid "file_input_label"
+msgstr "Selecione um arquivo binário Mii suportado:"
+
+msgid "loaded_mii_file"
+msgstr "Arquivo Mii carregado: "
+
+msgid "enter_data_in_hex_or_base64"
+msgstr "Ou, insira dados em hex, Base64, ou um URL do Mii Studio:"
+
+msgid "loaded_mii_data"
+msgstr "Dados do Mii carregados: "
+
+msgid "click_on_label_to_select_field"
+msgstr "(Clique em um rótulo para selecionar esse campo)"
+
+msgid "support_summary"
+msgstr "Deve suportar 3DS/Wii U, Wii, Switch, e Mii Studio. Clique para mais detalhes."
+
+msgid "option_all_body"
+msgstr "Corpo Inteiro"
+
+msgid "option_variableiconbody"
+msgstr "Retrato do Switch"
+
+msgid "shader_lighting_type_label"
+msgstr "Tipo de sombreado/iluminação:"
+
+msgid "option_wii_u_miiverse"
+msgstr "Wii U/Miiverse"
+
+msgid "option_miitomo_mii_studio"
+msgstr "Miitomo/Mii Studio"
+
+msgid "shader_type_new"
+msgstr "(NOVO!)"
+
+msgid "nfp_data_loaded_label"
+msgstr "Mii do amiibo carregado: "
+
+msgid "nfp_figure_loaded_label"
+msgstr "Nome da Figura: "
+
+msgid "nfp_error_label"
+msgstr "Não é possível ler o seu arquivo: "
+
+msgid "nfp_file_label"
+msgstr "Forneça um arquivo de 540/532 bytes de um amiibo preferencialmente criptografado contendo um Mii. Isso suporta Miis do Switch!"
+
+msgid "advanced_options"
+msgstr "Opções avançadas"
+
+msgid "resource_type_label"
+msgstr "Tipo de recurso:"
+
+msgid "resource_type_note"
+msgstr "Você deve sempre usar \"high\", mas os renders oficiais usam \"middle\" caso você queira combiná-los. Observe que middle não tem os novos óculos ou expressões (que foram adicionados no Switch/Miitomo)."
+
+msgid "disable_lighting_label"
+msgstr "Desativar iluminação:"
+
+msgid "disable_lighting_note"
+msgstr "Útil apenas se você quiser fazer algo diferente com o seu Mii, sei lá."
+
+msgid "texture_resolution_label"
+msgstr "Resolução da textura:"
+
+msgid "texture_resolution_note"
+msgstr "Resolução da textura do rosto / XluMask. Desative para usar o padrão."
+
+msgid "disable_crc16_label"
+msgstr "Desativar verificação CRC16 dos StoreData:"
+
+msgid "disable_crc16_note"
+msgstr "Pula a verificação da soma de verificação CRC16 se seus dados tiverem uma."
+
+msgid "disable_charinfo_verify_label"
+msgstr "Desativar verificação de CharInfo:"
+
+msgid "disable_charinfo_verify_note"
+msgstr "Permite usar qualquer tipo de dado como dados Mii. Pode ainda não funcionar."
+
+msgid "camera_x_rotation_label"
+msgstr "Rotação X da câmera:"
+
+msgid "camera_y_rotation_label"
+msgstr "Rotação Y da câmera:"
+
+msgid "camera_z_rotation_label"
+msgstr "Rotação Z da câmera:"
+
+msgid "miitomo_shader_inaccurate_note_pre_link"
+msgstr "Por favor, note que esta opção "
+
+msgid "miitomo_shader_inaccurate_note_link"
+msgstr "não usa o modelo de corpo do Mii Studio"
+
+msgid "miitomo_shader_inaccurate_note_post_link"
+msgstr " no momento, então vai parecer diferente das renderizações oficiais."
+
+msgid "miitomo_shader_inaccurate_note_small"
+msgstr "Para ser justo, a opção do Switch também não usa o modelo de corpo do Switch, mas a diferença é bem menor lá."
+
+msgid "view_type_all_body_inaccurate_note"
+msgstr "A visualização de corpo inteiro é uma visualização bem simples, e o corpo em si não está escalado corretamente e as calças não têm cor separada diferente dos servidores oficiais. É fornecida apenas como uma demonstração técnica por agora."
+
+msgid "view_type_all_body_inaccurate_note_small"
+msgstr "Também é apenas quadrado por enquanto devido à maneira como tudo está escrito E eu nem conheço a visualização all_body do Mii Studio direito, affff"
+
+msgid "label_left"
+msgstr "Esquerda: "
+
+msgid "label_right"
+msgstr "Direita: "
+
+msgid "label_our_render_lower"
+msgstr "nosso render."
+
+msgid "under_our_render_small"
+msgstr "(Wii U + recurso médio + sem AA / Switch + sem AA / Miitomo)"
+
+msgid "under_studio_render_small"
+msgstr "(Ou seja, studio.mii.nintendo.com/cdn-mii versão 2.0.0, mesmo visual/sombreado/óculos erroneamente grandes como no Miitomo)"
+
+msgid "studio_render_right_side_note"
+msgstr "Site/API Mii Studio."
+
+msgid "under_switch_render_small"
+msgstr "(Usado nos applets MiiEdit e amiibo, mas não para ícones de usuários.)"
+
+msgid "switch_render_right_side_note"
+msgstr "Render nn:mii::VariableIconBody do Switch."
+
+msgid "under_mii_maker_render_small"
+msgstr "(Igual a: Imagens de Miis da Nintendo Network, Miiverse, cdn-mii versão 1.0.0)"
+
+msgid "mii_maker_right_side_note"
+msgstr "Aplicativo Mii Maker do Wii U."
+
+msgid "view_types_summary"
+msgstr "Leia uma explicação dos tipos de visualização aqui."
+
+msgid "nfp_tutorial_summary"
+msgstr "Clique aqui para revelar meu tutorial sobre como extrair seu próprio amiibo para um arquivo."
+
+msgid "shader_lighting_type_above"
+msgstr "Escolha Miitomo aqui para obter uma aparência como a do Mii Studio (ou seja, Miis renderizados em accounts.nintendo.com):"
+
+msgid "copied"
+msgstr "Copiado "
+
+msgid "copy_image_url"
+msgstr "Copiar URL da imagem"
+
+msgid "convert_label"
+msgstr "Converter "
+
+msgid "input_data_type_label"
+msgstr "Tipo de dado de entrada:"
+
+msgid "input_data_type_unknown"
+msgstr "Desconhecido"
+
+msgid "convert_to_label"
+msgstr "Converter para: "
+
+msgid "convert_to_default"
+msgstr "Padrão"
+
+msgid "studio_render_label"
+msgstr "Render do Studio"
+
+msgid "studio_code_label"
+msgstr "Código do Studio: "
+
+msgid "post_convert_qr_code_label"
+msgstr "Código QR do Mii (cópia forçada habilitada) (passe o mouse para ampliar):"
+
+msgid "post_convert_fflstoredata_label"
+msgstr "Base64 3DS/Wii U StoreData: "
+
+msgid "download_prefix"
+msgstr "Baixar "
+
+msgid "auto_submit_label"
+msgstr "Auto-Enviar:"
+
+msgid "camera_controls_label"
+msgstr "Controles da câmera"
+
+msgid "background_color_opacity"
+msgstr "Opacidade da cor de fundo"
+
+msgid "clothes_color"
+msgstr "Cor da roupa"
+
+msgid "default"
+msgstr "Padrão"
+
+msgid "red"
+msgstr "Vermelho"
+
+msgid "orange"
+msgstr "Laranja"
+
+msgid "yellow"
+msgstr "Amarelo"
+
+msgid "light_green"
+msgstr "Verde claro"
+
+msgid "dark_green"
+msgstr "Verde escuro"
+
+msgid "dark_blue"
+msgstr "Azul escuro"
+
+msgid "light_blue"
+msgstr "Azul claro"
+
+msgid "pink"
+msgstr "Rosa"
+
+msgid "purple"
+msgstr "Roxo"
+
+msgid "brown"
+msgstr "Marrom"
+
+msgid "white"
+msgstr "Branco"
+
+msgid "black"
+msgstr "Preto"
+
+msgid "rotation_controls"
+msgstr "Controles de rotação"
+
+msgid "character_x_rotation_label"
+msgstr "Rotação X do personagem:"
+
+msgid "character_y_rotation_label"
+msgstr "Rotação Y do personagem:"
+
+msgid "character_z_rotation_label"
+msgstr "Rotação Z do personagem:"
+
+msgid "rotation_difference_explanation"
+msgstr "Como a rotação do personagem e da câmera são diferentes?"
+
+msgid "rotation_explanation_detail"
+msgstr "Diferenças sutis podem ser vistas ao combinar eixos - mas isso não os combina da mesma forma que Mii Studio, nas rotações X e Z, e mais notavelmente na iluminação - exceto que em comparação com Mii Studio, a iluminação é atualmente a mesma."
+
+msgid "head_model_type"
+msgstr "Tipo de modelo de cabeça"
+
+msgid "model_type_note"
+msgstr "Não é destinado a ícones, mas sim para modelagem ou jogos. Otimizado para, por exemplo, chapéus, capacetes (suporta apenas o rosto do Mii). Melhor combinado com \"partsTransform\" no JSON de um glTF exportado."
+
+msgid "draw_stage_mode"
+msgstr "Modo de desenho de palco"
+
+msgid "all"
+msgstr "Tudo"
+
+msgid "draw_opa_only"
+msgstr "Apenas DrawOpa"
+
+msgid "draw_xlu_only"
+msgstr "Apenas DrawXlu"
+
+msgid "mask_only"
+msgstr "Apenas máscara"
+
+msgid "draw_stage_note"
+msgstr "\"Opa\" é a cabeça sem óculos ou rosto, Xlu é a textura do rosto e óculos, e mask only é apenas a textura do rosto. As utilizações para isso são limitadas."
+
+msgid "download_model"
+msgstr "Baixar um modelo desta cabeça desse Mii em glTF (.glb)"
+
+msgid "see_instructions"
+msgstr "Veja as instruções sobre como recriar isso no Switch"
+
+msgid "flatten_nose"
+msgstr "Achatar nariz:"
+
+msgid "englishonly_label"
+msgstr "essa parte estará apenas disponível em inglês por enquanto :("
+
+msgid "welcome_to_site_text1"
+msgstr "Esse site é um Renderizador de Miis que é basicamente suportado pela library oficial da Nintendo, FFL (usada para renderizar Miis no Wii U), decompilada por %sAboodXD%s"
+
+msgid "welcome_to_site_text1_githublink"
+msgstr "Se quiser, veja no GitHub: %sariankordi/FFL-Testing (renderer-server-prototype branch)%s"
+
+msgid "welcome_to_site_text2"
+msgstr "Este renderizador tem novos shaders, suporte para todos os tipos de Mii data*, e também suporta Miis usados no Switch, e também é hospedado por mim mesmo! Se você quer usar ícones de Miis em seu site, agora você pode renderiza-los em seu próprio servidor!"
+
+msgid "welcome_to_site_text2_exceptions"
+msgstr "*Algumas exceções: DS (basicamente Miis do Wii, mas em LE), qualquer formato que não seja oficial, formatos específicos de jogos ou qualquer outro que eu não esteja ciente de sua existência."
+
+msgid "welcome_to_site_text2_github"
+msgstr "Veja o link do GitHub acima se quiser saber de mais detalhes."
+
+msgid "welcome_to_site_interested"
+msgstr "Está interessado? Clique aqui para ler mais..."
+
+msgid "welcome_to_site_interested1"
+msgstr "Esse site está rodando no código mencionado acima. E eu tentei fazer a API ser compatível com a API oficial do Mii Studio."
+
+msgid "welcome_to_site_interested_subtopic"
+msgstr "Este site funciona como uma forma de substituir a API já existente oficial do Mii Studio. Mas, se não estiver funcionando para você, %sentre em contato comigo!%s"
+
+msgid "welcome_to_site_interested_subtopic2"
+msgstr "Sinta-se a vontade para usar isso onde quiser! Mas, não dependa que o site fique no ar o tempo todo, %sPELO AMOR DE DEUS!!%s"
+
+msgid "welcome_to_site_interested_subtopic3"
+msgstr "Você pode apagar alguns parâmetros desnecessários dos URLs também. O parâmetro %serri%s não é necessário."
+
+msgid "welcome_to_site_interested2"
+msgstr "Graças ao AboodXD, o renderizador oficial de Miis no Wii U, chamado de FFL (Cafe Face Library), foi decompilado e portado para OpenGL 3.3."
+
+msgid "welcome_to_site_interested3"
+msgstr "%sFFL-Testing%s é o programa que ele fez para testar: tudo que este programa faz é rodar cabeças de Miis em uma janela."
+
+msgid "welcome_to_site_interested4"
+msgstr "O shader do Wii U foi decompilado como FFLShader.vert/frag, e os \"uniforms\" necessários para utilizá-lo estão em src/Shader.cpp. Fique a vontade para usar isso em outros projetos, se desejar."
+
+msgid "welcome_to_site_interested5"
+msgstr "A branch \"renderer-server-prototype\" contém as mesmas coisas para os shaders do Switch e do Miitomo."
+
+msgid "welcome_to_site_interested6"
+msgstr "Acho que daria pra eu escrever mais coisas aqui, mas por agora é só isso..."
+
+msgid "welcome_to_site_help"
+msgstr "%sVocê está interessado em me ajudar?%s Se quiser me dar uma mão com design frontend, ajuda com OpenGL/C++ ou portar para o WebGL, %scontate-me!%s"
+
+msgid "contact_info_maintained"
+msgstr "Esse projeto e/ou site é mantido apenas por mim, Arian Kordi - sim, aquele lá, sabe?..."
+
+msgid "contact_info_maintained_small"
+msgstr "Se você for entrar em contato, não me pergunte sobre o site que começa com \"Closed\", blz?"
+
+msgid "not_associated_nin"
+msgstr "Este projeto não está de forma alguma associado com a Nintendo."
+
+msgid "pants_color_label"
+msgstr "Cor da calça:"
+
+msgid "gray"
+msgstr "Cinza"
+
+msgid "gold"
+msgstr "Dourado"
+
+msgid "body_model_label"
+msgstr "Modelo de corpo:"
+
+msgid "miitomo_expression_label"
+msgstr "Expressão Miitomo:"
