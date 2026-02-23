@@ -24,14 +24,12 @@ import (
 
 	"github.com/CloudyKit/jet/v6"
 	"github.com/natefinch/lumberjack"
-	"github.com/pelletier/go-toml/v2"
 	"golang.org/x/text/language"
 
 	// html/template worked okay but
 	// jet doesn't exclude comments and
 	// is a lil bit more efficient
-
-	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/leonelquinteros/gotext"
 
 	// compresses static assets but not dynamic pages
 	"codeberg.org/meta/gzipped/v2"
@@ -58,64 +56,56 @@ import (
 )
 
 var (
-	translations              *i18n.Bundle
-	defaultLocalizer          *i18n.Localizer
+	locale                    map[string]* gotext.Locale
+	defaultLocale             *gotext.Locale
 
+	languageDefault         = language.AmericanEnglish.String()
 	languageStrings           []string
 	languageStringsUnderscore []string
 )
 
 func loadLocaleFiles(dir string) error {
 	// TODO: you may want to set this to the computer's language
-	bundle := i18n.NewBundle(language.AmericanEnglish)
-	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() || filepath.Ext(path) != ".toml" {
-			return nil
-		}
-		_, err = bundle.LoadMessageFile(path)
-		return err
-	})
+	locale = make(map[string]*gotext.Locale)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		return err
 	}
+	dirOuter := filepath.Join(dir, "..")
 
-	translations = bundle
-	// return prematurely if language strings is populated already
+	ext := ".po"//".mo"
+
+	for _, file := range files {
+		if !file.IsDir() && filepath.Ext(file.Name()) == ext {
+			lang := strings.TrimSuffix(file.Name(), ext)
+			//loc := gotext.NewLocale(dir, lang)
+
+			// HACK: instead of having LC_MESSAGES/language/domain.po ...
+			// the "locales" folder is the language, and each language is a "domain"
+			loc := gotext.NewLocale(dirOuter, dir)
+			//loc.AddDomain("messages") // Default domain
+			loc.AddDomain(lang)
+			loc.SetDomain(lang)
+
+			log.Println("loaded locale:", lang)
+			locale[lang] = loc
+			if (lang == languageDefault) {
+				defaultLocale = loc
+			}
+		}
+	}
+
+	// return early if language strings is populated already
 	if len(languageStrings) > 0 {
 		return nil
 	}
-	for _, value := range translations.LanguageTags() {
-		str := value.String()
-		languageStrings = append(languageStrings, str)
-		// Replace dashes with underscores
-		languageStringsUnderscore = append(languageStringsUnderscore, strings.ReplaceAll(str, "-", "_"))
+	// populate languages for templates
+	for lang := range locale {
+		languageStrings = append(languageStrings, lang)
+		// replace dashes with underscores
+		languageStringsUnderscore = append(languageStringsUnderscore, strings.ReplaceAll(lang, "-", "_"))
 	}
 	return nil
-}
-
-func translateFunc(localizer *i18n.Localizer) func(string) string {
-	return func(id string/*, args ...interface{}*/) string {
-		/*var data map[string]interface{}
-		if len(args) > 0 {
-			data = make(map[string]interface{}, len(args))
-			for n, iface := range args {
-				data["v"+strconv.Itoa(n)] = iface
-			}
-		}*/
-		str, _, err := localizer.LocalizeWithTag(&i18n.LocalizeConfig{
-			MessageID:    id,
-			//TemplateData: data,
-		})
-		if str == "" && err != nil {
-			log.Println("translateFunc failed:", err)
-			return "[translateFunc failed: " + err.Error() + "]"
-		}
-		return str
-	}
 }
 
 // createLocaleFunction creates a personalized localized translation function.
@@ -125,13 +115,37 @@ func createLocaleFunction(r *http.Request) (func(a jet.Arguments) reflect.Value,
 	cookieLang := query.Get("locale.lang")
 	// this is the language that opengraph clients
 	// will request for other languages, i think
-	ogLang := query.Get("fb_locale")
+	  // ogLang := query.Get("fb_locale")
 	// Determine the language from the "Accept-Language" header.
-	acceptLang := r.Header.Get("Accept-Language")
+	  // acceptLang := r.Header.Get("Accept-Language")
 
-	localizer := i18n.NewLocalizer(translations, ogLang, cookieLang, acceptLang)
+	lang := cookieLang
+	if lang == "" {
+		lang = r.Header.Get("Accept-Language")
+		if strings.Contains(lang, ",") {
+			lang = strings.SplitN(lang, ",", 2)[0]
+		}
+	}
+	lang = strings.TrimSpace(lang)
+	// check if lang exists, fallback to english if doesn't exist
+	if _, ok := locale[lang]; !ok {
+		lang = languageDefault//language.AmericanEnglish.String() // fallback
+	}
+	// if english doesn't exist then panic
+	if _, ok := locale[lang]; !ok {
+		log.Fatalf("fallback locale %s does not exist\n", lang)
+	}
 
-	Tfunc := translateFunc(localizer)
+	Tfunc := func(msgid string) string {
+		// NOTE: For whatever reason, IsTranslated() where pluralized count is 0
+		// will always return false, but IsTranslatedND() with count of 1 works.
+		if (!locale[lang].IsTranslatedND(locale[lang].GetDomain(), msgid, 1) &&
+			defaultLocale != nil) {
+			// If this string is not translated, get from the default locale.
+			return defaultLocale.Get(msgid)
+		}
+		return locale[lang].Get(msgid)
+	}
 
 	// map translation function to be used as "T" in template
 	//return template.FuncMap{"_": Tfunc}, nil
@@ -145,10 +159,6 @@ func createLocaleFunction(r *http.Request) (func(a jet.Arguments) reflect.Value,
 const templatesDir = "views"
 // walk through and load templates
 
-// will be used later
-func placeholderTranslate(key string) string {
-	return key
-}
 func assetURLWithTimestamp(assetPath string) (string) {//, error) {
 	// Get the file stats
 	fileInfo, err := os.Stat(assetPath)
