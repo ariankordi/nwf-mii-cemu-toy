@@ -11,7 +11,25 @@ globalThis.structsObj = {
   Gen2Wiiu3dsMiitomo: require('./kaitai-structs/js/Gen2Wiiu3dsMiitomo.js'),
   Gen3Studio: require('./kaitai-structs/js/Gen3Studio.js')
 };
-const conv = require('./data-conversion.js');
+const conv_ = require('./data-conversion.js');
+
+// Narrow down the imports list.
+const conv = {
+  convertDataToType: conv_.convertDataToType,
+
+  // formats
+  studioFormat: conv_.studioFormat,
+  ver3Format: conv_.ver3Format,
+  charInfoFormat: conv_.charInfoFormat,
+
+  // methods
+  studioURLEncodeHex: conv_.studioURLEncodeHex,
+  createNewInstanceOfKaitaiStructFormat: conv_.createNewInstanceOfKaitaiStructFormat,
+  encode3DSStoreDataFromStruct: conv_.encode3DSStoreDataFromStruct,
+  wrapVer3StoreDataForQR: conv_.wrapVer3StoreDataForQR,
+  studioURLObfuscationEncode: conv_.studioURLObfuscationEncode,
+  studioURLObfuscationDecode: conv_.studioURLObfuscationDecode,
+};
 
 /* globals __dirname -- Node.js globals. */
 
@@ -43,9 +61,9 @@ const hexToBytes = hex => Uint8Array.from({ length: hex.length >>> 1 }, (_, i) =
  * @param {Array<number>|Uint8Array} bytes - Input data to encode.
  * @returns {string} Hexadecimal representation of `buffer`.
  */
-// const bytesToHex = bytes => Array.prototype.map.call(bytes,
-//   (/** @type {{ toString: (arg0: number) => string; }} */ x) =>
-//     x.toString(16).padStart(2, '0')).join(''); // padStart: ES2017
+const bytesToHex = bytes => Array.prototype.map.call(bytes,
+  (/** @type {{ toString: (arg0: number) => string; }} */ x) =>
+    x.toString(16).padStart(2, '0')).join(''); // padStart: ES2017
 
 /**
  * U8 -> Base64
@@ -81,8 +99,8 @@ class TestUtility {
    * @param {Uint8Array} b - Second buffer to compare.
    */
   static expectBuffersEqual(a, b) {
-    const hexA = conv.bytesToHex(a);
-    const hexB = conv.bytesToHex(b);
+    const hexA = bytesToHex(a);
+    const hexB = bytesToHex(b);
     expect(hexA).toBe(hexB);
   }
 
@@ -437,107 +455,139 @@ describe('Mii data cross-conversion tests', () => {
   // testDataTableFromNX.forEach
 
   // Individual cases.
-  describe('Miscellaneous one-shot tests', () => {
-    it('wraps Ver3StoreData for QR code encryption correctly', () => {
+
+  describe('QR code encryption wrapping tests', () => {
+    it('encodes Ver3StoreData and wraps for QR code correctly', () => {
       // Expected wrapped/encrypted QR code data.
       const expectedQR = base64ToBytes(testWrappedStoreData);
       // Get the raw Ver3StoreData.
       const rawData = base64ToBytes(testVer3StoreDataForWrap);
-      // Convert to object, and then back to StoreData. Lol.
-      const obj = /** @type {conv.MiiVisualParam} */ (conv
-        .createNewInstanceOfKaitaiStructFormat(conv.ver3Format, rawData));
+      // Convert to object, and then back to StoreData.
+      const obj = conv
+        .createNewInstanceOfKaitaiStructFormat(conv.ver3Format, rawData);
       const convData = conv.encode3DSStoreDataFromStruct(obj, true);
-      // Wrap the raw Ver3StoreData
+      // Wrap the raw Ver3StoreData.
       const wrapped = new Uint8Array(conv.wrapVer3StoreDataForQR(convData));
 
       TestUtility.expectBuffersEqual(wrapped, expectedQR);
     });
+  });
 
+  describe('Ver3 CreateID tests', () => {
+    // Guest A / "no name" - a normal Wii U Mii.
+    // avatarId[0] = 0x80: bit7 set (normal mii), bit5 clear (not temporary).
+    const normalVer3 = 'AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV';
 
-    it('handles null/empty names correctly', () => {
+    it('clears temporary flag (bit 5) when encoding', () => {
+      // Set bit 5 in avatarId[0] in the raw bytes before encoding.
+      const src = base64ToBytes(normalVer3);
+      src[0x0C] |= 0b00100000; // FFLI_CREATE_ID_FLAG_TEMPORARY
+
+      const encoded = conv.convertDataToType(src, conv.ver3Format, null, true);
+      const out = conv.createNewInstanceOfKaitaiStructFormat(conv.ver3Format, encoded);
+      expect(out.avatarId[0] & 0b00100000).toBe(0);
+    });
+
+    it('assigns normal/Wii U createid when only temporary flag was set (treated as null)', () => {
+      // avatarId[0] = 0x20: only the temporary bit. After clearing it becomes 0,
+      // so isArrayNull fires and a fresh normal/Wii U createid is generated.
+      const src = base64ToBytes(normalVer3);
+      src[0x0C] = 0b00100000;
+      // Zero out the rest of the createid (avatarId bytes 1-3 + clientId).
+      TestUtility.zeroRange(src, 0x0D, 0x16);
+
+      const encoded = conv.convertDataToType(src, conv.ver3Format, null, true);
+      const out = conv.createNewInstanceOfKaitaiStructFormat(conv.ver3Format, encoded);
+      // Normal/Wii U: bits 7, 6, 4 set (0b11010000 = 0xD0).
+      expect(out.avatarId[0] & 0b11010000).toBe(0b11010000);
+      expect(out.avatarId[0] & 0b00100000).toBe(0); // still no temporary bit
+    });
+
+    it('assigns normal/Wii U createid when createid is fully null', () => {
+      const src = base64ToBytes(normalVer3);
+      // Zero out avatarId (0x0C-0x0F) and clientId (0x10-0x15).
+      TestUtility.zeroRange(src, 0x0C, 0x16);
+
+      const encoded = conv.convertDataToType(src, conv.ver3Format, null, true);
+      const out = conv.createNewInstanceOfKaitaiStructFormat(conv.ver3Format, encoded);
+      expect(out.avatarId[0] & 0b11010000).toBe(0b11010000);
+    });
+
+    it('preserves Special Mii createid (Miyamoto, 3DS origin)', () => {
+      // Miyamoto: avatarId[0] = 0x15 (non-zero, bit7=0 -> special mii).
+      // Encoding should not reassign the createid.
+      const src = base64ToBytes(testVer3StoreDataForWrap);
+      expect(src[0x0C]).toBe(0x15); // sanity-check fixture
+
+      const encoded = conv.convertDataToType(src, conv.ver3Format, null, true);
+      const out = conv.createNewInstanceOfKaitaiStructFormat(conv.ver3Format, encoded);
+      expect(out.avatarId[0]).toBe(0x15);
+    });
+  });
+
+  describe('Library-specific behavior tests', () => {
+    it('fills null name with default when encoding to CharInfo', () => {
+      // Ver3StoreData with an all-zero name field.
       const emptyNameVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
-      const convertedStudio = conv.convertDataToType(emptyNameVer3, conv.studioFormat);
-      const convertedCharInfo = conv.convertDataToType(convertedStudio, conv.charInfoFormat);
+      const studio = conv.convertDataToType(emptyNameVer3, conv.studioFormat);
+      const charInfo = conv.convertDataToType(studio, conv.charInfoFormat);
 
-      // Should fill with "Mii" as default name
-      const struct =
-        conv.createNewInstanceOfKaitaiStructFormat(conv.charInfoFormat, convertedCharInfo);
-      expect(/** @type {string} */ (struct.miiName).slice(0, 3)).toBe('Mii');
+      const out = conv.createNewInstanceOfKaitaiStructFormat(conv.charInfoFormat, charInfo);
+      expect(/** @type {string} */ (out.miiName).slice(0, 3)).toBe('Mii');
     });
 
-    it('validates CreateID format for QR code generation', () => {
-      const testVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
-
-      // Test temporary bit clearing
-      const struct = conv.createNewInstanceOfKaitaiStructFormat(conv.ver3Format, testVer3);
-      struct.avatarId[0] |= 0b00100000; // Set temporary bit
-
-      const forQR = conv.convertDataToType(testVer3, conv.ver3Format, null, true);
-      const qrStruct = conv.createNewInstanceOfKaitaiStructFormat(conv.ver3Format, forQR);
-      expect(qrStruct.avatarId[0] & 0b00100000).toBe(0); // Temporary bit should be cleared
-    });
-
-    it('validates CreateID format for QR code generation', () => {
-      const testVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
-
-      // Test temporary bit clearing
-      const struct = conv.createNewInstanceOfKaitaiStructFormat(conv.ver3Format, testVer3);
-      struct.avatarId[0] |= 0b00100000; // Set temporary bit
-
-      const forQR = conv.convertDataToType(testVer3, conv.ver3Format, null, true);
-      const qrStruct = conv.createNewInstanceOfKaitaiStructFormat(conv.ver3Format, forQR);
-      expect(qrStruct.avatarId[0] & 0b00100000).toBe(0); // Temporary bit should be cleared
-    });
-
-    it('continuity terminates strings properly', () => {
-      const testString = 'Should\u0000Not';
-      const terminated = conv.removeEverythingAfterNullTerminator(testString);
-
-      const expected = 'Should\u0000\u0000\u0000\u0000';
-      /*
-      console.log('testString (input):', conv.bytesToHex(new TextEncoder().encode(testString)));
-      console.log('terminated (expected)):', conv.bytesToHex(new TextEncoder().encode(expected)));
-      console.log('terminated (actual):', conv.bytesToHex(new TextEncoder().encode(terminated)));
-      */
-
-      expect(terminated).toBe(expected);
-    });
-
-    it('generates valid CharInfo with random CreateID', () => {
-      const emptyCore = new Uint8Array(48); // Empty nn::mii::CoreData
-      const charInfo = conv.convertDataToType(emptyCore, conv.charInfoFormat, 'Gen3Switch');
-
-      // CreateID should be 16 random bytes with proper UUIDv4 bits
-      const struct = conv.createNewInstanceOfKaitaiStructFormat(conv.charInfoFormat, charInfo);
-      const createId = struct.unknownData.slice(0, 16);
-      expect(createId.length).toBe(16);
-
-      // Version 4 UUID: bits 12-15 of first octet should be 0100
-      // NOTE: nn::mii does NOT STRICTLY check this
-      //expect((createId[6] & 0xF0) >> 4).toBe(4);
-
-      // Clock sequence MSB should have high bit set (RFC 4122)
-      expect(createId[8] & 0xC0).toBe(0x80);
-    });
-
-    it('handles Studio URL obfuscation round-trip', () => {
-      // Generate 46 random bytes as test Studio data
+    it('encodes Studio URL with seed byte and decodes back to same data', () => {
+      // Fixed test vector: alternating 0xA5/0x5A pattern over 46 bytes.
       const studioRaw = new Uint8Array(46);
-      for (let i = 0; i < 46; i++) {
-        studioRaw[i] = Math.floor(Math.random() * 256);
-      }
+      TestUtility.fillPattern(studioRaw, 0, 46, 0xA5, 0x5A);
 
       // Encode with seed 42
       const encoded = conv.studioURLObfuscationEncode(studioRaw, undefined, 42);
       expect(encoded.length).toBe(47);
-      expect(encoded[0]).toBe(42); // Seed should be first byte
+      expect(encoded[0]).toBe(42); // seed is first byte
 
       // Decode back to raw
       const decoded = new Uint8Array(46);
       conv.studioURLObfuscationDecode(decoded, encoded);
-
       TestUtility.expectBuffersEqual(decoded, studioRaw);
     });
   });
+
+  describe('nn::mii::CharInfo pedantic tests', () => {
+    it('generates valid createid from all-zero CoreData', () => {
+      const emptyCore = new Uint8Array(48); // Empty nn::mii::CoreData
+      const charInfo = conv.convertDataToType(emptyCore, conv.charInfoFormat, 'Gen3Switch');
+
+      // CreateID should be 16 random bytes with proper UUIDv4 bits
+      const out = conv.createNewInstanceOfKaitaiStructFormat(conv.charInfoFormat, charInfo);
+      const createId = /** @type {Uint8Array} */ (out.unknownData).slice(0, 16);
+
+      // Version 4 UUID: bits 12-15 of first octet should be 0100
+      // NOTE: nn::mii does NOT STRICTLY check this
+      // expect((createId[6] & 0xF0) >> 4).toBe(4);
+
+      // clock_seq_hi_and_reserved: two high bits must be 10 (RFC 4122 / nn::mii::CreateId::IsValid).
+      expect(createId[8] & 0xC0).toBe(0x80);
+    });
+
+    it('continuously terminates name after first null character', () => {
+      const input = 'Should\u0000Not';
+
+      // Ver3StoreData with an all-zero name field.
+      const emptyNameVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
+
+      const nameBuffer = new Uint16Array(emptyNameVer3.buffer, 0x1A, 0x20);
+      for (let i = 0; i < input.length; i++) {
+        nameBuffer[i] = input.charCodeAt(i);
+      }
+
+      const charInfo = conv.convertDataToType(emptyNameVer3, conv.charInfoFormat);
+      const out = conv.createNewInstanceOfKaitaiStructFormat(conv.charInfoFormat, charInfo);
+
+      // Every character from the null onward must be replaced with null.
+      expect(out.miiName).toBe('Should\u0000\u0000\u0000\u0000');
+    });
+  });
+
   // describe
 });
