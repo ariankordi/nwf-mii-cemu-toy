@@ -1458,10 +1458,6 @@ function studioURLObfuscationEncode(src, dst, seed = 0) {
   if (!dst) {
     dst = new Uint8Array(STUDIO_OBFUSCATED_LENGTH); // sizeof(charInfoStudio) + 1
   }
-  // Assign seed from random byte.
-  if (typeof seed !== 'number') {
-    seed = Math.floor(256 * Math.random());
-  }
 
   // Store the seed at index 0 of destination.
   dst[0] = seed;
@@ -1638,7 +1634,8 @@ const handleConvertDetailsToggle = (event) => {
   const miiInstructionsLinkElement = target.getElementsByClassName('mii-instructions-link')[0];
   miiInstructionsLinkElement.href += studioCode; // switchCharInfoHex;
 
-  const studioURLData = studioURLEncodeHex(studioData);
+  const studioURLSeed = Math.floor(256 * Math.random());
+  const studioURLData = studioURLEncodeHex(studioData, studioURLSeed);
   const studioURLRender = studioImageElement.dataset.src + studioURLData;
   // studioURLDataElement.textContent = studioURLData;
   studioImageElement.setAttribute('src', studioURLRender);
