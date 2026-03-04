@@ -8,7 +8,6 @@ require (
 	github.com/getsentry/sentry-go v0.42.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/hlts2/round-robin v0.0.0-20230814122250-2a846cd188be
-	github.com/kaitai-io/kaitai_struct_go_runtime v0.11.0
 	github.com/leonelquinteros/gotext v1.7.2
 	github.com/lpar/gzipped/v2 v2.1.0
 	github.com/natefinch/lumberjack v2.0.0+incompatible
@@ -24,9 +23,11 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
+	github.com/frankban/quicktest v1.14.6 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
@@ -39,11 +40,13 @@ require (
 	github.com/kevinpollet/nego v0.0.0-20200324111829-b3061ca9dd9d // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe // indirect
 	golang.org/x/mod v0.32.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/tools v0.41.0 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
