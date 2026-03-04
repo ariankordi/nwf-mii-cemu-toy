@@ -29,7 +29,6 @@ import (
 	"gorm.io/gorm/logger"
 
 	"bytes"
-	"ffl-testing-frontend-http/mii2studio"
 	"unicode/utf16"
 )
 
@@ -475,7 +474,7 @@ func retrieveMiiDataFromNNIDOrPID(nnid string, pid int64, apiID int, acceptsOcte
 
 		// only set other props if this is NOT simple octet stream
 		if !acceptsOctetStream {
-			data.StudioURLData = mii2studio.Map3DSStoreDataToStudioURLData(miiData.Data)
+			data.StudioURLData = Ver3StoreDataToStudioURLHex(miiData.Data)
 			data.PID = miiData.PID
 			data.UserID = miiData.NNID
 			data.Name = utf16LESliceToString(miiData.Data[0x1a : 0x1a+0x14])
@@ -508,7 +507,7 @@ func retrieveMiiDataFromNNIDOrPID(nnid string, pid int64, apiID int, acceptsOcte
 			var storeData []byte
 			storeData, err = base64.StdEncoding.DecodeString(miiResponse.Miis[0].Data)
 			if err == nil {
-				data.StudioURLData = mii2studio.Map3DSStoreDataToStudioURLData(storeData)
+				data.StudioURLData = Ver3StoreDataToStudioURLHex(storeData)
 			}
 
 			data.Name = miiResponse.Miis[0].Name
@@ -829,7 +828,7 @@ func randomNNIDHandler(w http.ResponseWriter, r *http.Request) {
 	// only set other props if this is NOT simple octet stream
 	if !acceptsOctetStream {
 		data.Data = base64.StdEncoding.EncodeToString(miiData.Data)
-		data.StudioURLData = mii2studio.Map3DSStoreDataToStudioURLData(miiData.Data)
+		data.StudioURLData = Ver3StoreDataToStudioURLHex(miiData.Data)
 		data.Images.LastModified = &lastModified
 		data.PID = miiData.PID
 		data.UserID = miiData.NNID
