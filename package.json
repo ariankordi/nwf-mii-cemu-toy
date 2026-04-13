@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "NOTE: This package is purely for the frontend JS.",
   "scripts": {
-    "build:es": "esbuild assets/js/bundle.js --bundle --format=iife --platform=browser --tree-shaking --minify --external:zlib --external:iconv-lite --outfile=assets/js-bundle.min.js",
+    "build:es": "esbuild assets/js/bundle.js --bundle --format=iife --platform=browser --tree-shaking --minify --external:zlib --sourcemap=external --external:iconv-lite --outfile=assets/js-bundle.min.js",
     "build:kaitai-compile": "kaitai-struct-compiler -t javascript --outdir assets/kaitai-dist/ kaitai-structs/*.ksy",
     "build:kaitai-post": "node kaitai-structs/kaitai-post-build.js assets/kaitai-dist",
     "build:kaitai": "npm run-script build:kaitai-compile && npm run-script build:kaitai-post",
