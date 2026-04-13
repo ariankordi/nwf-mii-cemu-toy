@@ -4,137 +4,18 @@
  * @author Arian Kordi <ariankordi@ariankordi.net>
  */
 
-import sjcl from 'sjcl';
 import QrScanner from '@getify-as-is/qr-scanner';
 /** Used in {@link handleTomodachiLife3DSData} */
 import { parseTomodachiLifeQRCodeData } from './data-conversion.js';
 import {
   // CRC-16/CCITT/XMODEM implementation.
   crc16,
+  extractUTF16Text,
   findSupportedTypeBySize
 } from './common.js';
-
-// AES keys encoded in sjcl 32-bit format.
-// https://www.3dbrew.org/wiki/PSPXI:EncryptDecryptAes#Key_Types
-// Type 2, slot 0x31
-/** 59FC817E6446EA6190347B20E9BDCE52 */
-const AES_CCM_KEYSLOT_0x31_BITS = [1509720446, 1682369121, -1875608800, -373436846];
-
-const AES_CTR_KEY = new Uint8Array([0x30, 0x81, 0x9F, 0x30, 0x0D,
-  0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01]);
-
-// Length of raw encrypted Mii QR code data.
-/** 0x70 */
-const CFLI_WRAPPED_MII_DATA_SIZE = 112;
-// Size of entire encrypted QR Code created by certain titles:
-const TOMODACHI_LIFE_3DS_QR_DATA_SIZE = 372;
-// const MIITOPIA_3DS_QR_DATA_SIZE       = 324; // idk the structure
-// const MIITOMO_QR_DATA_SIZE            = 172; // not decodable
-// TBD miitopia
-
-// // ---------------------------------------------------------------------
-// //  AES-CCM Encryption
-// // ---------------------------------------------------------------------
-
-/**
- * Decrypts the AES-CCM portion of the QR code, using sjcl's private ctrMode function.
- * The default AES-CCM decryption function in sjcl does not work
- * due to the following errata: https://www.3dbrew.org/wiki/AES_Registers#CCM_mode_pitfall
- * @param {Uint8Array} encryptedData - Input QR code data (CFLiWrappedMiiData)
- * @param {Array<number>} [key] - The key to pass into sjcl.
- * @returns {Uint8Array} The encrypted StoreData.
- * @throws {Error}
- */
-function decryptAesCcm(encryptedData, key = AES_CCM_KEYSLOT_0x31_BITS) {
-  // key = [1509720446, 1682369121, -1875608800, -373436846]) {
-  // if the length is smaller than the standard mii qr code size
-  if (encryptedData.length < CFLI_WRAPPED_MII_DATA_SIZE) {
-    throw new Error(`decryptAesCcm: Input size is ${encryptedData.length}, expected ${CFLI_WRAPPED_MII_DATA_SIZE} or longer.`);
-  }
-
-  /** Extracted nonce */
-  const nonce = encryptedData.subarray(0, 8);
-  const encryptedContent = encryptedData.subarray(8);
-
-  const cipher = new sjcl.cipher.aes(key);
-
-  // Convert nonce and encrypted content to bits, adjusting the nonce to full size
-  const encryptedBits = sjcl.codec.bytes.toBits(Array.from(encryptedContent));
-  const nonceBits = sjcl.codec.bytes.toBits([...nonce, 0, 0, 0, 0]);
-
-  // Isolate the actual ciphertext from the tag and adjust IV.
-  /** Tag length in bits */
-  const tlen = 128;
-  const out = sjcl.bitArray.clamp(encryptedBits,
-    // remove tag from out, tag length = 128
-    sjcl.bitArray.bitLength(encryptedBits) - tlen);
-
-  /** regex to find the _ctrMode function: 6 arguments and calls "bitSlice" */
-  const ctrModeFuncRegex = /\([^)]*,[^)]*,[^)]*,[^)]*,[^)]*,[^)]*\)\s*.*?bitSlice/;
-  /**
-   * Closure to find the _ctrMode function by matching its string representation.
-   * @param {[string, Function]} entry - A [key, function] pair from Object.entries.
-   * @returns {Array<string>|null} Match if function signature matches ctrMode.
-   */
-  // eslint-disable-next-line no-unused-vars -- key is not needed
-  const ctrModeFuncMatch = ([_, fn]) => fn.toString().match(ctrModeFuncRegex);
-
-  /**
-   * The sjcl.mode.ccm._ctrMode private function.
-   * @typedef {(prf: { encrypt: (input: sjcl.BitArray) => sjcl.BitArray },
-   * data: sjcl.BitArray, iv: sjcl.BitArray,
-   * tag: sjcl.BitArray, tlen: number, L: number
-   * ) => { tag: sjcl.BitArray, data: sjcl.BitArray }} _ctrMode
-   */
-  const ccm = /** @type {Object<string, *>} */ (sjcl.mode.ccm);
-  /**
-   * jsdelivr (1.0.8 sjcl.min.js) minifies this function name to "C"
-   * @type {_ctrMode}
-   */
-  let ctrDecrypt = /** @type {_ctrMode} */ (ccm._ctrMode) || /** @type {_ctrMode} */ (ccm.C);
-  if (!ctrDecrypt) {
-    // attempt to find the private _ctrMode func using our regex
-    const match = Object.entries(sjcl.mode.ccm).find(ctrModeFuncMatch);
-    // may throw IndexError??
-    if (match) {
-      ctrDecrypt = match[1];
-    } else {
-      throw new Error('decryptAesCcm: cannot find PRIVATE sjcl.mode.ccm._ctrMode DECRYPT FUNCTION!!!!!!');
-    }
-  }
-  /** harcoding 3 as "L" / length; */
-  const decryptedBits = ctrDecrypt(cipher, out, nonceBits, [], tlen, 3);
-  // NOTE: the CBC-MAC of the qr code is NOT verified here
-
-  /** Final output with nonce in the middle */
-  const decryptedBytes = sjcl.codec.bytes.fromBits(decryptedBits.data);
-  const decryptedSlice = new Uint8Array(decryptedBytes).subarray(0, 88);
-
-  return new Uint8Array([
-    ...decryptedSlice.subarray(0, 12),
-    ...nonce,
-    ...decryptedSlice.subarray(12)
-  ]);
-}
-
-// // ---------------------------------------------------------------------
-// //  AES-CTR Encryption
-// // ---------------------------------------------------------------------
-
-/**
- * Decrypts AES-CTR-128.
- * @param {Uint8Array} encryptedData - The encrypted data.
- * @param {Uint8Array} iv - The IV for the data.
- * @param {Uint8Array} [keyData] - The key for the data.
- * @returns {Promise<Uint8Array>} The decrypted data.
- */
-async function decryptAesCtr(encryptedData, iv, keyData = AES_CTR_KEY) {
-  // Calls to SubtleCr*pto (window.cr*pto.subtle):
-  const key = await crypto.subtle.importKey('raw', keyData, { name: 'AES-CTR' }, false, ['decrypt']);
-  const decrypted = await crypto.subtle.decrypt(
-    { name: 'AES-CTR', counter: iv, length: 128 }, key, encryptedData.buffer);
-  return new Uint8Array(decrypted);
-}
+import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
+import TomoExtraData from './TomoExtraData.js';
+import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
 
 const qrFileInput = document.getElementById('qr-file');
 const video = document.getElementById('qr-video');
@@ -144,6 +25,8 @@ const startCameraButton = document.getElementById('start-camera');
 const startCameraLabel = document.getElementById('start-camera-label');
 const stopCameraButton = document.getElementById('stop-camera');
 const stopCameraLabel = document.getElementById('stop-camera-label');
+
+const wrapCipher = new WrappedMiiDataSubtle(KeySlot0x31Keys[KeyType.Production]);
 
 /**
  * show a status by selectively picking specific id on the dom
@@ -333,21 +216,15 @@ const qrLoadedTLHairDye = document.getElementById('qr-tomodachilife-hair-dye');
  * @returns {Promise<Uint8Array>}
  */
 async function handleTomodachiLife3DSData(bytes, data) {
-  const iv = bytes.slice(CFLI_WRAPPED_MII_DATA_SIZE, 128);
-  const encryptedExtra = new Uint8Array(bytes.slice(128, -4));
-  // try {
-  const decryptedExtraData = await decryptAesCtr(encryptedExtra, new Uint8Array(iv));
-  // console.log(decryptedExtraData);
-  data = new Uint8Array([...data, ...decryptedExtraData]);
-  // } catch(error) {
-  // TODO: miic EXTENSION?
-  //  console.error(error);
-  //  return;
-  // }
+  let extra = await TomoExtraData.decryptFromWrappedData(bytes);
+  if (!extra) {
+    return extra;
+  }
 
+  extra = new Uint8Array([...data, ...extra]);
   const dataObj = {};
   // NOTE may not be defined:
-  parseTomodachiLifeQRCodeData(data, dataObj);
+  parseTomodachiLifeQRCodeData(extra, dataObj);
   // TODO check if that worked and props are there
 
   qrLoadedTL.children[0].textContent = dataObj.firstName;
@@ -355,7 +232,7 @@ async function handleTomodachiLife3DSData(bytes, data) {
   qrLoadedTL.children[2].textContent = dataObj.islandName;
   qrLoadedTLHairDye.style.display = dataObj.hairDyeMode ? '' : 'none';
 
-  return data;
+  return extra;
 }
 
 /**
@@ -375,7 +252,7 @@ async function handleDecryption(result) {
   if (!bytes.length) {
     showStatus('no-mii', 'QR code is empty or does not have binary data.');
     return;
-  } else if (bytes.length < CFLI_WRAPPED_MII_DATA_SIZE) {
+  } else if (bytes.length < WrappedMiiDataLength) {
     // NOTE: this is actually REDUNDANT because it is ALSO
     // checked within decryptAesCcm though then it will be caught like a generic err
     showStatus('no-mii', 'QR code needs to be 112 bytes or longer, but length is: ' + bytes.length);
@@ -383,9 +260,13 @@ async function handleDecryption(result) {
   }
   // bytes = new Uint8Array(result.bytes);
   // const inputData = new Uint8Array(result.bytes);
-  let decryptedData;
+  let decryptedData = new Uint8Array(96);
   try {
-    decryptedData = decryptAesCcm(bytes); // Decrypt
+    const result = await wrapCipher.decrypt(decryptedData, bytes);
+    if (!result) {
+      showStatus('no-mii', 'CBC-MAC of encrypted data is invalid.');
+      return;
+    }
   } catch (error) {
     console.error(error);
     // not including "Error:" string because the js error will begin with its type
@@ -393,29 +274,21 @@ async function handleDecryption(result) {
     return;
   }
 
-  if (bytes.length === TOMODACHI_LIFE_3DS_QR_DATA_SIZE) { // tomodachi life, miitomo = 172
+  // tomodachi life, miitomo = 172
+  // const isTomodachi3ds = bytes.length === TOMODACHI_LIFE_3DS_QR_DATA_SIZE;
+  const isTomodachi3ds = TomoExtraData.getDataName(bytes.length - WrappedMiiDataLength - 16 /* iv */ - 4 /* crc */) === 'tomodachi-life-data';
+
+  if (isTomodachi3ds) {
     const ret = await handleTomodachiLife3DSData(bytes, decryptedData);
     if (ret) {
       decryptedData = ret;
     }
   } else if (bytes.length == 122) { // miic
-    const extra = bytes.slice(CFLI_WRAPPED_MII_DATA_SIZE);
+    const extra = bytes.slice(WrappedMiiDataLength);
     decryptedData = new Uint8Array([...decryptedData, ...extra]);
   }
 
-  // Extract UTF-16 LE Mii name starting at 0x1A
-  const startOffset = 0x1A;
-  const nameLength = 0x14;
-  // Find the position of the null terminator (0x00 0x00)
-  let endPosition = startOffset;
-  while (endPosition < startOffset + nameLength) {
-    if (decryptedData[endPosition] === 0x00 && decryptedData[endPosition + 1] === 0x00) {
-      break;
-    }
-    endPosition += 2; // Move in 2-byte increments (UTF-16 LE)
-  }
-  const utf16leBytes = decryptedData.slice(0x1A, endPosition);
-  const utf16leMiiName = new TextDecoder('utf-16le').decode(utf16leBytes);
+  const miiName = extractUTF16Text(decryptedData, 0x1A);
 
   // crc16 verify
   const dataCrc16 = decryptedData.slice(94, 96);
@@ -431,8 +304,8 @@ async function handleDecryption(result) {
     return;
   }
 
-  showStatus('loaded', utf16leMiiName);
-  if (bytes.length === TOMODACHI_LIFE_3DS_QR_DATA_SIZE) {
+  showStatus('loaded', miiName);
+  if (isTomodachi3ds) {
     qrLoadedTL.style.display = '';
   }
 
@@ -448,10 +321,9 @@ async function handleDecryption(result) {
   stopCameraButton.style.display = 'none'; // Hide stop button
   stopCameraLabel.style.display = 'none'; // Hide stop label
 
-  const dataU8 = new Uint8Array(decryptedData);
-  const type = findSupportedTypeBySize(dataU8.length);
+  const type = findSupportedTypeBySize(decryptedData.length);
 
-  qrCodeDataInput.value = btoa(String.fromCharCode(...dataU8));
+  qrCodeDataInput.value = btoa(String.fromCharCode(...decryptedData));
   qrCodeDataReal.disabled = true;
-  globalThis.setDataConvertInline(dataU8, type, qrCodeDataInput, qrCodeDataReal);
+  globalThis.setDataConvertInline(decryptedData, type, qrCodeDataInput, qrCodeDataReal);
 }

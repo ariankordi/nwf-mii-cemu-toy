@@ -22,7 +22,6 @@
 
 import { KaitaiStream } from 'kaitai-struct';
 import QRCode from 'qrjs';
-import sjcl from 'sjcl';
 import * as Gen1Wii from '../kaitai-dist/Gen1Wii.cjs';
 import * as Gen2Wiiu3dsMiitomo from '../kaitai-dist/Gen2Wiiu3dsMiitomo.cjs';
 import * as Gen3Studio from '../kaitai-dist/Gen3Studio.cjs';
@@ -35,6 +34,8 @@ import {
   /** CRC-16/CCITT - used in {@link encode3DSStoreDataFromStruct}, {@link wrapVer3StoreDataForQR} */
   crc16
 } from './common.js';
+import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
+import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
 
 // below is an UGLY!!!!!!! workaround to importing
 // UMD modules, from ESM, for browser and node (bundler)
@@ -186,7 +187,7 @@ const supportedFormats = [{
 },
 // for Tomodachi Life 3DS data:
 {
-  className: 'Gen2Wiiu3dsTomodachi',
+  className: 'Gen2Wiiu3dsMiitomo',
   sizes: [96 + 240], // qr code data is 240 bytes long
   technicalName: 'CFLiMiiDataPacket + Tomodachi Life 3DS QR Data',
   version: 3,
@@ -441,7 +442,7 @@ const parseTomodachiLifeQRCodeData = (data, struct) => {
   const structClass = structsObj[className];
 
   /** begins after cfsd */
-  const qrCodeData = data.slice(96);
+  const qrCodeData = data.subarray(96);
   const stream = new KaitaiStream(qrCodeData);
   const src = new structClass(stream);
 
@@ -862,11 +863,7 @@ conversionMethods.encodeVer3StoreData = (dataStruct, forQRCode) => {
     });
   }
   // mingle, or local only, is already initialized to false tho
-
-  // skip crc16 for qr code bc qr encode function does it itself
-  const skipCRC16 = Boolean(forQRCode);
-  return encode3DSStoreDataFromStruct(dataStruct,
-    skipCRC16);
+  return encode3DSStoreDataFromStruct(dataStruct);
 };
 
 /**
@@ -1228,10 +1225,9 @@ const isArrayNull = array => array.every(i => i === 0);
  * https://github.com/kazuki-4ys/kazuki-4ys.github.io/blob/148dc339974f8b7515bfdc1395ec1fc9becb68ab/web_apps/MiiInfoEditorCTR/mii.js#L348
  * 2024-08-10: tested to be accurate with: blanco, bro-mole-high, jasmine
  * @param {MiiVisualParam} data
- * @param {boolean} skipCRC16
  * @returns {Uint8Array}
  */
-const encode3DSStoreDataFromStruct = (data, skipCRC16) => {
+const encode3DSStoreDataFromStruct = (data) => {
   // Create buffer to store the encoded data
   /** 0x48 bytes + 20 bytes for creatorName + 2 bytes padding + 2 bytes checksum */
   const buf = new Uint8Array(0x48 + 20 + 2 + 2);
@@ -1418,14 +1414,11 @@ const encode3DSStoreDataFromStruct = (data, skipCRC16) => {
   buf[0x5D] = (data.padding2 >> 8) & 0xFF;
 
   // SET CRC16 CHECKSUM
-
-  if (!skipCRC16) {
-    // crc all before last two bytes
-    const calculatedCRC16 = crc16(buf.slice(0, 94));
-    // think MSB and LSB are reversed here but eh
-    buf[0x5E] = (calculatedCRC16 >> 8) & 0xFF;
-    buf[0x5F] = calculatedCRC16 & 0xFF;
-  }
+  // crc all before last two bytes
+  const calculatedCRC16 = crc16(buf.slice(0, 94));
+  // think MSB and LSB are reversed here but eh
+  buf[0x5E] = (calculatedCRC16 >> 8) & 0xFF;
+  buf[0x5F] = calculatedCRC16 & 0xFF;
 
   return buf; // return the buffer containing the encoded StoreData
 };
@@ -1486,41 +1479,11 @@ function studioURLObfuscationDecode(dst, src) {
   }
 }
 
-/**
- * @param {Uint8Array} data
- * @returns {Array<number>}
- */
-const wrapVer3StoreDataForQR = (data) => {
-  // NOTE: uses sjcl and assumes it is loaded
-  const nonce = data.slice(12, 20);
-  let content = [...data.slice(0, 12), ...data.slice(20)];
-
-  // checksum the data, overriding the previous checksum it may have had
-  const checksumContent = [...data.slice(0, 12), ...nonce, ...data.slice(20, -2)];
-  const newChecksum = crc16(new Uint8Array(checksumContent));
-  // pack the uint16 checksum into an array
-  const newChecksumArray = [(newChecksum >> 8) & 0xFF, newChecksum & 0xFF];
-  content = [...content.slice(0, -2), ...newChecksumArray];
-
-  // const cipher =  new sjcl.cipher.aes(sjcl.codec.hex.toBits('59FC817E6446EA6190347B20E9BDCE52'));
-  const cipher = new sjcl.cipher.aes([1509720446, 1682369121, -1875608800, -373436846]);
-
-  const paddedContent = new Uint8Array([...content, ...new Array(8).fill(0)]);
-  const paddedContentBits = sjcl.codec.bytes.toBits(Array.from(paddedContent));
-  // nonce has to be padded
-  const nonceBits = sjcl.codec.bytes.toBits([...nonce, 0, 0, 0, 0]);
-
-  const encryptedBits = sjcl.mode.ccm.encrypt(cipher, paddedContentBits, nonceBits, [], 128);
-  const encryptedBytes = sjcl.codec.bytes.fromBits(encryptedBits);
-
-  const correctEncryptedContentLength = encryptedBytes.length - 8 - 16;
-  const encryptedContentCorrected = encryptedBytes.slice(0, correctEncryptedContentLength);
-  const tag = encryptedBytes.slice(encryptedBytes.length - 16);
-
-  // construct and return an array
-  const result = [...nonce, ...encryptedContentCorrected, ...tag];
-  // note: not a uint8array because qrjs takes arrays natively
-  return result;
+const wrapVer3StoreDataForQR = async (/** @type {Uint8Array} */ data) => {
+  const out = new Uint8Array(WrappedMiiDataLength);
+  await (new WrappedMiiDataSubtle(KeySlot0x31Keys[KeyType.Production]))
+    .encrypt(out, data);
+  return out;
 };
 
 // #endregion
@@ -1623,11 +1586,13 @@ const handleConvertDetailsToggle = (event) => {
     /** set "forQRCode" true */
     const ver3StoreDataForQR = convertDataToType(inputData, ver3Format, inputFormat, true);
     const ver3QRCodeDataArray = wrapVer3StoreDataForQR(ver3StoreDataForQR);
-    const qrCodeImage = target.getElementsByClassName('image-qr')[0];
-    qrCodeImage.src = QRCode.generatePNG(ver3QRCodeDataArray, {
-      margin: null
-    }); // for whatever reason they check whether this
-    // property in options is null - but it is undefined
+    ver3QRCodeDataArray.then((ver3QRCodeDataArray) => {
+      const qrCodeImage = target.getElementsByClassName('image-qr')[0];
+      qrCodeImage.src = QRCode.generatePNG(ver3QRCodeDataArray, {
+        margin: null
+      }); // for whatever reason they check whether this
+      // property in options is null - but it is undefined
+    });
   }
 
   const modelDownloadButtons = target.getElementsByClassName('model-download-button');

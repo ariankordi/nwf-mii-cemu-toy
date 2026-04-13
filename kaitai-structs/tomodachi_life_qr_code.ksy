@@ -5,8 +5,8 @@ meta:
     To access this data, use this jsfiddle: https://jsfiddle.net/arian_/ckya346z/18/
     Please note that strings usually contain garbage data after the first terminator.
   endian: le
+  bit-endian: le
 seq:
-  # TODO: When Kaitai 0.11 is released, change str to strz for termination.
   - id: first_name
     type: str
     size: 32
@@ -20,20 +20,20 @@ seq:
     size: 3
     doc: contains birthday and Kid/Grown-Up flag
 
+  - id: unknownb2
+    type: b1
+  - id: hair_dye
+    type: b5
   - id: hair_dye_mode
     type: b2
     enum: hair_dye_mode
-  - id: hair_dye
-    type: b5
-  - id: unknownb2
-    type: b1
-    
+
   - id: unknown2
     size: 12
     doc: |
       always begins with 00000000, effectively 8 bytes
       changing doesnt affect appearance on scan
-  
+
   - id: catchphrase
     type: str
     size: 32
@@ -76,7 +76,7 @@ seq:
     type: u1
   - id: voice_inotation
     type: u1
-    
+
   - id: character_movement
     type: u1
   - id: character_speech

@@ -434,7 +434,7 @@ describe('Mii data cross-conversion tests', () => {
   // Individual cases.
 
   describe('QR code encryption wrapping tests', () => {
-    it('encodes Ver3StoreData and wraps for QR code correctly', () => {
+    it('encodes Ver3StoreData and wraps for QR code correctly', async () => {
       // Expected wrapped/encrypted QR code data.
       const expectedQR = base64ToBytes(testWrappedStoreData);
       // Get the raw Ver3StoreData.
@@ -442,11 +442,12 @@ describe('Mii data cross-conversion tests', () => {
       // Convert to object, and then back to StoreData.
       const obj = conv
         .createNewInstanceOfKaitaiStructFormat(conv.ver3Format, rawData);
-      const convData = conv.encode3DSStoreDataFromStruct(obj, true);
+      const convData = conv.encode3DSStoreDataFromStruct(obj);
       // Wrap the raw Ver3StoreData.
-      const wrapped = new Uint8Array(conv.wrapVer3StoreDataForQR(convData));
+      const wrapped = await conv.wrapVer3StoreDataForQR(convData);
 
       TestUtility.expectBuffersEqual(wrapped, expectedQR);
+      // wrapped.then((wrapped) => { TestUtility.expectBuffersEqual(wrapped, expectedQR); })
     });
   });
 

@@ -31,9 +31,9 @@ var TomodachiLifeQrCode = (function() {
     this.firstName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(32), "UTF-16LE");
     this.lastName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(32), "UTF-16LE");
     this.unknownBirthdayAge = this._io.readBytes(3);
-    this.hairDyeMode = this._io.readBitsIntBe(2);
-    this.hairDye = this._io.readBitsIntBe(5);
-    this.unknownb2 = this._io.readBitsIntBe(1) != 0;
+    this.unknownb2 = this._io.readBitsIntLe(1) != 0;
+    this.hairDye = this._io.readBitsIntLe(5);
+    this.hairDyeMode = this._io.readBitsIntLe(2);
     this._io.alignToByte();
     this.unknown2 = this._io.readBytes(12);
     this.catchphrase = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(32), "UTF-16LE");

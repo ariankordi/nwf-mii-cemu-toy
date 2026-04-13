@@ -42,13 +42,13 @@ function crc16(data, current = 0x0000) {
 /**
  * @param {Uint8Array|Array<number>} data
  * @param {number} [startOffset]
- * @param {boolean} isBigEndian
- * @param {number} nameLength
+ * @param {boolean} [isBigEndian]
+ * @param {number} [nameLength]
  * @returns {string}
  */
-function extractUTF16Text(data, startOffset, isBigEndian, nameLength) {
+function extractUTF16Text(data, startOffset, isBigEndian = false, nameLength = 10) {
   // Default to 10 characters (20 bytes) if nameLength is not provided
-  const length = nameLength === undefined ? 20 : nameLength * 2;
+  const length = nameLength * 2;
   let endPosition = startOffset;
 
   // Determine the byte order based on the isBigEndian flag
