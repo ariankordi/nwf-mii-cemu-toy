@@ -22,7 +22,7 @@ var Gen3Switchgame = (function() {
     for (var i = 0; i < 16; i++) {
       this.unknownData.push(this._io.readU1());
     }
-    this.miiName = KaitaiStream.bytesToStr(this._io.readBytes(20), "utf-16le");
+    this.miiName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "utf-16le");
     this.unknownBuffer = [];
     for (var i = 0; i < 3; i++) {
       this.unknownBuffer.push(this._io.readU1());
