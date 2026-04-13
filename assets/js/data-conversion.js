@@ -21,7 +21,6 @@
  */
 
 import { KaitaiStream } from 'kaitai-struct';
-import QRCode from 'qrjs';
 import * as Gen1Wii from '../kaitai-dist/Gen1Wii.cjs';
 import * as Gen2Wiiu3dsMiitomo from '../kaitai-dist/Gen2Wiiu3dsMiitomo.cjs';
 import * as Gen3Studio from '../kaitai-dist/Gen3Studio.cjs';
@@ -36,6 +35,7 @@ import {
 } from './common.js';
 import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
+import { MiiLogoQrCode } from './MiiLogoQrCode.js';
 
 // below is an UGLY!!!!!!! workaround to importing
 // UMD modules, from ESM, for browser and node (bundler)
@@ -1533,7 +1533,7 @@ const handleConvertDetailsToggle = (event) => {
   if (!dataValue) {
     throw new Error('data-data attribute on <details> is undefined, it is supposed to contain the data for this result');
   }
-  const name = target.dataset.name;
+  const name = target.dataset.name || DEFAULT_NAME_IF_NONE;
   // will be undefined if data-name is not there
 
   // the name of the input type will be put in this element
@@ -1563,8 +1563,7 @@ const handleConvertDetailsToggle = (event) => {
   const miiInstructionsLinkElement = target.getElementsByClassName('mii-instructions-link')[0];
   miiInstructionsLinkElement.href += studioCode; // switchCharInfoHex;
 
-  const studioURLSeed = Math.floor(256 * Math.random());
-  const studioURLData = studioURLEncodeHex(studioData, studioURLSeed);
+  const studioURLData = studioURLEncodeHex(studioData);
   const studioURLRender = studioImageElement.dataset.src + studioURLData;
   // studioURLDataElement.textContent = studioURLData;
   studioImageElement.setAttribute('src', studioURLRender);
@@ -1582,18 +1581,13 @@ const handleConvertDetailsToggle = (event) => {
   const ver3StoreDataB64 = uint8ArrayToBase64(ver3StoreData);
   ver3StoreDataElement.textContent = ver3StoreDataB64;
   // finally make a qr code
-  if (typeof QRCode !== 'undefined') {
-    /** set "forQRCode" true */
-    const ver3StoreDataForQR = convertDataToType(inputData, ver3Format, inputFormat, true);
-    const ver3QRCodeDataArray = wrapVer3StoreDataForQR(ver3StoreDataForQR);
-    ver3QRCodeDataArray.then((ver3QRCodeDataArray) => {
-      const qrCodeImage = target.getElementsByClassName('image-qr')[0];
-      qrCodeImage.src = QRCode.generatePNG(ver3QRCodeDataArray, {
-        margin: null
-      }); // for whatever reason they check whether this
-      // property in options is null - but it is undefined
+  const ver3StoreDataForQR = convertDataToType(inputData, ver3Format, inputFormat, true);
+  const qrCodeImage = target.getElementsByClassName('image-qr')[0];
+  wrapVer3StoreDataForQR(ver3StoreDataForQR).then((data) => {
+    MiiLogoQrCode.generatePng(data, name).then((src) => {
+      /** @type {HTMLImageElement} */ (qrCodeImage).src = src;
     });
-  }
+  });
 
   const modelDownloadButtons = target.getElementsByClassName('model-download-button');
   const imgSearchIfItExists = target.parentElement.getElementsByTagName('img');
