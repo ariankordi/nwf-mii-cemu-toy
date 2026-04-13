@@ -1,7 +1,7 @@
 /**
  * @file JS utility and site module that handles conversion across Mii data formats.
- * See exports ({@link convertDataToType}, {@link handleConvertDetailsToggle}).
- * Does not create event listeners on its own but the event handlers are called in HTML.
+ * See exports ({@link convertDataToType}, {@link bindResultTemplateHandlers}).
+ * Binds event listeners to result template clones via {@link bindResultTemplateHandlers}.
  * @author Arian Kordi <ariankordi@ariankordi.net>
  */
 // @ts-check
@@ -1721,6 +1721,32 @@ const handleDownloadDataFileButton = (event) => {
   URL.revokeObjectURL(url);
 };
 
+/**
+ * Binds all event handlers to a cloned result template element.
+ * @param {HTMLElement} cloneEl - The cloned result template li element
+ * @param {function(MouseEvent, Uint8Array=, string=): void} copyHandler - handleCopyButtonAndUpdateText from main.js
+ */
+const bindResultTemplateHandlers = (cloneEl, copyHandler) => {
+  const topCopyButton = cloneEl.querySelector('.copy-image-url-top');
+  if (topCopyButton) {
+    topCopyButton.addEventListener('click', (e) => copyHandler(/** @type {MouseEvent} */ (e), undefined, 'erri'));
+  }
+
+  const details = cloneEl.querySelector('details');
+  if (details) {
+    details.addEventListener('toggle', handleConvertDetailsToggle);
+  }
+
+  const studioCopyButton = cloneEl.querySelector('.copy-studio-url');
+  if (studioCopyButton) {
+    studioCopyButton.addEventListener('click', copyHandler);
+  }
+
+  for (const btn of cloneEl.querySelectorAll('.download-studio-data, .download-switch-charinfo, .download-ffsd')) {
+    btn.addEventListener('click', handleDownloadDataFileButton);
+  }
+};
+
 // #endregion
 
 export {
@@ -1734,9 +1760,7 @@ export {
   studioURLEncodeHex,
   parseTomodachiLifeQRCodeData,
   bytesToHex,
-  // from HTML:
-  handleDownloadDataFileButton,
-  handleConvertDetailsToggle,
+  bindResultTemplateHandlers,
   // for tests:
   removeEverythingAfterNullTerminator,
   wrapVer3StoreDataForQR,

@@ -811,11 +811,11 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
                 <!-- js appends the image element in here -->
             </div>
             <!-- the last argument controls whether to remove that as a query param -->
-            <button onclick="handleCopyButtonAndUpdateText(event, undefined, 'erri')">
+            <button class="copy-image-url-top">
                 <span class="text-copy">{{T("copy_image_url")}}</span>
                 <span class="text-copied" style="display: none;">{{T("copied")}}</span>
             </button>
-            <details ontoggle="handleConvertDetailsToggle(event)">
+            <details>
             <summary style="font-size: 18px;">
                 {{T("convert_label")}}<span style="color: plum;"></span>
             </summary>
@@ -830,7 +830,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
                 <ul class="left-justified-compact">
                 <li style="margin: 5px;">
                     {{T("studio_render_label")}}
-                    <button onclick="handleCopyButtonAndUpdateText(event)">
+                    <button class="copy-studio-url">
                     <span class="text-copy">{{T("copy_image_url")}}</span>
                     <span class="text-copied" style="display: none;">{{T("copied")}}</span>
                     </button>
@@ -848,15 +848,15 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
                     (for <a target="_blank" href="https://heyimheroic.github.io/MiiStudioMiiLoader/">Mii Studio Mii Loader</a>)
                 <code class="studio-code code-block"></code></li>
                 <li>
-                    <button class="download-studio-data" onclick="handleDownloadDataFileButton(event)" data-filename="Mii.mnms">
+                    <button class="download-studio-data" data-filename="Mii.mnms">
                     {{T("download_prefix")}}.mnms
                     </button>
 
-                    <button class="download-switch-charinfo" onclick="handleDownloadDataFileButton(event)" data-filename="Mii.charinfo">
+                    <button class="download-switch-charinfo" data-filename="Mii.charinfo">
                     {{T("download_prefix")}}.charinfo
                     </button>
 
-                    <button class="download-ffsd" onclick="handleDownloadDataFileButton(event)" data-filename="Mii.ffsd">
+                    <button class="download-ffsd" data-filename="Mii.ffsd">
                     {{T("download_prefix")}}.ffsd
                     </button>
                 </li>
