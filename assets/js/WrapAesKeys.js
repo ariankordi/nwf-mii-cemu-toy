@@ -4,6 +4,7 @@
  * encrypted form of Mii data seen in QR codes.
  * @author Arian Kordi <https://github.com/ariankordi>
  */
+// @ts-check
 
 /** @enum {number} */
 const KeyType = {
@@ -15,7 +16,7 @@ const KeyType = {
 /**
  * AES normal keys (keyN) at "Type 2, slot 0x31" from the 3DS.
  * https://www.3dbrew.org/wiki/PSPXI:EncryptDecryptAes#Key_Types
- * @type {Object<KeyType, sjcl.BitArray>}
+ * @type {Object<KeyType, Uint8Array>}
  */
 const KeySlot0x31Keys = [
   /** Production key. */
