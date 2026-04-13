@@ -790,7 +790,7 @@ const crc16ChecksumFailedText = document.getElementById('crc16-checksum-failed-t
 
 /**
  * @param {Uint8Array} data
- * @param {SupportedTypeDefinition} type
+ * @param {import('./common.js').SupportedTypeDefinition} type
  * @returns {string|boolean|null}
  */
 function getNameFromSupportedType(data, type) {
@@ -813,7 +813,7 @@ function getNameFromSupportedType(data, type) {
 /**
  * @param {Uint8Array} data
  * @param {HTMLSpanElement} nameElement
- * @param {SupportedTypeDefinition} type
+ * @param {import('./common.js').SupportedTypeDefinition} type
  * @param {boolean} crc16NotPassed
  * @returns {boolean}
  */
@@ -1173,7 +1173,7 @@ if (!iframeMode) {
 
 /**
  * @param {Uint8Array|Array<number>} data
- * @param {SupportedTypeDefinition} type
+ * @param {import('./common.js').SupportedTypeDefinition} type
  * @param {boolean} checkCRC16
  * @returns {CheckTypeReturn}
  */
@@ -1217,7 +1217,7 @@ function checkSupportedTypeBySize(data, type, checkCRC16) {
 /**
  *
  * @param {Uint8Array} data
- * @param {SupportedTypeDefinition} type
+ * @param {import('./common.js').SupportedTypeDefinition} type
  * @param {HTMLInputElement} dataField
  * @param {HTMLInputElement} dataRealField
  */
