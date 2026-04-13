@@ -23,20 +23,26 @@
 import { KaitaiStream } from 'kaitai-struct';
 import QRCode from 'qrjs';
 import sjcl from 'sjcl';
+import * as Gen1Wii from '../kaitai-dist/Gen1Wii.cjs';
+import * as Gen2Wiiu3dsMiitomo from '../kaitai-dist/Gen2Wiiu3dsMiitomo.cjs';
+import * as Gen3Studio from '../kaitai-dist/Gen3Studio.cjs';
+import * as Gen3Switch from '../kaitai-dist/Gen3Switch.cjs';
+import * as Gen3Switchgame from '../kaitai-dist/Gen3Switchgame.cjs';
+import * as TomodachiLifeQrCode from '../kaitai-dist/TomodachiLifeQrCode.cjs';
 import {
   /** Text utility - used in {@link handleConvertDetailsToggle}, {@link handleDownloadDataFileButton} */
   parseHexOrB64ToUint8Array, uint8ArrayToBase64, base64ToUint8Array,
   /** CRC-16/CCITT - used in {@link encode3DSStoreDataFromStruct}, {@link wrapVer3StoreDataForQR} */
   crc16
 } from './common.js';
-import * as Gen1Wii from '../kaitai-structs/js/Gen1Wii.cjs';
-import * as Gen2Wiiu3dsMiitomo from '../kaitai-structs/js/Gen2Wiiu3dsMiitomo.cjs';
-import * as Gen3Studio from '../kaitai-structs/js/Gen3Studio.cjs';
-import * as Gen3Switch from '../kaitai-structs/js/Gen3Switch.cjs';
-import * as Gen3Switchgame from '../kaitai-structs/js/Gen3Switchgame.cjs';
-import * as TomodachiLifeQrCode from '../kaitai-structs/js/TomodachiLifeQrCode.cjs';
 
+// below is an UGLY!!!!!!! workaround to importing
+// UMD modules, from ESM, for browser and node (bundler)
+
+// the generated scripts do not import KaitaiStream properly
+// so this has to be injected into the globalThis...
 globalThis['KaitaiStream'] = KaitaiStream;
+/* eslint-disable @stylistic/quote-props -- maybe clearer for closure compiler */
 const structsObj = {
   'Gen1Wii': globalThis.Gen1Wii || Gen1Wii.default,
   'Gen2Wiiu3dsMiitomo': globalThis.Gen2Wiiu3dsMiitomo || Gen2Wiiu3dsMiitomo.default,
@@ -45,6 +51,13 @@ const structsObj = {
   'Gen3Switchgame': globalThis.Gen3Switchgame || Gen3Switchgame.default,
   'TomodachiLifeQrCode': globalThis.TomodachiLifeQrCode || TomodachiLifeQrCode.default
 };
+/* eslint-enable @stylistic/quote-props -- see above */
+// kaitai's exported class is the "default" import, however we
+// use star imports to be compatible with browser and node ESM
+for (const k of Object.keys(structsObj)) {
+  // @ts-ignore -- read above, this is manually resolved`
+  structsObj[k] = structsObj[k][k];
+}
 
 /**
  * Object representing common fields shared by Kaitai structures.

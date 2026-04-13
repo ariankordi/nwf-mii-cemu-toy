@@ -2,13 +2,13 @@
 
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
-    define(['kaitai-struct/KaitaiStream'], factory);
-  } else if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('kaitai-struct/KaitaiStream'));
+    define(['exports', 'kaitai-struct/KaitaiStream'], factory);
+  } else if (typeof exports === 'object' && exports !== null && typeof exports.nodeType !== 'number') {
+    factory(exports, require('kaitai-struct/KaitaiStream'));
   } else {
-    root.Gen1Wii = factory(root.KaitaiStream);
+    factory(root.Gen1Wii || (root.Gen1Wii = {}), root.KaitaiStream);
   }
-}(typeof self !== 'undefined' ? self : this, function (KaitaiStream) {
+})(typeof self !== 'undefined' ? self : this, function (Gen1Wii_, KaitaiStream) {
 var Gen1Wii = (function() {
   function Gen1Wii(_io, _parent, _root) {
     this._io = _io;
@@ -25,7 +25,7 @@ var Gen1Wii = (function() {
     this.favoriteColor = this._io.readBitsIntBe(4);
     this.favorite = this._io.readBitsIntBe(1) != 0;
     this._io.alignToByte();
-    this.miiName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "utf-16be");
+    this.miiName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "UTF-16BE");
     this.bodyHeight = this._io.readU1();
     this.bodyWeight = this._io.readU1();
     this.avatarId = [];
@@ -88,10 +88,10 @@ var Gen1Wii = (function() {
     this.moleHorizontal = this._io.readBitsIntBe(5);
     this.unknown11 = this._io.readBitsIntBe(1) != 0;
     this._io.alignToByte();
-    this.creatorName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "utf-16be");
+    this.creatorName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "UTF-16BE");
   }
 
   return Gen1Wii;
 })();
-return Gen1Wii;
-}));
+Gen1Wii_.Gen1Wii = Gen1Wii;
+});

@@ -171,7 +171,7 @@ export default [
   {
     ignores: [
       '**/vendor-js/',
-      '**/kaitai-structs/',
+      '**/kaitai-structs/*.cjs',
       // Defaults
       '**/dist/', // Common build output directory
       '**/*.min.js' // Minified JavaScript files

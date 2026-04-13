@@ -2,13 +2,13 @@
 
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
-    define(['kaitai-struct/KaitaiStream'], factory);
-  } else if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('kaitai-struct/KaitaiStream'));
+    define(['exports', 'kaitai-struct/KaitaiStream'], factory);
+  } else if (typeof exports === 'object' && exports !== null && typeof exports.nodeType !== 'number') {
+    factory(exports, require('kaitai-struct/KaitaiStream'));
   } else {
-    root.Gen3Switchgame = factory(root.KaitaiStream);
+    factory(root.Gen3Switchgame || (root.Gen3Switchgame = {}), root.KaitaiStream);
   }
-}(typeof self !== 'undefined' ? self : this, function (KaitaiStream) {
+})(typeof self !== 'undefined' ? self : this, function (Gen3Switchgame_, KaitaiStream) {
 var Gen3Switchgame = (function() {
   function Gen3Switchgame(_io, _parent, _root) {
     this._io = _io;
@@ -22,7 +22,7 @@ var Gen3Switchgame = (function() {
     for (var i = 0; i < 16; i++) {
       this.unknownData.push(this._io.readU1());
     }
-    this.miiName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "utf-16le");
+    this.miiName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "UTF-16LE");
     this.unknownBuffer = [];
     for (var i = 0; i < 3; i++) {
       this.unknownBuffer.push(this._io.readU1());
@@ -289,5 +289,5 @@ var Gen3Switchgame = (function() {
 
   return Gen3Switchgame;
 })();
-return Gen3Switchgame;
-}));
+Gen3Switchgame_.Gen3Switchgame = Gen3Switchgame;
+});
