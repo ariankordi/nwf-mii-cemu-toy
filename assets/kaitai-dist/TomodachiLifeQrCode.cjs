@@ -2,20 +2,20 @@
 
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
-    define(['kaitai-struct/KaitaiStream'], factory);
-  } else if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('kaitai-struct/KaitaiStream'));
+    define(['exports', 'kaitai-struct/KaitaiStream'], factory);
+  } else if (typeof exports === 'object' && exports !== null && typeof exports.nodeType !== 'number') {
+    factory(exports, require('kaitai-struct/KaitaiStream'));
   } else {
-    root.TomodachiLifeQrCode = factory(root.KaitaiStream);
+    factory(root.TomodachiLifeQrCode || (root.TomodachiLifeQrCode = {}), root.KaitaiStream);
   }
-}(typeof self !== 'undefined' ? self : this, function (KaitaiStream) {
+})(typeof self !== 'undefined' ? self : this, function (TomodachiLifeQrCode_, KaitaiStream) {
 var TomodachiLifeQrCode = (function() {
   TomodachiLifeQrCode.HairDyeMode = Object.freeze({
-    OFF: 0,
+    FALSE: 0,
     HAIR_ONLY: 1,
     HAIR_EYEBROWS: 2,
 
-    0: "OFF",
+    0: "FALSE",
     1: "HAIR_ONLY",
     2: "HAIR_EYEBROWS",
   });
@@ -69,7 +69,7 @@ var TomodachiLifeQrCode = (function() {
     function IslandId(_io, _parent, _root) {
       this._io = _io;
       this._parent = _parent;
-      this._root = _root || this;
+      this._root = _root;
 
       this._read();
     }
@@ -111,5 +111,5 @@ var TomodachiLifeQrCode = (function() {
 
   return TomodachiLifeQrCode;
 })();
-return TomodachiLifeQrCode;
-}));
+TomodachiLifeQrCode_.TomodachiLifeQrCode = TomodachiLifeQrCode;
+});

@@ -13,22 +13,22 @@
 // // ---------------------------------------------------------------------
 
 (function (root, factory) {
-    // @ts-ignore - cannot find name define
-    if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
-        // @ts-ignore
-        define([], factory);
-    } else if (typeof module === 'object' && module.exports) {
-        module.exports = factory();
-    } else {
-        // Browser globals (root is window)
+  // @ts-ignore - cannot find name define
+  if (typeof define === 'function' && define.amd) {
+    // AMD. Register as an anonymous module.
+    // @ts-ignore
+    define([], factory);
+  } else if (typeof module === 'object' && module.exports) {
+    module.exports = factory();
+  } else {
+    // Browser globals (root is window)
 
-        // Assume TextEncoder/TextDecoder are either defined or undefined in window.
-        /** @type {*} */ (root).maboii =
+    // Assume TextEncoder/TextDecoder are either defined or undefined in window.
+    /** @type {*} */ (root).maboii =
           factory();
-    }
-}(typeof self !== 'undefined' ? self : this,
-    function () {
+  }
+}(typeof self === 'undefined' ? this : self,
+  function () {
 'use strict';
 
 /* eslint-disable -- Ignore output from tsc. */

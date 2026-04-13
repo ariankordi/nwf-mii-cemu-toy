@@ -2,13 +2,13 @@
 
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
-    define(['kaitai-struct/KaitaiStream'], factory);
-  } else if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('kaitai-struct/KaitaiStream'));
+    define(['exports', 'kaitai-struct/KaitaiStream'], factory);
+  } else if (typeof exports === 'object' && exports !== null && typeof exports.nodeType !== 'number') {
+    factory(exports, require('kaitai-struct/KaitaiStream'));
   } else {
-    root.Gen3Switch = factory(root.KaitaiStream);
+    factory(root.Gen3Switch || (root.Gen3Switch = {}), root.KaitaiStream);
   }
-}(typeof self !== 'undefined' ? self : this, function (KaitaiStream) {
+})(typeof self !== 'undefined' ? self : this, function (Gen3Switch_, KaitaiStream) {
 var Gen3Switch = (function() {
   function Gen3Switch(_io, _parent, _root) {
     this._io = _io;
@@ -70,7 +70,7 @@ var Gen3Switch = (function() {
     this.moleSize = this._io.readBitsIntBe(4);
     this.facialHairSize = this._io.readBitsIntBe(4);
     this._io.alignToByte();
-    this.miiName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "utf-16le");
+    this.miiName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "UTF-16LE");
     this.unknown = [];
     for (var i = 0; i < 16; i++) {
       this.unknown.push(this._io.readU1());
@@ -291,5 +291,5 @@ var Gen3Switch = (function() {
 
   return Gen3Switch;
 })();
-return Gen3Switch;
-}));
+Gen3Switch_.Gen3Switch = Gen3Switch;
+});
