@@ -593,6 +593,7 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 		"LanguageStrings": languageStrings,
 		"LanguageStringsUnderscore": languageStringsUnderscore,
 		"LastUpdated": lastUpdated,
+		"IsDevelopment": isDevelopment,
 	}
 	// functions need to be in vars i think
 	vars := jet.VarMap{}

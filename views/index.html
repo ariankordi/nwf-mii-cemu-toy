@@ -918,6 +918,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
         </li>
     </ul>
 
+    {{if .IsDevelopment}}
     <!-- ES modules import map -->
     <script type="importmap">
       {
@@ -929,24 +930,10 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
         }
       }
     </script>
-
-    <script type="module" src="/{{asset("assets/js/main.js")}}"></script>
-    <!-- async because it's not needed to RENDER the page
-    ... but will be needed laaateerrrr.... -->
-    <script async type="module" src="/{{asset("assets/js/qr-scan-handler.js")}}"></script>
-    <script async type="module" src="/{{asset("assets/js/nfp-handler.js")}}"></script>
-
-    <!-- just a joke and should not inhibit loading
-    of any other scripts ples -->
-    <script>
-    // funny pranke
-    console.log('%cDO NOT PASTE ANYTHING HERE!!!!!!!!!!',
-                        'color: red; font-size: 90px;');
-    console.log('%cHowever, if you know JavaScript, you should go here: '
-                        // links to an image of steve jobs
-                        + location.protocol + '//' + location.host + '/jobs',
-            'color: lightskyblue; font-size: 40px;');
-    </script>
+    <script type="module" src="/{{asset("assets/js/bundle.js")}}"></script>
+    {{else}}
+    <script src="/{{asset("assets/js-bundle.min.js")}}"></script>
+    {{end}}
 
     <hr class="hide-iframe-mode">
 
