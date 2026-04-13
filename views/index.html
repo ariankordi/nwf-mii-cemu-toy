@@ -917,42 +917,27 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
             </details>
         </li>
     </ul>
-    <script src="/{{asset("assets/script.js")}}"></script>
-    <!--<script src="https://cdn.jsdelivr.net/gh/criteo-forks/qr-scanner/qr-scanner.umd.min.js"></script>-->
+
+    <!-- ES modules import map -->
+    <script type="importmap">
+    {
+      "imports": {
+        "kaitai-struct": "https://esm.sh/kaitai-struct@0.11.0",
+        "sjcl": "https://esm.sh/sjcl-with-all-without-require-crypto@1.0.8",
+        "@getify-as-is/qr-scanner": "https://esm.sh/@getify-as-is/qr-scanner@0.20251225.0",
+        "qrjs": "https://esm.sh/qrjs@0.2.0"
+      }
+    }
+  </script>
+
+    <script type="module" src="/{{asset("assets/js/main.js")}}"></script>
     <!-- async because it's not needed to RENDER the page
     ... but will be needed laaateerrrr.... -->
-    <script async src="/{{asset("assets/qr-scan-handler.js")}}"></script>
-    <!-- NOTE: qr-scan-handler actually does depend on qr-scanner AND sjcl both to work -->
-    <script async src="/{{asset("assets/vendor-js/gh-criteo-forks-qr-scanner-qr-scanner.umd.min.js")}}"></script>
-    <!-- TODO: this sjcl (manually crafted) bundle could be smaller if it contained less deps -->
-    <!-- NOTE: both jses took manually from jsdelivr -->
-    <script async src="/{{asset("assets/vendor-js/sjcl-108-min-plus-codecBytes.js")}}"></script>
-
+    <script async type="module" src="/{{asset("assets/js/qr-scan-handler.js")}}"></script>
 
     <!-- scripts for data conversion -->
-    <!-- kaitai runtime -->
-    <!-- NOTE: all of the kaitais below need this BEFORE THEY LOAD!!!! -->
-    <script src="/{{asset("assets/vendor-js/KaitaiStream.min.js")}}"></script>
-    <!-- scripts -->
-    <script async src="/{{asset("assets/data-conversion.js")}}"></script>
-    <!-- kaitai structs begin -->
-    <!--
-    <script async src="/{{asset("assets/kaitai-structs/js/Gen2Wiiu3dsMiitomo.js")}}"></script>
-    <script async src="/{{asset("assets/kaitai-structs/js/Gen3Studio.js")}}"></script>
-    <script async src="/{{asset("assets/kaitai-structs/js/Gen1Wii.js")}}"></script>
-    <script async src="/{{asset("assets/kaitai-structs/js/Gen3Switch.js")}}"></script>
-    <script async src="/{{asset("assets/kaitai-structs/js/TomodachiLifeQrCode.js")}}"></script>
-    <script async src="/{{asset("assets/kaitai-structs/js/Gen3Switchgame.js")}}"></script>
-    -->
-    <script async src="/{{asset("assets/kaitai-structs/js/2025-04-21-all-compiled-kaitai-structs.min.js")}}"></script>
-    <!-- qr code encoder for data conversion -->
-{{ if .IframeMode == false }}
-    <script async src="/{{asset("assets/vendor-js/qr.min.js")}}"></script>
-{{end}}
-
-    <!-- NOTE: this maboii script below
-    contains the library AND handler for now -->
-    <script async src="/{{asset("assets/vendor-js/maboii-from-ts-browser-port.js")}}"></script>
+    <script async type="module" src="/{{asset("assets/js/data-conversion.js")}}"></script>
+    <script async type="module" src="/{{asset("assets/js/nfp-handler.js")}}"></script>
 
     <!-- just a joke and should not inhibit loading
     of any other scripts ples -->
@@ -1072,4 +1057,3 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
 
 </body>
 </html>
-

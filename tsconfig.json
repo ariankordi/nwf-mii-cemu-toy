@@ -4,7 +4,8 @@
     "allowJs": true,
     //"checkJs": true, // Assumed from @ts-check.
     "target": "es2015",
-    "module": "commonjs",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
 
     "strict": true,
     "noImplicitAny": true,
@@ -18,6 +19,6 @@
     "outDir": "types" // Emit .d.ts into types.
   },
   // Only include main sources.
-  "include": ["assets/*.js"],
+  "include": ["assets/js/*.js"],
   "exclude": ["assets/vendor-js/*"]
 }

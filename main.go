@@ -21,6 +21,8 @@ import (
 
 	// for tls sni whitelist
 	"crypto/tls"
+	// add custom mime types
+	"mime"
 
 	"github.com/CloudyKit/jet/v6"
 	"github.com/natefinch/lumberjack"
@@ -386,6 +388,7 @@ func main() {
 	http.HandleFunc("/render.png", miisImagePngRedirectHandler)
 
 	// add frontend
+	mime.AddExtensionType(".cjs", "application/javascript")
 	fileServer := gzipped.FileServer(gzipped.Dir(assetsDir))
 	if isDevelopment {
 		// Wrap the file server with CORS handler middleware

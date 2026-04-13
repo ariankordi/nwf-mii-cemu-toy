@@ -4,17 +4,15 @@
  * @author Arian Kordi <ariankordi@ariankordi.net>
  */
 
+import sjcl from 'sjcl';
+import QrScanner from '@getify-as-is/qr-scanner';
 /** Used in {@link handleTomodachiLife3DSData} */
-//import { parseTomodachiLifeQRCodeData } from './data-conversion.js';
-//import {
+import { parseTomodachiLifeQRCodeData } from './data-conversion.js';
+import {
   // CRC-16/CCITT/XMODEM implementation.
-//  crc16,
-  // TODO: this is SETTING STATE in script.js
-//  setDataConvertInline,
-//  findSupportedTypeBySize
-//} from './script.js';
-//import * as QrScanner from './vendor-js/gh-criteo-forks-qr-scanner-qr-scanner.umd.min.js';
-//import * as sjcl from './vendor-js/sjcl-108-min-plus-codecBytes.js';
+  crc16,
+  findSupportedTypeBySize
+} from './common.js';
 
 // AES keys encoded in sjcl 32-bit format.
 // https://www.3dbrew.org/wiki/PSPXI:EncryptDecryptAes#Key_Types
@@ -372,19 +370,22 @@ async function handleDecryption(result) {
   // ^^ only async because of decryptAesCtr/SubtleCr*pto
 
   // QR CODE EMPTY or does not contain binary
-  if (!result.bytes.length) {
+  // let bytes = result.bytes;
+  const bytes = result.binaryData;
+  if (!bytes.length) {
     showStatus('no-mii', 'QR code is empty or does not have binary data.');
     return;
-  } else if (result.bytes.length < CFLI_WRAPPED_MII_DATA_SIZE) {
+  } else if (bytes.length < CFLI_WRAPPED_MII_DATA_SIZE) {
     // NOTE: this is actually REDUNDANT because it is ALSO
     // checked within decryptAesCcm though then it will be caught like a generic err
-    showStatus('no-mii', 'QR code needs to be 112 bytes or longer, but length is: ' + result.bytes.length);
+    showStatus('no-mii', 'QR code needs to be 112 bytes or longer, but length is: ' + bytes.length);
     return;
   }
-  const inputData = new Uint8Array(result.bytes);
+  // bytes = new Uint8Array(result.bytes);
+  // const inputData = new Uint8Array(result.bytes);
   let decryptedData;
   try {
-    decryptedData = decryptAesCcm(inputData); // Decrypt
+    decryptedData = decryptAesCcm(bytes); // Decrypt
   } catch (error) {
     console.error(error);
     // not including "Error:" string because the js error will begin with its type
@@ -392,13 +393,13 @@ async function handleDecryption(result) {
     return;
   }
 
-  if (result.bytes.length === TOMODACHI_LIFE_3DS_QR_DATA_SIZE) { // tomodachi life, miitomo = 172
-    const ret = await handleTomodachiLife3DSData(result.bytes, decryptedData);
+  if (bytes.length === TOMODACHI_LIFE_3DS_QR_DATA_SIZE) { // tomodachi life, miitomo = 172
+    const ret = await handleTomodachiLife3DSData(bytes, decryptedData);
     if (ret) {
       decryptedData = ret;
     }
-  } else if (result.bytes.length == 122) { // miic
-    const extra = result.bytes.slice(CFLI_WRAPPED_MII_DATA_SIZE);
+  } else if (bytes.length == 122) { // miic
+    const extra = bytes.slice(CFLI_WRAPPED_MII_DATA_SIZE);
     decryptedData = new Uint8Array([...decryptedData, ...extra]);
   }
 
@@ -431,7 +432,7 @@ async function handleDecryption(result) {
   }
 
   showStatus('loaded', utf16leMiiName);
-  if (result.bytes.length === TOMODACHI_LIFE_3DS_QR_DATA_SIZE) {
+  if (bytes.length === TOMODACHI_LIFE_3DS_QR_DATA_SIZE) {
     qrLoadedTL.style.display = '';
   }
 
@@ -452,5 +453,5 @@ async function handleDecryption(result) {
 
   qrCodeDataInput.value = btoa(String.fromCharCode(...dataU8));
   qrCodeDataReal.disabled = true;
-  setDataConvertInline(dataU8, type, qrCodeDataInput, qrCodeDataReal);
+  globalThis.setDataConvertInline(dataU8, type, qrCodeDataInput, qrCodeDataReal);
 }

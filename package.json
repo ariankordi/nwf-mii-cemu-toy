@@ -1,14 +1,16 @@
 {
   "name": "nwf-mii-cemu-toy",
+  "type": "module",
   "version": "1.0.0",
   "description": "NOTE: This package is purely for the frontend JS.",
-  "main": "assets/script.js",
+  "main": "assets/js/main.js",
   "devDependencies": {
     "@eslint-community/eslint-plugin-eslint-comments": "^4.5.0",
     "@eslint/js": "^9.25.1",
     "@stylistic/eslint-plugin": "^4.2.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.19",
+    "@types/sjcl": "^1.0.34",
     "csv-parse": "^6.1.0",
     "eslint": "^9.25.1",
     "eslint-plugin-import-x": "^4.16.1",
@@ -19,7 +21,9 @@
     "jest-html-reporter": "^4.3.0"
   },
   "dependencies": {
-    "kaitai-struct": "^0.10.0",
-    "sjcl-with-all": "^1.0.8"
+    "@getify-as-is/qr-scanner": "^0.20251225.0",
+    "kaitai-struct": "^0.11.0",
+    "qrjs": "^0.2.0",
+    "sjcl": "npm:sjcl-with-all-without-require-crypto@^1.0.8"
   }
 }
