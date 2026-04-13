@@ -20,23 +20,30 @@
  * @property {string} [parseExtensionFunction] - Name of a parser for extension data embedded in the format.
  */
 
-// TODO imports:
-// sjcl, KaitaiStream
-// crc16, parseHexOrB64ToUint8Array
-// uint8ArrayToBase64, QRCode, base64ToUint8Array
-
-//import {
-/** Text utility - used in {@link handleConvertDetailsToggle}, {@link handleDownloadDataFileButton} */
-//  parseHexOrB64ToUint8Array, uint8ArrayToBase64, base64ToUint8Array,
-/** CRC-16/CCITT - used in {@link encode3DSStoreDataFromStruct}, {@link wrapVer3StoreDataForQR} */
-//  crc16
-//} from './script.js';
-/** Used in {@link createNewInstanceOfKaitaiStructFormat}, {@link parseTomodachiLifeQRCodeData} */
-//import * as KaitaiStream from './vendor-js/KaitaiStream.min.js';
-/** For generatePNG in {@link handleConvertDetailsToggle} */
-//import * as QRCode from './vendor-js/qr.min.js';
-/** For {@link wrapVer3StoreDataForQR} */
-//import * as sjcl from './vendor-js/sjcl-108-min-plus-codecBytes.js';
+import { KaitaiStream } from 'kaitai-struct';
+import QRCode from 'qrjs';
+import sjcl from 'sjcl';
+import {
+  /** Text utility - used in {@link handleConvertDetailsToggle}, {@link handleDownloadDataFileButton} */
+  parseHexOrB64ToUint8Array, uint8ArrayToBase64, base64ToUint8Array,
+  /** CRC-16/CCITT - used in {@link encode3DSStoreDataFromStruct}, {@link wrapVer3StoreDataForQR} */
+  crc16
+} from './common.js';
+globalThis.KaitaiStream = KaitaiStream;
+import * as Gen1Wii from '../kaitai-structs/js/Gen1Wii.cjs';
+import * as Gen2Wiiu3dsMiitomo from '../kaitai-structs/js/Gen2Wiiu3dsMiitomo.cjs';
+import * as Gen3Studio from '../kaitai-structs/js/Gen3Studio.cjs';
+import * as Gen3Switch from '../kaitai-structs/js/Gen3Switch.cjs';
+import * as Gen3Switchgame from '../kaitai-structs/js/Gen3Switchgame.cjs';
+import * as TomodachiLifeQrCode from '../kaitai-structs/js/TomodachiLifeQrCode.cjs';
+const structsObj = {
+  Gen1Wii: globalThis.Gen1Wii || Gen1Wii,
+  Gen2Wiiu3dsMiitomo: globalThis.Gen2Wiiu3dsMiitomo || Gen2Wiiu3dsMiitomo,
+  Gen3Studio: globalThis.Gen3Studio || Gen3Studio,
+  Gen3Switch: globalThis.Gen3Switch || Gen3Switch,
+  Gen3Switchgame: globalThis.Gen3Switchgame || Gen3Switchgame,
+  TomodachiLifeQrCode: globalThis.TomodachiLifeQrCode || TomodachiLifeQrCode
+};
 
 /**
  * Object representing common fields shared by Kaitai structures.
@@ -91,41 +98,6 @@
  * @property {number} noseVertical
  */
 
-// // ---------------------------------------------------------------------
-// //  UMD / factory setup
-// eslint-disable-next-line jsdoc/convert-to-jsdoc-comments -- not documenting the umd block
-// // ---------------------------------------------------------------------
-
-(function (root, factory) {
-  /* istanbul ignore next */
-  if (typeof module === 'object' && module.exports) {
-    // Node.js/CommonJS
-
-    // TODO: Only including KaitaiStream and nothing else.
-    module.exports = factory(
-      require('kaitai-struct/KaitaiStream'),
-      require('sjcl-with-all'),
-      globalThis.structsObj
-    );
-  } else {
-    // Browser globals (root is window)
-
-    const ret = factory(/** @type {*} */ (root).KaitaiStream,
-      /** @type {*} */ (root).sjcl,
-      root);
-
-    // Set each returned property on root.
-    for (const key in ret) {
-      if (!Object.prototype.hasOwnProperty.call(ret, key)) {
-        continue;
-      }
-      /** @type {*} */ (root)[key] = /** @type {*} */ (ret)[key];
-    }
-  }
-}(typeof self !== 'undefined' ? self : this,
-  // NOTE: the ONLY injected dependency is KaitaiStream
-  // because the UMD block is ONLY for unit testing purposes - no crc, qr code... needed
-  function (KaitaiStream, sjcl, structsObj) {
 'use strict';
 
 // #region Format Definitions
@@ -1502,24 +1474,6 @@ function studioURLObfuscationDecode(dst, src) {
   }
 }
 
-// TODO will this stay here?
-function crc16(data) {
-  let crc = 0;
-  let msb = crc >> 8;
-  let lsb = crc & 0xFF;
-
-  for (let i = 0; i < data.length; i++) {
-    const c = data[i];
-    let x = c ^ msb;
-    x ^= (x >> 4);
-    msb = (lsb ^ (x >> 3) ^ (x << 4)) & 0xFF;
-    lsb = (x ^ (x << 5)) & 0xFF;
-  }
-
-  crc = (msb << 8) + lsb;
-  return crc;
-}
-
 /**
  * @param {Uint8Array} data
  * @returns {Array<number>}
@@ -1769,8 +1723,7 @@ const handleDownloadDataFileButton = (event) => {
 
 // #endregion
 
-// export {
-return {
+export {
   convertDataToType,
   supportedFormats,
   studioFormat,
@@ -1792,4 +1745,3 @@ return {
   studioURLObfuscationDecode,
   createNewInstanceOfKaitaiStructFormat
 };
-}));

@@ -1,37 +1,14 @@
 // @ts-check
 
-const fs = require('node:fs');
-const path = require('node:path');
-const parse = require('csv-parse/sync');
-// All imports for data-conversion.js:
-globalThis.structsObj = {
-  Gen1Wii: require('./kaitai-structs/js/Gen1Wii.js'),
-  Gen3Switch: require('./kaitai-structs/js/Gen3Switch.js'),
-  Gen3Switchgame: require('./kaitai-structs/js/Gen3Switchgame.js'),
-  Gen2Wiiu3dsMiitomo: require('./kaitai-structs/js/Gen2Wiiu3dsMiitomo.js'),
-  Gen3Studio: require('./kaitai-structs/js/Gen3Studio.js')
-};
-const conv_ = require('./data-conversion.js');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
+import { parse } from 'csv-parse/sync';
+import * as conv from './data-conversion.js';
 
-// Narrow down the imports list.
-const conv = {
-  convertDataToType: conv_.convertDataToType,
-
-  // formats
-  studioFormat: conv_.studioFormat,
-  ver3Format: conv_.ver3Format,
-  charInfoFormat: conv_.charInfoFormat,
-
-  // methods
-  studioURLEncodeHex: conv_.studioURLEncodeHex,
-  createNewInstanceOfKaitaiStructFormat: conv_.createNewInstanceOfKaitaiStructFormat,
-  encode3DSStoreDataFromStruct: conv_.encode3DSStoreDataFromStruct,
-  wrapVer3StoreDataForQR: conv_.wrapVer3StoreDataForQR,
-  studioURLObfuscationEncode: conv_.studioURLObfuscationEncode,
-  studioURLObfuscationDecode: conv_.studioURLObfuscationDecode,
-};
-
-/* globals __dirname -- Node.js globals. */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // const data = conv.convertDataToType(new Uint8Array(), conv.ver3Format, 'Gen1Wii', true);
 // console.log(data);
@@ -163,18 +140,18 @@ class TestUtility {
  */
 
 /** @type {Array<TestDataTableElement>} */
-const testDataTable = parse.parse(
+const testDataTable = parse(
   fs.readFileSync(
-    path.join(__dirname, 'fixtures/conversion-test-data.csv'), 'utf8'),
+    path.join(__dirname, '../fixtures/conversion-test-data.csv'), 'utf8'),
   {
     columns: true,
     skip_empty_lines: true
   });
 
 /** @type {Array<TestDataTableElement>} */
-const testDataTableFromNX = parse.parse(
+const testDataTableFromNX = parse(
   fs.readFileSync(
-    path.join(__dirname, 'fixtures/conv-from-nx.csv'), 'utf8'),
+    path.join(__dirname, '../fixtures/conv-from-nx.csv'), 'utf8'),
   {
     columns: true,
     skip_empty_lines: true
