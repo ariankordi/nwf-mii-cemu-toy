@@ -29,20 +29,21 @@ import {
   /** CRC-16/CCITT - used in {@link encode3DSStoreDataFromStruct}, {@link wrapVer3StoreDataForQR} */
   crc16
 } from './common.js';
-globalThis.KaitaiStream = KaitaiStream;
 import * as Gen1Wii from '../kaitai-structs/js/Gen1Wii.cjs';
 import * as Gen2Wiiu3dsMiitomo from '../kaitai-structs/js/Gen2Wiiu3dsMiitomo.cjs';
 import * as Gen3Studio from '../kaitai-structs/js/Gen3Studio.cjs';
 import * as Gen3Switch from '../kaitai-structs/js/Gen3Switch.cjs';
 import * as Gen3Switchgame from '../kaitai-structs/js/Gen3Switchgame.cjs';
 import * as TomodachiLifeQrCode from '../kaitai-structs/js/TomodachiLifeQrCode.cjs';
+
+globalThis['KaitaiStream'] = KaitaiStream;
 const structsObj = {
-  Gen1Wii: globalThis.Gen1Wii || Gen1Wii,
-  Gen2Wiiu3dsMiitomo: globalThis.Gen2Wiiu3dsMiitomo || Gen2Wiiu3dsMiitomo,
-  Gen3Studio: globalThis.Gen3Studio || Gen3Studio,
-  Gen3Switch: globalThis.Gen3Switch || Gen3Switch,
-  Gen3Switchgame: globalThis.Gen3Switchgame || Gen3Switchgame,
-  TomodachiLifeQrCode: globalThis.TomodachiLifeQrCode || TomodachiLifeQrCode
+  'Gen1Wii': globalThis.Gen1Wii || Gen1Wii,
+  'Gen2Wiiu3dsMiitomo': globalThis.Gen2Wiiu3dsMiitomo || Gen2Wiiu3dsMiitomo,
+  'Gen3Studio': globalThis.Gen3Studio || Gen3Studio,
+  'Gen3Switch': globalThis.Gen3Switch || Gen3Switch,
+  'Gen3Switchgame': globalThis.Gen3Switchgame || Gen3Switchgame,
+  'TomodachiLifeQrCode': globalThis.TomodachiLifeQrCode || TomodachiLifeQrCode
 };
 
 /**
@@ -97,8 +98,6 @@ const structsObj = {
  * @property {number} noseType
  * @property {number} noseVertical
  */
-
-'use strict';
 
 // #region Format Definitions
 // // ---------------------------------------------------------------------

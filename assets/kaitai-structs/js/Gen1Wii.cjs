@@ -25,7 +25,7 @@ var Gen1Wii = (function() {
     this.favoriteColor = this._io.readBitsIntBe(4);
     this.favorite = this._io.readBitsIntBe(1) != 0;
     this._io.alignToByte();
-    this.miiName = KaitaiStream.bytesToStr(this._io.readBytes(20), "utf-16be");
+    this.miiName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "utf-16be");
     this.bodyHeight = this._io.readU1();
     this.bodyWeight = this._io.readU1();
     this.avatarId = [];
@@ -88,7 +88,7 @@ var Gen1Wii = (function() {
     this.moleHorizontal = this._io.readBitsIntBe(5);
     this.unknown11 = this._io.readBitsIntBe(1) != 0;
     this._io.alignToByte();
-    this.creatorName = KaitaiStream.bytesToStr(this._io.readBytes(20), "utf-16be");
+    this.creatorName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "utf-16be");
   }
 
   return Gen1Wii;

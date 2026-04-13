@@ -43,7 +43,7 @@ var Gen2Wiiu3dsMiitomo = (function() {
     }
     this.padding = this._io.readU2le();
     this.data1 = this._io.readU2le();
-    this.miiName = KaitaiStream.bytesToStr(this._io.readBytes(20), "utf-16le");
+    this.miiName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "utf-16le");
     this.bodyHeight = this._io.readU1();
     this.bodyWeight = this._io.readU1();
     this.faceColor = this._io.readBitsIntBe(3);
@@ -65,7 +65,7 @@ var Gen2Wiiu3dsMiitomo = (function() {
     this.beard = this._io.readU2le();
     this.glasses = this._io.readU2le();
     this.mole = this._io.readU2le();
-    this.creatorName = KaitaiStream.bytesToStr(this._io.readBytes(20), "utf-16le");
+    this.creatorName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "utf-16le");
     this.padding2 = this._io.readU2le();
     this.checksum = this._io.readU2le();
   }

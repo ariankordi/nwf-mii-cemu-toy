@@ -70,7 +70,7 @@ var Gen3Switch = (function() {
     this.moleSize = this._io.readBitsIntBe(4);
     this.facialHairSize = this._io.readBitsIntBe(4);
     this._io.alignToByte();
-    this.miiName = KaitaiStream.bytesToStr(this._io.readBytes(20), "utf-16le");
+    this.miiName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(20), "utf-16le");
     this.unknown = [];
     for (var i = 0; i < 16; i++) {
       this.unknown.push(this._io.readU1());

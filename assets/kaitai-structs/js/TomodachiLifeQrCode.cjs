@@ -28,15 +28,15 @@ var TomodachiLifeQrCode = (function() {
     this._read();
   }
   TomodachiLifeQrCode.prototype._read = function() {
-    this.firstName = KaitaiStream.bytesToStr(this._io.readBytes(32), "UTF-16LE");
-    this.lastName = KaitaiStream.bytesToStr(this._io.readBytes(32), "UTF-16LE");
+    this.firstName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(32), "UTF-16LE");
+    this.lastName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(32), "UTF-16LE");
     this.unknownBirthdayAge = this._io.readBytes(3);
     this.hairDyeMode = this._io.readBitsIntBe(2);
     this.hairDye = this._io.readBitsIntBe(5);
     this.unknownb2 = this._io.readBitsIntBe(1) != 0;
     this._io.alignToByte();
     this.unknown2 = this._io.readBytes(12);
-    this.catchphrase = KaitaiStream.bytesToStr(this._io.readBytes(32), "UTF-16LE");
+    this.catchphrase = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(32), "UTF-16LE");
     this.unknown3Clothing = this._io.readBytes(8);
     this.islandId1 = new IslandId(this._io, this, this._root);
     this.islandId2 = new IslandId(this._io, this, this._root);
@@ -61,7 +61,7 @@ var TomodachiLifeQrCode = (function() {
     this.characterOverall = this._io.readU1();
     this.unknown5 = this._io.readBytes(19);
     this.islandId3 = new IslandId(this._io, this, this._root);
-    this.islandName = KaitaiStream.bytesToStr(this._io.readBytes(18), "UTF-16LE");
+    this.islandName = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(18), "UTF-16LE");
     this.unknown6 = this._io.readBytes(6);
   }
 
@@ -113,4 +113,3 @@ var TomodachiLifeQrCode = (function() {
 })();
 return TomodachiLifeQrCode;
 }));
-
