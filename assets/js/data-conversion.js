@@ -38,12 +38,12 @@ import * as TomodachiLifeQrCode from '../kaitai-structs/js/TomodachiLifeQrCode.c
 
 globalThis['KaitaiStream'] = KaitaiStream;
 const structsObj = {
-  'Gen1Wii': globalThis.Gen1Wii || Gen1Wii,
-  'Gen2Wiiu3dsMiitomo': globalThis.Gen2Wiiu3dsMiitomo || Gen2Wiiu3dsMiitomo,
-  'Gen3Studio': globalThis.Gen3Studio || Gen3Studio,
-  'Gen3Switch': globalThis.Gen3Switch || Gen3Switch,
-  'Gen3Switchgame': globalThis.Gen3Switchgame || Gen3Switchgame,
-  'TomodachiLifeQrCode': globalThis.TomodachiLifeQrCode || TomodachiLifeQrCode
+  'Gen1Wii': globalThis.Gen1Wii || Gen1Wii.default,
+  'Gen2Wiiu3dsMiitomo': globalThis.Gen2Wiiu3dsMiitomo || Gen2Wiiu3dsMiitomo.default,
+  'Gen3Studio': globalThis.Gen3Studio || Gen3Studio.default,
+  'Gen3Switch': globalThis.Gen3Switch || Gen3Switch.default,
+  'Gen3Switchgame': globalThis.Gen3Switchgame || Gen3Switchgame.default,
+  'TomodachiLifeQrCode': globalThis.TomodachiLifeQrCode || TomodachiLifeQrCode.default
 };
 
 /**

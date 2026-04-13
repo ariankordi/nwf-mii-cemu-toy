@@ -142,7 +142,7 @@ class TestUtility {
 /** @type {Array<TestDataTableElement>} */
 const testDataTable = parse(
   fs.readFileSync(
-    path.join(__dirname, '../fixtures/conversion-test-data.csv'), 'utf8'),
+    path.join(__dirname, '../test-fixtures/conversion-test-data.csv'), 'utf8'),
   {
     columns: true,
     skip_empty_lines: true
@@ -151,7 +151,7 @@ const testDataTable = parse(
 /** @type {Array<TestDataTableElement>} */
 const testDataTableFromNX = parse(
   fs.readFileSync(
-    path.join(__dirname, '../fixtures/conv-from-nx.csv'), 'utf8'),
+    path.join(__dirname, '../test-fixtures/conv-from-nx.csv'), 'utf8'),
   {
     columns: true,
     skip_empty_lines: true

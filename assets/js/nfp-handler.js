@@ -1,4 +1,4 @@
-import * as maboiiImport from '../vendor-js/maboii-from-ts-browser-port.cjs';
+import * as maboiiImport from './maboii-from-ts-browser-port.cjs';
 import { extractUTF16Text, uint8ArrayToBase64 } from './common.js';
 
 /* eslint-disable no-self-assign -- Get TypeScript to identify global imports. */
