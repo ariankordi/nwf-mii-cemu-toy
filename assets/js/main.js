@@ -8,7 +8,7 @@
 
 // @ts-check
 import {
-  convertDataToType, studioFormat, studioURLEncodeHex, bytesToHex
+  convertDataToType, studioFormat, studioURLEncodeHex, bytesToHex, bindResultTemplateHandlers
 } from './data-conversion.js';
 import {
   crc16, parseHexOrB64ToUint8Array,
@@ -474,6 +474,7 @@ function onFormSubmit(event) {
       resultTemplateClone.style.display = '';
 
       resultList.insertBefore(resultTemplateClone, resultList.firstChild);
+      bindResultTemplateHandlers(resultTemplateClone, handleCopyButtonAndUpdateText);
 
       // remove on successful load
       const tutorial = document.getElementById('tutorial');
