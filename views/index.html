@@ -6,7 +6,7 @@
         <!-- NOTE: this will not be blocked by ad blockers -->
         <!-- if we do our own analytics it may not be blocked at all bleh -->
         <!-- TODO: make this friendly to ad blockers -->
-        <script src="/{{asset("assets/vendor-js/sentry-7.60.0-bundle.min.js")}}"></script>
+        <script src="/{{asset("assets/sentry-7.60.0-bundle.min.js")}}"></script>
         <script>
         Sentry.init({
             dsn: "{{.SentryDSN}}",
@@ -920,23 +920,20 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
 
     <!-- ES modules import map -->
     <script type="importmap">
-    {
-      "imports": {
-        "kaitai-struct": "https://esm.sh/kaitai-struct@0.11.0",
-        "sjcl": "https://esm.sh/sjcl-with-all-without-require-crypto@1.0.8",
-        "@getify-as-is/qr-scanner": "https://esm.sh/@getify-as-is/qr-scanner@0.20251225.0",
-        "qrjs": "https://esm.sh/qrjs@0.2.0"
+      {
+        "imports": {
+          "kaitai-struct": "https://esm.sh/kaitai-struct@0.11.0",
+          "sjcl": "https://esm.sh/sjcl-with-all-without-require-crypto@1.0.8",
+          "@getify-as-is/qr-scanner": "https://esm.sh/@getify-as-is/qr-scanner@0.20251225.0",
+          "qrjs": "https://esm.sh/qrjs@0.2.0"
+        }
       }
-    }
-  </script>
+    </script>
 
     <script type="module" src="/{{asset("assets/js/main.js")}}"></script>
     <!-- async because it's not needed to RENDER the page
     ... but will be needed laaateerrrr.... -->
     <script async type="module" src="/{{asset("assets/js/qr-scan-handler.js")}}"></script>
-
-    <!-- scripts for data conversion -->
-    <script async type="module" src="/{{asset("assets/js/data-conversion.js")}}"></script>
     <script async type="module" src="/{{asset("assets/js/nfp-handler.js")}}"></script>
 
     <!-- just a joke and should not inhibit loading
