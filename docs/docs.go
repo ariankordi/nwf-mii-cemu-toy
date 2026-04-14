@@ -241,7 +241,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "boolean",
-                        "description": "Enable Mipmaps for Mask//Faceline",
+                        "description": "Enable Mipmaps for Mask/Faceline",
                         "name": "mipmapEnable",
                         "in": "query"
                     },
@@ -476,7 +476,8 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "integer"
+                                "type": "integer",
+                                "format": "int32"
                             }
                         }
                     },
@@ -599,7 +600,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "boolean",
-                        "description": "Enable Mipmaps for Mask//Faceline",
+                        "description": "Enable Mipmaps for Mask/Faceline",
                         "name": "mipmapEnable",
                         "in": "query"
                     },
@@ -834,7 +835,8 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "integer"
+                                "type": "integer",
+                                "format": "int32"
                             }
                         }
                     },
@@ -957,7 +959,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "boolean",
-                        "description": "Enable Mipmaps for Mask//Faceline",
+                        "description": "Enable Mipmaps for Mask/Faceline",
                         "name": "mipmapEnable",
                         "in": "query"
                     },
@@ -1192,7 +1194,8 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "integer"
+                                "type": "integer",
+                                "format": "int32"
                             }
                         }
                     },

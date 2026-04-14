@@ -235,7 +235,7 @@
                     },
                     {
                         "type": "boolean",
-                        "description": "Enable Mipmaps for Mask//Faceline",
+                        "description": "Enable Mipmaps for Mask/Faceline",
                         "name": "mipmapEnable",
                         "in": "query"
                     },
@@ -470,7 +470,8 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "integer"
+                                "type": "integer",
+                                "format": "int32"
                             }
                         }
                     },
@@ -593,7 +594,7 @@
                     },
                     {
                         "type": "boolean",
-                        "description": "Enable Mipmaps for Mask//Faceline",
+                        "description": "Enable Mipmaps for Mask/Faceline",
                         "name": "mipmapEnable",
                         "in": "query"
                     },
@@ -828,7 +829,8 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "integer"
+                                "type": "integer",
+                                "format": "int32"
                             }
                         }
                     },
@@ -951,7 +953,7 @@
                     },
                     {
                         "type": "boolean",
-                        "description": "Enable Mipmaps for Mask//Faceline",
+                        "description": "Enable Mipmaps for Mask/Faceline",
                         "name": "mipmapEnable",
                         "in": "query"
                     },
@@ -1186,7 +1188,8 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "integer"
+                                "type": "integer",
+                                "format": "int32"
                             }
                         }
                     },

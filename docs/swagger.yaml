@@ -201,7 +201,7 @@ paths:
         in: query
         name: texResolution
         type: integer
-      - description: Enable Mipmaps for Mask//Faceline
+      - description: Enable Mipmaps for Mask/Faceline
         in: query
         name: mipmapEnable
         type: boolean
@@ -385,6 +385,7 @@ paths:
           description: Model rendered to png, tga, or binary glTF (.glb)
           schema:
             items:
+              format: int32
               type: integer
             type: array
         "400":
@@ -474,7 +475,7 @@ paths:
         in: query
         name: texResolution
         type: integer
-      - description: Enable Mipmaps for Mask//Faceline
+      - description: Enable Mipmaps for Mask/Faceline
         in: query
         name: mipmapEnable
         type: boolean
@@ -658,6 +659,7 @@ paths:
           description: Model rendered to png, tga, or binary glTF (.glb)
           schema:
             items:
+              format: int32
               type: integer
             type: array
         "400":
@@ -747,7 +749,7 @@ paths:
         in: query
         name: texResolution
         type: integer
-      - description: Enable Mipmaps for Mask//Faceline
+      - description: Enable Mipmaps for Mask/Faceline
         in: query
         name: mipmapEnable
         type: boolean
@@ -931,6 +933,7 @@ paths:
           description: Model rendered to png, tga, or binary glTF (.glb)
           schema:
             items:
+              format: int32
               type: integer
             type: array
         "400":
