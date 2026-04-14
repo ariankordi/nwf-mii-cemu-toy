@@ -486,50 +486,23 @@ conversionMethods.applyHairDyeAsVer4HairColor = (data) => {
     return; // Return unmodified
   }
 
-  /* Tomodachi Life hair dye color table from kat21 (vec3)
-     They are expressed as RGBA little-endian bytes in the binary. (0004000E0008C300 1.1.0)
-     There are 29 colors in the binary with the remaining 4 being defined inline.
-     Colors are defined in function: FUN_00706fa4, uint[29] begins at 00707134.
-     Extracted by capturing the color selector in RenderDoc.
-    0.61569, 0.87451, 1.00
-    0.40784, 0.80,    1.00
-    0.23922, 0.52549, 1.00
-    0.00,    0.00,    1.00
-    0.15294, 0.15294, 0.37255
-    0.29412, 0.29412, 0.54902
-    0.00,    0.43922, 0.43922
-    0.18039, 0.66275, 0.66275
-    0.00,    1.00,    1.00
-    0.5451,  0.91765, 0.61961
-    0.27843, 0.94118, 0.14902
-    0.00,    0.58431, 0.00
-    0.00,    0.29804, 0.00
-    1.00,    1.00,    0.44314
-    1.00,    1.00,    0.00
-    1.00,    0.80,    0.60
-    1.00,    0.61176, 0.2549
-    0.86667, 0.39216, 0.00
-    1.00,    0.11765, 0.11765
-    1.00,    0.00,    0.00
-    0.56863, 0.00,    0.00
-    1.00,    0.00,    0.66667
-    1.00,    0.38431, 0.59216
-    1.00,    0.67843, 0.63529
-    0.23529, 0.00,    0.23529
-    0.51373, 0.03137, 0.76078
-    0.76471, 0.50588, 0.97255
-    0.48235, 0.36471, 0.42745
-    0.29412, 0.29412, 0.29412
-    0.73333, 0.74902, 0.63137
-    0.70588, 0.70588, 0.70588
-    1.00,    1.00,    1.00
+  /*
+    Table for custom hair dye colors from Tomodachi Life 3DS.
+    These are RGBA little-endian integers (0xAABBGGRR)
+    in the binary found at FUN_00706fb0, Title: 0004000E0008C300 1.1.0
+    (not a linear table, some values are outside of the data section)
+    Values as 0xRRGGBB:
+
+    0x9DDFFF, 0x68CCFF, 0x3D86FF, 0x0000FF, 0x27275F, 0x4B4B8C, 0x007070, 0x2EA9A9,
+    0x00FFFF, 0x8BEA9E, 0x47F026, 0x009500, 0x004C00, 0xFFFF71, 0xFFFF00, 0xFFCC99,
+    0xFF9C41, 0xDD6400, 0xFF1E1E, 0xFF0000, 0x910000, 0xFF00AA, 0xFF6297, 0xFFADA2,
+    0x3C003C, 0x8308C2, 0xC381F8, 0x7B5D6D, 0x4B4B4B, 0xBBBFA1, 0xB4B4B4, 0xFFFFFF
   */
 
   /**
-   * Lookup table created using Euclidian distance to common colors. (courtesy of kat21)
+   * Lookup table converting TL 3DS (Clone) hair dye colors to Switch common colors.
+   * Created by taking the nearest value of each via Euclidian distance.
    * See also a version by HEYimHeroic: https://x.com/HEYimHeroic/status/1705662026398196073
-   * floats - https://discord.com/channels/360173962862395392/485919503369371648/1325604971072327712
-   * conversion - https://discord.com/channels/360173962862395392/485919503369371648/1325884578673463396
    */
   const HairDyeToCommonColorTable = [
     // Corresponds to the in-game color selection layout:
@@ -540,8 +513,8 @@ conversionMethods.applyHairDyeAsVer4HairColor = (data) => {
   ];
   // Map from data.hairDye.
   const hairDyeCommonColor = HairDyeToCommonColorTable[data.hairDye];
-  // (According to https://web.archive.org/web/20250106204124/https://tomodachi.fandom.com/wiki/Hair_Dye):
-  // Applied to hairColor, eyebrowColor, facialHairColor.
+  // These are applied to hairColor, eyebrowColor, facialHairColor.
+  // (Confirmed according to https://web.archive.org/web/20250106204124/https://tomodachi.fandom.com/wiki/Hair_Dye)
   Object.defineProperty(data, 'hairColor', {
     value: hairDyeCommonColor
   });
