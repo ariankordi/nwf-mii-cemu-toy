@@ -22,7 +22,9 @@ window.addEventListener('unhandledrejection', function (event) {
   const errorMessage = document.getElementById('error-message');
   const errorStacktrace = document.getElementById('error-stacktrace');
   const errorAt = document.getElementById('error-at');
-  errorMessage.textContent = event.reason.message || 'Unhandled Promise Rejection';
+  errorMessage.textContent = event.reason && event.reason.message
+    ? event.reason.message
+    : 'Unhandled Promise Rejection';
 
   // show stack trace if it has one
   if (event.reason && event.reason.stack) {
@@ -259,6 +261,8 @@ function loadSpecifiedFieldsFromLocalStorage() {
     }
   }
 }
+
+const shaderType = document.getElementById('shaderType');
 
 // iframe mode - do not submit to server but submit to outer frame
 const iframeMode = Object.hasOwn(document.body.dataset, 'iframeMode');
@@ -1247,8 +1251,6 @@ function setDataConvertInline(data, type, dataField, dataRealField) {
 }
 
 globalThis.setDataConvertInline = setDataConvertInline;
-
-const shaderType = document.getElementById('shaderType');
 
 const pantsColor = document.getElementById('pantsColor');
 const pantsColorsWithSwitchShaderInaccurate = document.getElementById('pants-colors-with-switch-shader-inaccurate');
