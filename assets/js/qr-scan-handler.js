@@ -78,6 +78,13 @@ startCameraButton.addEventListener('click', () => {
       highlightCodeOutline: true
     });
   }
+
+  // https://github.com/nimiq/qr-scanner/issues/139
+  const playPromise = scanner.start();
+  if (!playPromise) {
+    return; // play operation was cancelled
+  }
+
   // unhide video element (camera)
   video.style.height = '';
   videoGroup.style.display = '';
@@ -85,7 +92,8 @@ startCameraButton.addEventListener('click', () => {
   startCameraLabel.style.display = 'none'; // Hide start label
   stopCameraButton.style.display = ''; // Unhide stop button
   stopCameraLabel.style.display = ''; // Unhide stop label
-  scanner.start().then(() => {
+
+  playPromise.then(() => {
     // List cameras after the scanner started to avoid listCamera's stream and the scanner's stream being requested
     // at the same time which can result in listCamera's unconstrained stream also being offered to the scanner.
     // Note that we can also start the scanner after listCameras, we just have it this way around in the demo to
