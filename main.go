@@ -47,8 +47,8 @@ import (
 	// * do not require either database type
 	// ... or gorm in general if you don't even want it
 	"github.com/aarol/reload"
+	"github.com/glebarez/sqlite"
 	"gorm.io/driver/mysql"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	// import swaggo documentation:
