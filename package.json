@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "NOTE: This package is purely for the frontend JS.",
   "scripts": {
-    "build:rolldown": "rolldown -c rolldown.config.mjs",
+    "build:rolldown": "node rolldown.js",
     "build:kaitai-compile": "kaitai-struct-compiler -t javascript --outdir assets/kaitai-dist/ kaitai-structs/*.ksy",
     "build:kaitai-post": "node kaitai-structs/kaitai-post-build.js assets/kaitai-dist",
     "build:kaitai": "npm run-script build:kaitai-compile && npm run-script build:kaitai-post",
