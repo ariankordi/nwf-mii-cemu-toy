@@ -4,22 +4,26 @@
   "version": "1.0.0",
   "description": "NOTE: This package is purely for the frontend JS.",
   "scripts": {
-    "build:es": "esbuild assets/js/bundle.js --bundle --format=iife --platform=browser --tree-shaking --minify --external:zlib --sourcemap=external --external:iconv-lite --outfile=assets/js-bundle.min.js",
+    "build:rolldown": "rolldown -c rolldown.config.mjs",
     "build:kaitai-compile": "kaitai-struct-compiler -t javascript --outdir assets/kaitai-dist/ kaitai-structs/*.ksy",
     "build:kaitai-post": "node kaitai-structs/kaitai-post-build.js assets/kaitai-dist",
     "build:kaitai": "npm run-script build:kaitai-compile && npm run-script build:kaitai-post",
-    "build": "npm run-script build:es"
+    "build": "npm run-script build:rolldown"
   },
   "main": "assets/js/bundle.js",
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
     "@eslint-community/eslint-plugin-eslint-comments": "^4.5.0",
     "@eslint/js": "^9.25.1",
+    "@rollup/plugin-babel": "^7.0.0",
+    "@rollup/plugin-terser": "^1.0.0",
     "@stylistic/eslint-plugin": "^4.2.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.19",
     "@types/sjcl": "^1.0.34",
+    "core-js": "^3.49.0",
     "csv-parse": "^6.1.0",
-    "esbuild": "^0.28.0",
     "eslint": "^9.25.1",
     "eslint-plugin-import-x": "^4.16.1",
     "eslint-plugin-jsdoc": "^50.6.11",
@@ -27,7 +31,8 @@
     "globals": "^16.0.0",
     "jest": "^29.7.0",
     "jest-html-reporter": "^4.3.0",
-    "kaitai-struct-compiler": "^0.11.0"
+    "kaitai-struct-compiler": "^0.11.0",
+    "rolldown": "^1.0.0-rc.15"
   },
   "dependencies": {
     "@getify-as-is/qr-scanner": "^0.20251225.0",

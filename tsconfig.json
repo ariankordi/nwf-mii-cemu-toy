@@ -3,7 +3,8 @@
   "compilerOptions": {
     "allowJs": true,
     //"checkJs": true, // Assumed from @ts-check.
-    "target": "es2015",
+    "target": "es2018",
+    "lib": ["es2018", "DOM", "DOM.Iterable"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
 

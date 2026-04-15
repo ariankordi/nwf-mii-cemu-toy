@@ -265,7 +265,7 @@ function loadSpecifiedFieldsFromLocalStorage() {
 const shaderType = document.getElementById('shaderType');
 
 // iframe mode - do not submit to server but submit to outer frame
-const iframeMode = Object.hasOwn(document.body.dataset, 'iframeMode');
+const iframeMode = Object.prototype.hasOwnProperty.call(document.body.dataset, 'iframeMode');
 // assumes there is only ONE form on the page or at least the one we want is the first one
 const form = document.forms[0];
 const resultList = document.getElementById('results');
