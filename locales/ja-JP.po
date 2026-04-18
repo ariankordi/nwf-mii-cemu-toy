@@ -240,7 +240,7 @@ msgid "data_error_size_0"
 msgstr "データが空です。おっと！"
 
 msgid "miis_from_nnids_prior_notice"
-msgstr "NNIDのMiiは、2024年4月7日に作成され、2025年4月17日に更新されたアーカイブから取得されています。"
+msgstr "NNIDのMiiは、2024年4月7日に作成され、2026年4月18日に更新されたアーカイブから取得されています。"
 
 msgid "welcome_to_site_header"
 msgstr "サイトへようこそ！"

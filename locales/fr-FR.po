@@ -240,7 +240,7 @@ msgid "data_error_size_0"
 msgstr "Les données sont vides. Oups !"
 
 msgid "miis_from_nnids_prior_notice"
-msgstr "Les Mii des NNID proviennent d'une archive créée le 7 avril 2024 et mise à jour le 17 avril 2025."
+msgstr "Les Mii des NNID proviennent d'une archive créée le 7 avril 2024 et mise à jour le 18 avril 2026."
 
 msgid "welcome_to_site_header"
 msgstr "Bienvenue sur mon site !"
