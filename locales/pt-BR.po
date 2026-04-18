@@ -240,7 +240,7 @@ msgid "data_error_size_0"
 msgstr "Os dados estão vazios. Vixe!"
 
 msgid "miis_from_nnids_prior_notice"
-msgstr "Os Miis dos NNIDs vêm de um arquivo criado em 7 de abril de 2024 e atualizado em 17 de abril de 2025."
+msgstr "Os Miis dos NNIDs vêm de um arquivo criado em 7 de abril de 2024 e atualizado em 18 de abril de 2026."
 
 msgid "welcome_to_site_header"
 msgstr "Bem-vindo ao meu site!"

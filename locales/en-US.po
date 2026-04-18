@@ -240,7 +240,7 @@ msgid "data_error_size_0"
 msgstr "The data is empty. Oops!"
 
 msgid "miis_from_nnids_prior_notice"
-msgstr "Miis from NNIDs come from an archive made on April 7, 2024 and updated on April 17, 2025."
+msgstr "Miis from NNIDs come from an archive made on April 7, 2024 and updated on April 18, 2026."
 
 msgid "welcome_to_site_header"
 msgstr "Welcome to my site!"
