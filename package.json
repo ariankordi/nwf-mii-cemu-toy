@@ -35,7 +35,7 @@
     "rolldown": "^1.0.0-rc.15"
   },
   "dependencies": {
-    "@getify-as-is/qr-scanner": "^0.20251225.0",
+    "qr-scanner": "github:ariankordi/qr-scanner-binary#v1.6.2",
     "kaitai-struct": "^0.11.0",
     "qrjs": "^0.2.0",
     "sjcl": "npm:sjcl-with-all-without-require-crypto@^1.0.8"

@@ -4,7 +4,7 @@
  * @author Arian Kordi <ariankordi@ariankordi.net>
  */
 
-import QrScanner from '@getify-as-is/qr-scanner';
+import QrScanner from 'qr-scanner';
 /** Used in {@link handleTomodachiLife3DSData} */
 import { parseTomodachiLifeQRCodeData } from './data-conversion.js';
 import {
@@ -249,7 +249,7 @@ async function handleTomodachiLife3DSData(bytes, data) {
  * an error of a "no mii" type and handle showing status separately
  * also the function name is not very accurate
  * it's more like, handle scanning
- * @param {{bytes: Uint8Array}} result - The result object received from QrScanner.
+ * @param {{binaryData: Uint8Array<ArrayBufer>}} result - The result object received from QrScanner.
  */
 async function handleDecryption(result) {
   // ^^ only async because of decryptAesCtr/SubtleCr*pto
