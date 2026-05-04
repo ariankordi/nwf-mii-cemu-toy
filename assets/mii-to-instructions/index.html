@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Mii to Instructions (Redirect)</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            max-width: 600px;
+        }
+        h1 {
+            color: #333;
+            margin: 0 0 20px 0;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+        .countdown {
+            font-weight: bold;
+            color: #667eea;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>This link is not meant to be public</h1>
+        <p>Please use the official website instead: <a href="https://miiinstructions.sticksweb.site/">miiinstructions.sticksweb.site</a>
+        </p>
+        <div class="countdown">Redirecting you automatically in <span id="countdown">5</span> seconds...</div>
+    </div>
+
+    <script>
+        function getRedirectUrl() {
+            const baseUrl = 'https://miiinstructions.sticksweb.site/';
+            const queryString = window.location.search;
+            return baseUrl + queryString;
+        }
+
+        function startCountdown() {
+            let seconds = 5;
+            const countdownEl = document.getElementById('countdown');
+
+            const interval = setInterval(() => {
+                seconds--;
+                countdownEl.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    window.location.href = getRedirectUrl();
+                }
+            }, 1000);
+        }
+
+        // Redirect immediately if query params exist.
+        if (window.location.search) {
+            window.location.href = getRedirectUrl();
+        } else {
+            // Show message and countdown if no query params
+            startCountdown();
+        }
+    </script>
+</body>
+</html>
