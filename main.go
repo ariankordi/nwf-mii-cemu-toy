@@ -385,8 +385,6 @@ func main() {
 
 	http.HandleFunc("/error_reporting", sseErrorHandler)
 
-	http.HandleFunc("/render.png", miisImagePngRedirectHandler)
-
 	// add frontend
 	mime.AddExtensionType(".cjs", "application/javascript")
 	fileServer := gzipped.FileServer(gzipped.Dir(assetsDir))
@@ -600,10 +598,13 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 	vars.SetFunc("T", i18nFunc)
 
 	// send early hints
+	// well... cloudflare ignores this anyway
+	/*
 	w.Header().Add("Link", "</assets/nintendo_NTLG.woff2>; rel=prefetch; as=font; type=\"font/woff2\"; crossorigin=anonymous")
 	w.Header().Add("Link", "</" + assetURLWithTimestamp("assets/style.css") + ">; rel=prefetch; as=style")
-	w.Header().Add("Link", "</" + assetURLWithTimestamp("assets/script.js") + ">; rel=prefetch; as=script")
+	w.Header().Add("Link", "</" + assetURLWithTimestamp("assets/js-bundle.min.js") + ">; rel=prefetch; as=script")
 	w.WriteHeader(http.StatusEarlyHints)
+	*/
 
 	// write response
 	if err = tmpl.Execute(w, vars, data); err != nil {
@@ -612,18 +613,6 @@ func endpointsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	//http.ServeFile(w, r, "index.html")
-}
-
-// NOTE: redirect /render.png to /miis/image.png why did this ever use render.png
-func miisImagePngRedirectHandler(w http.ResponseWriter, r *http.Request) {
-	// Parse the new endpoint URL
-	newURL, _ := url.Parse("/miis/image.png")
-
-	// Copy the query parameters from the original request
-	newURL.RawQuery = r.URL.RawQuery
-
-	// Perform the redirect
-	http.Redirect(w, r, newURL.String(), http.StatusFound)
 }
 
 // make http client that does not do keep alives
