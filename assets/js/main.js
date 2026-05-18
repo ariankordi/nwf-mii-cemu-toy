@@ -8,8 +8,9 @@
 
 // @ts-check
 import {
-  convertDataToType, studioFormat, studioURLEncodeHex, bytesToHex, bindResultTemplateHandlers
+  convertDataToType, studioFormat, studioURLEncodeHex, bytesToHex
 } from './data-conversion.js';
+import { bindResultTemplateHandlers } from './convert-dropdown.js';
 import {
   crc16, parseHexOrB64ToUint8Array,
   uint8ArrayToBase64, base64ToUint8Array,
