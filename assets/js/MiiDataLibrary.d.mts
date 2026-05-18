@@ -34,9 +34,10 @@ export class Crc16Ccitt
 	/**
 	 * Calculates the CRC-16/CCITT checksum for the specified input data.
 	 * Courtesy of Luciano Barcaro: https://stackoverflow.com/a/30357446
-	 * @param context Starting CRC value/seed.
 	 */
-	public static calculate(input: Readonly<Uint8Array>, size: number, context?: number): number;
+	public static calculate(input: Readonly<Uint8Array>, size: number): number;
+
+	public static updateBigEndian(data: Uint8Array, end: number, start?: number): void;
 }
 
 export class MiiDecoder
@@ -308,4 +309,136 @@ export class StudioObfuscation
 	 * Deobfuscates Studio URL data to raw decodable data.
 	 */
 	public static decode(dst: Uint8Array, src: Readonly<Uint8Array>): void;
+}
+
+export const MiiDataType = {
+	/**
+	 * Placeholder value.
+	 */
+	UNKNOWN : 0,
+	/**
+	 * 64/0x40 bytes. Used in Wii hidden/"parade" DB, no creator name.
+	 * RFLiHiddenCharData
+	 */
+	RFL_CORE : 1,
+	/**
+	 * 74/0x4A bytes. Data format used on Wii.
+	 * RFLCharData, FFLiMiiDataOfficialRFL
+	 * Extension: rcd, unofficial: mii, mae, miigx
+	 */
+	RFL_DATA : 2,
+	/**
+	 * 76/0x4C bytes. Wii data format with CRC-16.
+	 * Extension: rsd, used in some titles e.g. MKW ghosts
+	 */
+	RFL_STORE_DATA : 3,
+	/**
+	 * 74/0x4A bytes. Data format used in DS titles with Mii characters.
+	 * Byte order is little-endian, while bit order is same.
+	 */
+	RFL_DATA_LITTLE_ENDIAN : 4,
+	/**
+	 * 72/0x48 bytes. Used in 3DS/Wii U hidden DB, no creator name.
+	 * CFLiPackedMiiDataCore, FFLiMiiDataCore
+	 */
+	VER3_CORE : 5,
+	/**
+	 * 92/0x5C bytes. Used in 3DS/Wii U database, no CRC.
+	 * CFLiPackedMiiDataOfficial, FFLiMiiDataOfficial
+	 * Unofficial extensions: 3dsmii, cfcd, ffcdgam
+	 */
+	VER3_DATA : 6,
+	/**
+	 * 96/0x60 bytes. Data format used on 3DS/Wii U.
+	 * CFLiMiiDataPacket/CFLStoreData, FFLStoreData, nn::mii::Ver3StoreData
+	 * Extensions: cfsd, ffsd
+	 */
+	VER3_STORE_DATA : 7,
+	/**
+	 * 92/0x5C bytes. Used in the Wii U database.
+	 * Byte order is big-endian, while bit order is same.
+	 */
+	VER3_DATA_BIG_ENDIAN : 8,
+	/**
+	 * 88/0x58 bytes. Used in Switch titles. Each field is a byte.
+	 * nn::mii::CharInfo/nn::mii::detail::CharInfoRaw
+	 * Unofficial extension: charinfo (SDK uses .dat)
+	 */
+	NX_CHAR_INFO : 9,
+	/**
+	 * 48/0x30 bytes. Used in Switch databases and NFIF format. Bitfield-packed, no CreateID.
+	 * nn::mii::CoreData/nn::mii::detail::CoreDataRaw
+	 * Unofficial extension: nfcd
+	 */
+	NX_CORE : 10,
+	/**
+	 * 68/0x44 bytes. Used in Switch MiiDatabase.dat (editor DB).
+	 * Contains core, CreateID, CRC-16 of data, and CRC-16 of system AuthorID.
+	 * nn::mii::StoreData/nn::mii::detail::StoreDataRaw
+	 * Unofficial extension: nfsd
+	 */
+	NX_STORE_DATA : 11,
+	/**
+	 * 28/0x1C bytes. Trimmed version of Switch CoreData excluding name.
+	 */
+	NX_CORE_PARAM : 12,
+	/**
+	 * 46/0x2E bytes. Used in NA/"Mii Studio" web editor.
+	 * This is the format before obfuscation and in LocalStorage.
+	 * Contains only visual information with Switch colors/glass types.
+	 * Unofficial extension: mnms
+	 */
+	STUDIO_DATA : 13,
+	/**
+	 * 47/0x2F bytes. NA/"Mii Studio" web editor format with obfuscation.
+	 * This obfuscated form is used in the "data=" URL param for the /miis/image.png endpoint.
+	 */
+	STUDIO_URL_DATA : 14,
+	/**
+	 * Represents the biggest Mii data format,
+	 * in order to provide a maximum buffer size.
+	 */
+	LARGEST : 7
+} as const;
+
+export const MiiDataSize = {
+	UNKNOWN : 0,
+	RFL_CORE : 64,
+	RFL_DATA : 74,
+	RFL_STORE_DATA : 76,
+	VER3_CORE : 72,
+	VER3_DATA : 92,
+	VER3_STORE_DATA : 96,
+	NX_CORE : 48,
+	NX_CHAR_INFO : 88,
+	NX_STORE_DATA : 68,
+	NX_CORE_PARAM : 28,
+	STUDIO_DATA : 46,
+	STUDIO_URL_DATA : 47
+} as const;
+
+export class MiiFormat
+{
+	private constructor();
+
+	public static getTypeFromSize(size: number): MiiDataType;
+
+	public static getSize(type: MiiDataType): number;
+}
+
+export class DataConversionUtilityTodoMoveThis
+{
+	private constructor();
+
+	public static convertDataTypeBuffers(src: Readonly<Uint8Array>, dst: Uint8Array, srcType: MiiDataType, dstType: MiiDataType): boolean;
+
+	public static convertDataType(src: Readonly<Uint8Array>, srcType: MiiDataType, dstType: MiiDataType): Uint8Array | null;
+
+	public static decodeDataType(src: Readonly<Uint8Array>, type: MiiDataType, info: MiiVisualInfo, ex: MiiExtraInfo): boolean;
+
+	public static encodeDataType(dst: Uint8Array, type: MiiDataType, info: MiiVisualInfo, ex: MiiExtraInfo): void;
+
+	public static convertWiiExtraForVer3Personal(extra: MiiExtraInfo): void;
+
+	static #convertWiiCreateIdToVer3(idData: Uint8Array, authorId: Uint8Array): void;
 }

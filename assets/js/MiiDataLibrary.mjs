@@ -79,13 +79,11 @@ export class Crc16Ccitt
 	/**
 	 * Calculates the CRC-16/CCITT checksum for the specified input data.
 	 * Courtesy of Luciano Barcaro: https://stackoverflow.com/a/30357446
-	 * @param context Starting CRC value/seed.
 	 */
-	static calculate(input, size, context = 0)
+	static calculate(input, size)
 	{
-		let crc = context;
-		let msb = crc >> 8;
-		let lsb = crc & 255;
+		let msb = 0;
+		let lsb = 0;
 		for (let i = 0; i < size; i++) {
 			let x = input[i] ^ msb;
 			x ^= x >> 4;
@@ -93,6 +91,18 @@ export class Crc16Ccitt
 			lsb = (x ^ x << 5) & 255;
 		}
 		return msb << 8 | lsb;
+	}
+
+	static updateBigEndian(data, end, start = 0)
+	{
+		let offset = start + end - 2;
+		data[offset] = data[offset + 1] = 0;
+		for (let i = 0; i < end - 2; i++) {
+			let x = data[start + i] ^ data[offset];
+			x ^= x >> 4;
+			data[offset] = (data[offset + 1] ^ x >> 3 ^ x << 4) & 255;
+			data[offset + 1] = (x ^ x << 5) & 255;
+		}
 	}
 }
 
@@ -223,7 +233,7 @@ export class MiiDecoder
 	static from3dsWiiuStoreData(src, info, ex)
 	{
 		MiiDecoder.from3dsWiiuData(src, info, ex);
-		return Crc16Ccitt.calculate(src, 96) == 0;
+		return Crc16Ccitt.calculate(src, MiiDataSize.VER3_STORE_DATA) == 0;
 	}
 
 	static visualFromNxCore(src, info)
@@ -505,7 +515,7 @@ export class MiiDecoder
 	static fromRflStoreData(src, info, ex)
 	{
 		MiiDecoder.fromRflData(src, info, ex);
-		return Crc16Ccitt.calculate(src, 76) == 0;
+		return Crc16Ccitt.calculate(src, MiiDataSize.RFL_STORE_DATA) == 0;
 	}
 
 	static #VISUAL_FROM_RFL_CORE_FACE_TEX_TABLE = new Uint8Array([ 0, 0, 0, 1, 0, 6, 0, 9, 5, 0, 2, 0, 3, 0, 7, 0,
@@ -699,9 +709,7 @@ export class MiiEncoder
 	static to3dsWiiuStoreData(dst, info, ex)
 	{
 		MiiEncoder.to3dsWiiuData(dst, info, ex);
-		let crcOffset = 94;
-		let crc = Crc16Ccitt.calculate(dst, crcOffset);
-		MiiEncoder.storeU16BigEndian(crc, dst, crcOffset);
+		Crc16Ccitt.updateBigEndian(dst, MiiDataSize.VER3_STORE_DATA);
 	}
 
 	static toStudioData(dst, info)
@@ -841,9 +849,8 @@ export class MiiEncoder
 		if (ex.hasFlag(MiiExtraFlag.NX_DEVICE_CRC)) {
 			dst.set(ex.authorId.subarray(0, 2), 66);
 		}
-		let crcOffset = 62;
-		let crc = Crc16Ccitt.calculate(dst, crcOffset);
-		MiiEncoder.storeU16BigEndian(crc, dst, crcOffset);
+		let crcOffset = MiiDataSize.NX_STORE_DATA - 2;
+		Crc16Ccitt.updateBigEndian(dst, crcOffset);
 	}
 
 	static visualToNxCharInfo(dst, info)
@@ -1011,9 +1018,7 @@ export class MiiEncoder
 	static toRflStoreData(dst, info, ex)
 	{
 		MiiEncoder.toRflData(dst, info, ex);
-		let crcOffset = 74
-		let crc = Crc16Ccitt.calculate(dst, crcOffset);
-		MiiEncoder.storeU16BigEndian(crc, dst, crcOffset);
+		Crc16Ccitt.updateBigEndian(dst, MiiDataSize.RFL_STORE_DATA);
 	}
 }
 
@@ -1207,6 +1212,323 @@ export class StudioObfuscation
 		for (let i = 0; i < 46; i++) {
 			let val = (src[i + 1] - 7) % 256;
 			dst[i] = val ^ src[i];
+		}
+	}
+}
+
+export const MiiDataType = {
+	/**
+	 * Placeholder value.
+	 */
+	UNKNOWN : 0,
+	/**
+	 * 64/0x40 bytes. Used in Wii hidden/"parade" DB, no creator name.
+	 * RFLiHiddenCharData
+	 */
+	RFL_CORE : 1,
+	/**
+	 * 74/0x4A bytes. Data format used on Wii.
+	 * RFLCharData, FFLiMiiDataOfficialRFL
+	 * Extension: rcd, unofficial: mii, mae, miigx
+	 */
+	RFL_DATA : 2,
+	/**
+	 * 76/0x4C bytes. Wii data format with CRC-16.
+	 * Extension: rsd, used in some titles e.g. MKW ghosts
+	 */
+	RFL_STORE_DATA : 3,
+	/**
+	 * 74/0x4A bytes. Data format used in DS titles with Mii characters.
+	 * Byte order is little-endian, while bit order is same.
+	 */
+	RFL_DATA_LITTLE_ENDIAN : 4,
+	/**
+	 * 72/0x48 bytes. Used in 3DS/Wii U hidden DB, no creator name.
+	 * CFLiPackedMiiDataCore, FFLiMiiDataCore
+	 */
+	VER3_CORE : 5,
+	/**
+	 * 92/0x5C bytes. Used in 3DS/Wii U database, no CRC.
+	 * CFLiPackedMiiDataOfficial, FFLiMiiDataOfficial
+	 * Unofficial extensions: 3dsmii, cfcd, ffcdgam
+	 */
+	VER3_DATA : 6,
+	/**
+	 * 96/0x60 bytes. Data format used on 3DS/Wii U.
+	 * CFLiMiiDataPacket/CFLStoreData, FFLStoreData, nn::mii::Ver3StoreData
+	 * Extensions: cfsd, ffsd
+	 */
+	VER3_STORE_DATA : 7,
+	/**
+	 * 92/0x5C bytes. Used in the Wii U database.
+	 * Byte order is big-endian, while bit order is same.
+	 */
+	VER3_DATA_BIG_ENDIAN : 8,
+	/**
+	 * 88/0x58 bytes. Used in Switch titles. Each field is a byte.
+	 * nn::mii::CharInfo/nn::mii::detail::CharInfoRaw
+	 * Unofficial extension: charinfo (SDK uses .dat)
+	 */
+	NX_CHAR_INFO : 9,
+	/**
+	 * 48/0x30 bytes. Used in Switch databases and NFIF format. Bitfield-packed, no CreateID.
+	 * nn::mii::CoreData/nn::mii::detail::CoreDataRaw
+	 * Unofficial extension: nfcd
+	 */
+	NX_CORE : 10,
+	/**
+	 * 68/0x44 bytes. Used in Switch MiiDatabase.dat (editor DB).
+	 * Contains core, CreateID, CRC-16 of data, and CRC-16 of system AuthorID.
+	 * nn::mii::StoreData/nn::mii::detail::StoreDataRaw
+	 * Unofficial extension: nfsd
+	 */
+	NX_STORE_DATA : 11,
+	/**
+	 * 28/0x1C bytes. Trimmed version of Switch CoreData excluding name.
+	 */
+	NX_CORE_PARAM : 12,
+	/**
+	 * 46/0x2E bytes. Used in NA/"Mii Studio" web editor.
+	 * This is the format before obfuscation and in LocalStorage.
+	 * Contains only visual information with Switch colors/glass types.
+	 * Unofficial extension: mnms
+	 */
+	STUDIO_DATA : 13,
+	/**
+	 * 47/0x2F bytes. NA/"Mii Studio" web editor format with obfuscation.
+	 * This obfuscated form is used in the "data=" URL param for the /miis/image.png endpoint.
+	 */
+	STUDIO_URL_DATA : 14,
+	/**
+	 * Represents the biggest Mii data format,
+	 * in order to provide a maximum buffer size.
+	 */
+	LARGEST : 7
+}
+
+export const MiiDataSize = {
+	UNKNOWN : 0,
+	RFL_CORE : 64,
+	RFL_DATA : 74,
+	RFL_STORE_DATA : 76,
+	VER3_CORE : 72,
+	VER3_DATA : 92,
+	VER3_STORE_DATA : 96,
+	NX_CORE : 48,
+	NX_CHAR_INFO : 88,
+	NX_STORE_DATA : 68,
+	NX_CORE_PARAM : 28,
+	STUDIO_DATA : 46,
+	STUDIO_URL_DATA : 47
+}
+
+export class MiiFormat
+{
+
+	static getTypeFromSize(size)
+	{
+		switch (size) {
+		case 64:
+			return MiiDataType.RFL_CORE;
+		case 74:
+			return MiiDataType.RFL_DATA;
+		case 76:
+			return MiiDataType.RFL_STORE_DATA;
+		case 72:
+			return MiiDataType.VER3_CORE;
+		case 92:
+			return MiiDataType.VER3_DATA;
+		case 96:
+			return MiiDataType.VER3_STORE_DATA;
+		case 28:
+			return MiiDataType.NX_CORE_PARAM;
+		case 48:
+			return MiiDataType.NX_CORE;
+		case 68:
+			return MiiDataType.NX_STORE_DATA;
+		case 88:
+			return MiiDataType.NX_CHAR_INFO;
+		case 46:
+			return MiiDataType.STUDIO_DATA;
+		case 47:
+			return MiiDataType.STUDIO_URL_DATA;
+		default:
+			return MiiDataType.UNKNOWN;
+		}
+	}
+
+	static getSize(type)
+	{
+		switch (type) {
+		case MiiDataType.UNKNOWN:
+			return MiiDataSize.UNKNOWN;
+		case MiiDataType.RFL_CORE:
+			return MiiDataSize.RFL_CORE;
+		case MiiDataType.RFL_STORE_DATA:
+			return MiiDataSize.RFL_STORE_DATA;
+		case MiiDataType.RFL_DATA:
+		case MiiDataType.RFL_DATA_LITTLE_ENDIAN:
+			return MiiDataSize.RFL_DATA;
+		case MiiDataType.VER3_CORE:
+			return MiiDataSize.VER3_CORE;
+		case MiiDataType.VER3_STORE_DATA:
+			return MiiDataSize.VER3_STORE_DATA;
+		case MiiDataType.VER3_DATA:
+		case MiiDataType.VER3_DATA_BIG_ENDIAN:
+			return MiiDataSize.VER3_DATA;
+		case MiiDataType.NX_CHAR_INFO:
+			return MiiDataSize.NX_CHAR_INFO;
+		case MiiDataType.NX_CORE:
+			return MiiDataSize.NX_CORE;
+		case MiiDataType.NX_STORE_DATA:
+			return MiiDataSize.NX_STORE_DATA;
+		case MiiDataType.NX_CORE_PARAM:
+			return MiiDataSize.NX_CORE_PARAM;
+		case MiiDataType.STUDIO_DATA:
+			return MiiDataSize.STUDIO_DATA;
+		case MiiDataType.STUDIO_URL_DATA:
+			return MiiDataSize.STUDIO_URL_DATA;
+		default:
+			throw new Error("Unknown MiiDataType value.");
+		}
+	}
+}
+
+export class DataConversionUtilityTodoMoveThis
+{
+
+	static convertDataTypeBuffers(src, dst, srcType, dstType)
+	{
+		const info = new MiiVisualInfo();
+		const ex = new MiiExtraInfo();
+		if (!DataConversionUtilityTodoMoveThis.decodeDataType(src, srcType, info, ex)) {
+			return false;
+		}
+		DataConversionUtilityTodoMoveThis.encodeDataType(dst, dstType, info, ex);
+		return true;
+	}
+
+	static convertDataType(src, srcType, dstType)
+	{
+		let size = MiiFormat.getSize(dstType);
+		let dst = new Uint8Array(size);
+		if (!DataConversionUtilityTodoMoveThis.convertDataTypeBuffers(src, dst, srcType, dstType)) {
+			return null;
+		}
+		return dst;
+	}
+
+	static decodeDataType(src, type, info, ex)
+	{
+		switch (type) {
+		case MiiDataType.RFL_CORE:
+			MiiDecoder.visualFromRflCore(src, info);
+			return true;
+		case MiiDataType.RFL_DATA:
+			MiiDecoder.fromRflData(src, info, ex);
+			return true;
+		case MiiDataType.RFL_STORE_DATA:
+			return MiiDecoder.fromRflStoreData(src, info, ex);
+		case MiiDataType.VER3_CORE:
+			MiiDecoder.from3dsWiiuCore(src, info, ex);
+			return true;
+		case MiiDataType.VER3_DATA:
+			MiiDecoder.from3dsWiiuData(src, info, ex);
+			return true;
+		case MiiDataType.VER3_STORE_DATA:
+			return MiiDecoder.from3dsWiiuStoreData(src, info, ex);
+		case MiiDataType.NX_CHAR_INFO:
+			MiiDecoder.fromNxCharInfo(src, info, ex);
+			return true;
+		case MiiDataType.NX_CORE:
+			MiiDecoder.fromNxCore(src, info, ex);
+			return true;
+		case MiiDataType.NX_STORE_DATA:
+			return MiiDecoder.fromNxStoreData(src, info, ex);
+		case MiiDataType.NX_CORE_PARAM:
+			MiiDecoder.fromNxCoreParam(src, info, ex);
+			return true;
+		case MiiDataType.STUDIO_DATA:
+			MiiDecoder.fromStudioData(src, info);
+			return true;
+		case MiiDataType.STUDIO_URL_DATA:
+			MiiDecoder.fromStudioUrlData(src, info);
+			return true;
+		default:
+			throw new Error("Unknown MiiDataType value.");
+		}
+	}
+
+	static encodeDataType(dst, type, info, ex)
+	{
+		switch (type) {
+		case MiiDataType.RFL_CORE:
+			MiiEncoder.visualToRflCore(dst, info);
+			break;
+		case MiiDataType.RFL_DATA:
+			MiiEncoder.toRflData(dst, info, ex);
+			break;
+		case MiiDataType.RFL_STORE_DATA:
+			MiiEncoder.toRflStoreData(dst, info, ex);
+			break;
+		case MiiDataType.VER3_CORE:
+			MiiEncoder.to3dsWiiuCore(dst, info, ex);
+			break;
+		case MiiDataType.VER3_DATA:
+			MiiEncoder.to3dsWiiuData(dst, info, ex);
+			break;
+		case MiiDataType.VER3_STORE_DATA:
+			MiiEncoder.to3dsWiiuStoreData(dst, info, ex);
+			break;
+		case MiiDataType.NX_CHAR_INFO:
+			MiiEncoder.toNxCharInfo(dst, info, ex);
+			break;
+		case MiiDataType.NX_CORE:
+			MiiEncoder.toNxCore(dst, info, ex);
+			break;
+		case MiiDataType.NX_STORE_DATA:
+			MiiEncoder.toNxStoreData(dst, info, ex);
+			break;
+		case MiiDataType.NX_CORE_PARAM:
+			MiiEncoder.toNxCoreParam(dst, info, ex);
+			break;
+		case MiiDataType.STUDIO_DATA:
+			MiiEncoder.toStudioData(dst, info);
+			break;
+		case MiiDataType.STUDIO_URL_DATA:
+			MiiEncoder.toStudioUrlData(dst, info);
+			break;
+		default:
+			throw new Error("Unknown MiiDataType value.");
+		}
+	}
+
+	static convertWiiExtraForVer3Personal(extra)
+	{
+		console.assert(extra.hasFlag(MiiExtraFlag.WII_CREATE_ID));
+		extra.clearFlag();
+		extra.setFlag(MiiExtraFlag.NICKNAME);
+		extra.setFlag(MiiExtraFlag.CREATOR_NAME);
+		extra.setFlag(MiiExtraFlag.FAVORITE_LOCAL_BIRTH);
+		extra.setFlag(MiiExtraFlag.SPECIAL);
+		extra.setFlag(MiiExtraFlag.VER3_PERSONAL);
+		extra.positionInRoom = extra.roomIndex = 0;
+		extra.ngWord = false;
+		extra.birthPlatform = 1;
+		extra.copyable = false;
+		DataConversionUtilityTodoMoveThis.#convertWiiCreateIdToVer3(extra.createId, extra.authorId);
+	}
+
+	static #convertWiiCreateIdToVer3(idData, authorId = new Uint8Array(8))
+	{
+		let offset = 8;
+		idData[offset] = 127;
+		idData[offset + 1] = 3;
+		for (let i = 0; i < 8; i++) {
+			let x = idData[offset];
+			x ^= x >> 4;
+			idData[offset] = (idData[offset + 1] ^ x >> 3 ^ x << 4) & 255;
+			idData[offset + 1] = (x ^ x << 5 ^ authorId[i]) & 255;
 		}
 	}
 }
