@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import { parse } from 'csv-parse/sync';
-import { MiiDecoder, MiiEncoder, MiiVisualInfo, MiiExtraInfo } from './MiiDataLibrary.mjs';
+import { DataConversionUtilityTodoMoveThis as ConvUtility, MiiDataSize, MiiDataType, MiiExtraInfo, MiiVisualInfo } from './MiiDataLibrary.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -252,26 +252,25 @@ const testConversionEntry = (entry, fromNX = false) => () => {
       /** @param {Uint8Array} buffer - Ver3StoreData to normalize. */
       function normalize(buffer) {
         Normalize.ver3NormalizeExclusiveFields(buffer);
-
         // bitfield 0x01
         buffer[1] &= 0xCF; // fontRegion = 0 (jp_us_eu)
-
-        // Zero out part of CreateID exclusive to Ver3StoreData.
-        TestUtility.zeroRange(buffer, 0x14, 0x16); // CreateID last 2 bytes
-        // TODO: Last 2 bytes are SUPPOSED TO BE a CRC-16 of the AuthorID.
-        // Not sure how to implement this if we don't "know" what
-        // the AuthorID is supposed to be. Perhaps let the RFL->Ver3
-        // function specify the AuthorID in case they know it?
-        TestUtility.fillPattern(buffer, 0x04, 0x0C); // AuthorID
 
         TestUtility.fillPattern(buffer, 0x5E, 0x60); // CRC-16 checksum.
       }
 
       const rawRfl = hexToBytes(/** @type {string} */(entry.rflCharData));
-      const roundTrip = new Uint8Array(96);
-      const info = new MiiVisualInfo(), ex = new MiiExtraInfo();
-      MiiDecoder.fromRflData(rawRfl, info, ex);
-      MiiEncoder.to3dsWiiuStoreData(roundTrip, info, ex);
+
+      const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+      ConvUtility.decodeDataType(rawRfl, MiiDataType.RFL_DATA, info, extra);
+      debugger
+      // set author id from original data
+      extra.authorId.set(srcVer3.subarray(0x04, 0x0C));
+      ConvUtility.convertWiiExtraForVer3Personal(extra);
+
+      const roundTrip = new Uint8Array(MiiDataSize.VER3_STORE_DATA);
+      ConvUtility.encodeDataType(roundTrip, MiiDataType.VER3_STORE_DATA, info, extra);
+      // const roundTrip = ConvUtility.convertDataType(rawRfl, MiiDataType.RFL_DATA, MiiDataType.VER3_STORE_DATA);
+      // if (!roundTrip) throw new Error('data conversion failure.');
 
       /** Source bytes copied for normalization. */
       const srcBytesForCompare = new Uint8Array(srcVer3.length);
@@ -287,10 +286,10 @@ const testConversionEntry = (entry, fromNX = false) => () => {
   if (entry.studioCharInfo) {
     if (!fromNX) {
       it('converts Ver3StoreData -> Studio CharInfo', () => {
-        const studio = new Uint8Array(46);
-        const info = new MiiVisualInfo(), ex = new MiiExtraInfo();
-        MiiDecoder.from3dsWiiuStoreData(srcVer3, info, ex);
-        MiiEncoder.toStudioData(studio, info);
+
+        const studio =
+          ConvUtility.convertDataType(srcVer3, MiiDataType.VER3_STORE_DATA, MiiDataType.STUDIO_DATA);
+        if (!studio) throw new Error('data conversion failure.');
 
         TestUtility.expectBuffersEqual(studio, expectedStudio);
       });
@@ -311,10 +310,9 @@ const testConversionEntry = (entry, fromNX = false) => () => {
         TestUtility.fillPattern(buffer, 0x48, 0x5C); // Creator name.
       }
 
-      const roundTrip = new Uint8Array(96);
-      const info = new MiiVisualInfo(), ex = new MiiExtraInfo();
-      MiiDecoder.fromStudioData(expectedStudio, info);
-      MiiEncoder.to3dsWiiuStoreData(roundTrip, info, ex);
+      const roundTrip =
+        ConvUtility.convertDataType(expectedStudio, MiiDataType.STUDIO_DATA, MiiDataType.VER3_STORE_DATA);
+      if (!roundTrip) throw new Error('data conversion failure.');
 
       // Set copyable to 1 for source - always gets set to 1 in destinati
 
@@ -349,10 +347,9 @@ const testConversionEntry = (entry, fromNX = false) => () => {
         TestUtility.fillPattern(buffer, 0x48, 0x5C); // Creator name.
       }
 
-      const roundTrip = new Uint8Array(96);
-      const info = new MiiVisualInfo(), ex = new MiiExtraInfo();
-      MiiDecoder.fromNxCore(expectedCore, info, ex);
-      MiiEncoder.to3dsWiiuStoreData(roundTrip, info, ex);
+      const roundTrip =
+        ConvUtility.convertDataType(expectedCore, MiiDataType.NX_CORE, MiiDataType.VER3_STORE_DATA);
+      if (!roundTrip) throw new Error('data conversion failure.');
 
       // TODO: Continuity Termination
 
@@ -371,16 +368,17 @@ const testConversionEntry = (entry, fromNX = false) => () => {
     it('decodes Studio URL (seed=0) and re-encodes to same', () => {
       // Convert hex to bytes
       const obfuscatedBytes = hexToBytes(/** @type {string} */(entry.studioURLSeed0));
-      const info = new MiiVisualInfo(), ex = new MiiExtraInfo();
-      MiiDecoder.fromStudioUrlData(obfuscatedBytes, info);
-      // Decode Studio URL back to raw studio data
-      const studioRaw = new Uint8Array(46);
-      MiiEncoder.toStudioData(studioRaw, info);
+
+      const roundTrip =
+        ConvUtility.convertDataType(obfuscatedBytes, MiiDataType.STUDIO_URL_DATA, MiiDataType.STUDIO_DATA);
+      if (!roundTrip) throw new Error('data conversion failure.');
 
       // Then obfuscate to URL bytes, and compare
-      const studioObfuscated = new Uint8Array(47);
-      MiiEncoder.toStudioUrlData(studioObfuscated, info);
-      const expectedURLHex = bytesToHex(studioObfuscated);
+      const studioUrl =
+        ConvUtility.convertDataType(roundTrip, MiiDataType.STUDIO_DATA, MiiDataType.STUDIO_URL_DATA);
+      if (!studioUrl) throw new Error('data conversion failure.');
+
+      const expectedURLHex = bytesToHex(studioUrl);
       expect(expectedURLHex).toBe(entry.studioURLSeed0);
     });
   }
@@ -389,10 +387,11 @@ const testConversionEntry = (entry, fromNX = false) => () => {
   if (entry.nnmiiCharInfo && !fromNX) {
     it('converts nn::mii::CoreData -> nn::mii::CharInfo', () => {
       const expectedCharInfo = hexToBytes(/** @type {string} */(entry.nnmiiCharInfo));
-      const actualCharInfo = new Uint8Array(88);
-      const info = new MiiVisualInfo(), ex = new MiiExtraInfo();
-      MiiDecoder.fromNxCore(expectedCore, info, ex);
-      MiiEncoder.toNxCharInfo(actualCharInfo, info, ex);
+
+      const actualCharInfo =
+        ConvUtility.convertDataType(expectedCore, MiiDataType.NX_CORE, MiiDataType.NX_CHAR_INFO);
+      if (!actualCharInfo) throw new Error('data conversion failure.');
+
       Normalize.nnmiiCharInfoNormalize(expectedCharInfo);
       Normalize.nnmiiCharInfoNormalize(actualCharInfo);
 
