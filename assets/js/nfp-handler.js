@@ -1,5 +1,5 @@
 import * as maboiiImport from './maboii-from-ts-browser-port.cjs';
-import { extractUTF16Text, uint8ArrayToBase64 } from './common.js';
+import { extractUTF16Text, bytesToBase64 } from './common.js';
 
 /* eslint-disable no-self-assign -- Get TypeScript to identify global imports. */
 globalThis.maboii = ((globalThis).maboii);
@@ -227,7 +227,7 @@ nfpFileInput.addEventListener('input', function () {
       storeData.set(storeDataCopy, 0);
       storeData.set(storeDataExtension, NFP_STOREDATA_SIZE);
     } else {
-      nfpFileDataInput.value = uint8ArrayToBase64(storeData);
+      nfpFileDataInput.value = bytesToBase64(storeData);
       // if this IS using extension then setDataConvertInline will set the value
     }
 
