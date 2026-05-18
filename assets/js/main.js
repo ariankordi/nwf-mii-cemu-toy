@@ -7,9 +7,6 @@
  */
 
 // @ts-check
-import {
-  convertDataToType, studioFormat, studioURLEncodeHex, bytesToHex
-} from './data-conversion.js';
 import { bindResultTemplateHandlers } from './convert-dropdown.js';
 import {
   crc16, parseHexOrB64ToBytes,
@@ -493,73 +490,7 @@ function onFormSubmit(event) {
   }
 }
 
-if (iframeMode) {
-  // special form handler for iframe mode
-  form.addEventListener('submit', function (event) {
-    event.preventDefault(); // Prevent the default form submission via HTTP
-    formSubmitting = true;
-    submitButton.disabled = true; // Disable the button
-
-    const formData = new FormData(form);
-    const searchParams = new URLSearchParams([...formData.entries()]);
-    if (transparentCheckbox.checked) {
-      searchParams.delete('bgColor');
-    }
-    searchParams.delete('erri');
-
-    const dataForConversion = formData.get('data-REAL');
-    if (dataForConversion) {
-      // delete it so it is not sent to the server, only used for js
-      searchParams.delete('data-REAL');
-    }
-    const data = dataForConversion ? dataForConversion : formData.get('data');
-    console.log('data input:', data);
-
-    if (data) { // not empty, null, or undefined
-      const inputData = parseHexOrB64ToBytes(data);
-
-      // run the function to convert the data from the image to raw studio data
-      const studioData = convertDataToType(inputData, studioFormat);
-      const studioURLData = studioURLEncodeHex(studioData);
-      searchParams.append('studioData', studioURLData);
-    }
-
-    // iterate through elements with data-default-value attribute
-    // for each of these inputs, if the value matches the default...
-    // then they will be excluded from the search params to clean it up
-    for (const element of document.querySelectorAll('[data-default-value]')) {
-      const defaultValue = element.dataset.defaultValue;
-
-      let inputValue = element.value;
-      // if this is a checkbox, then the value is if it is checked
-      if (element.type === 'checkbox') {
-        inputValue = element.checked;
-      }
-
-      // double equals means that '0' will match 'disabled' (checkbox)
-      if (inputValue == defaultValue) {
-        searchParams.delete(element.name);
-      }
-    }
-
-    const params = Object.fromEntries(searchParams);
-    // post to above iframe
-    window.top.postMessage(params, '*');
-  });
-  window.onmessage = function (event) {
-    if (event.data === 'releaseSubmit') {
-      formSubmitting = false;
-      submitButton.disabled = false;
-    }
-    /*
-    if(event.data === 'submitForm') {
-
-    }
-    */
-  };
-} else {
-  form.addEventListener('submit', onFormSubmit);
-}
+form.addEventListener('submit', onFormSubmit);
 
 /** @enum number */
 const CheckTypeReturn = {
@@ -1233,15 +1164,9 @@ function setDataConvertInline(data, type, dataField, dataRealField) {
     return;
   }
 
+  throw new Error('implement this function.');
   // convert to stuuuuuudioooooo
-
-  // run the function to convert the data from the image to raw studio data
-  // NOTE: assuming function and studioFormat const are already defined
-  const studioData = convertDataToType(data, studioFormat);
-  // "studio code" = raw studio data in hex
-  // NOTE: three dots are only required if it is a uint8array which
-  // it is only one if the input data is studio data directly
-  const studioCode = bytesToHex(studioData);
+  const studioCode = 'foobar';
 
   // set data field
   dataField.value = studioCode;
