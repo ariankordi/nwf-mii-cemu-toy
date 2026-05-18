@@ -5,8 +5,6 @@
  */
 
 import QrScanner from 'qr-scanner';
-/** Used in {@link handleTomodachiLife3DSData} */
-import { parseTomodachiLifeQRCodeData } from './data-conversion.js';
 import {
   // CRC-16/CCITT/XMODEM implementation.
   crc16,
@@ -229,10 +227,11 @@ async function handleTomodachiLife3DSData(bytes, data) {
     return extra;
   }
 
+  throw new Error('implement this');
   extra = new Uint8Array([...data, ...extra]);
   const dataObj = {};
   // NOTE may not be defined:
-  parseTomodachiLifeQRCodeData(extra, dataObj);
+  // parseTomodachiLifeQRCodeData(extra, dataObj);
   // TODO check if that worked and props are there
 
   qrLoadedTL.children[0].textContent = dataObj.firstName;
