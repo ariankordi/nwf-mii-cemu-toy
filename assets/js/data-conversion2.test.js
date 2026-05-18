@@ -5,13 +5,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import { parse } from 'csv-parse/sync';
-import { DataConversionUtilityTodoMoveThis as ConvUtility, MiiDataSize, MiiDataType, MiiExtraInfo, MiiVisualInfo } from './MiiDataLibrary.mjs';
+import { Char16, DataConversionUtilityTodoMoveThis as ConvUtility, MiiDataSize, MiiDataType, MiiExtraInfo, MiiVisualInfo } from './MiiDataLibrary.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// const data = conv.convertDataToType(new Uint8Array(), conv.ver3Format, 'Gen1Wii', true);
-// console.log(data);
 
 // #region Utility: Base64 -> U8, Hex -> U8, U8 -> Hex
 // // ---------------------------------------------------------------------
@@ -41,15 +38,6 @@ const hexToBytes = hex => Uint8Array.from({ length: hex.length >>> 1 }, (_, i) =
 const bytesToHex = bytes => Array.prototype.map.call(bytes,
   (/** @type {{ toString: (arg0: number) => string; }} */ x) =>
     x.toString(16).padStart(2, '0')).join(''); // padStart: ES2017
-
-/**
- * U8 -> Base64
- * @param {Array<number>|Uint8Array} bytes - Input data to encode.
- * @returns {string} Base64 representation of `buffer`.
- */
-// const bytesToBase64 = bytes =>
-// fromCharCode should be compatible with Uint8Array, but its param type is number[].
-//   btoa(String.fromCharCode.apply(null, /** @type {Array<number>} */ (bytes)));
 
 /**
  * Base64 -> U8 function that also supports Base64URL
@@ -116,7 +104,7 @@ class TestUtility {
  * Data conversion methods:
  * - Ver3StoreData -> Studio: Using NA Mii Studio import from NNID.
  * - Ver3StoreData -> CoreData: Miitomo from QR code
- * -  (Or, import to Studio, and see Nintendo Account API "coreData" with INVALID CREATEID)
+ * -  (Or, import to Studio, and see Nintendo Account API "coreData" with INVALID CREATE ID)
  * - Studio Seed 0: Using own obfuscation function from raw.
  * - Studio -> Ver3StoreData: Set Studio Mii as primary, see Nintendo Account API
  * - Switch (StoreData) -> Ver3StoreData: From amiibo (NfpStoreData)
@@ -223,7 +211,6 @@ const testConversionEntry = (entry, fromNX = false) => () => {
   /** @type {Uint8Array} */ let expectedCore;
   /** @type {Uint8Array} */ let expectedStudio;
 
-
   beforeAll(() => {
     // Prepare byte buffers once per entry.
     const src = base64ToBytes(entry.ver3StoreData);
@@ -314,7 +301,7 @@ const testConversionEntry = (entry, fromNX = false) => () => {
         ConvUtility.convertDataType(expectedStudio, MiiDataType.STUDIO_DATA, MiiDataType.VER3_STORE_DATA);
       if (!roundTrip) throw new Error('data conversion failure.');
 
-      // Set copyable to 1 for source - always gets set to 1 in destinati
+      // Set copyable to 1 for source - always gets set to 1 in destination
 
       /** Source bytes copied for normalization. */
       const srcBytesForCompare = new Uint8Array(srcVer3.length);
@@ -403,6 +390,23 @@ const testConversionEntry = (entry, fromNX = false) => () => {
   // cannot convert back to CharInfo, due to not being able to encode CoreData
   // nnmiiCharInfo
 
+  if (entry.nfpStoreData && entry.nnmiiCharInfo) {
+    it('converts NfpStoreData -> CharInfo', () => {
+      const nfpBytes = base64ExToBytes(/** @type {string} */(entry.nfpStoreData));
+      const expectedCharInfo = hexToBytes(/** @type {string} */(entry.nnmiiCharInfo));
+
+      const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+      ConvUtility.decodeDataType(nfpBytes, MiiDataType.VER3_STORE_DATA, info, extra);
+      ConvUtility.applyNfpExtension(info, nfpBytes, MiiDataSize.VER3_STORE_DATA);
+      const actualCharInfo = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
+      ConvUtility.encodeDataType(actualCharInfo, MiiDataType.NX_CHAR_INFO, info, extra);
+
+      Normalize.nnmiiCharInfoNormalize(expectedCharInfo);
+      Normalize.nnmiiCharInfoNormalize(actualCharInfo);
+
+      TestUtility.expectBuffersEqual(actualCharInfo, expectedCharInfo);
+    });
+  }
   // nfpStoreData
 };
 
@@ -428,5 +432,114 @@ describe('Mii data cross-conversion tests', () => {
   }
   // testDataTableFromNX.forEach
 
+  // Individual cases.
+
+
+  describe('Ver3 CreateID tests', () => {
+    // Guest A / "no name" - a normal Wii U Mii.
+    // avatarId[0] = 0x80: bit7 set (normal mii), bit5 clear (not temporary).
+    const normalVer3 = 'AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV';
+
+    it('clears temporary flag (bit 5) when encoding', () => {
+      // Set bit 5 in avatarId[0] in the raw bytes before encoding.
+      const src = base64ToBytes(normalVer3);
+      src[0x0C] |= 0b00100000; // FFLI_CREATE_ID_FLAG_TEMPORARY
+
+      const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+      ConvUtility.decodeDataType(src, MiiDataType.VER3_STORE_DATA, info, extra);
+      ConvUtility.adjustExtra(extra, MiiDataType.VER3_STORE_DATA);
+
+      expect(extra.createId[0] & 0b00100000).toBe(0);
+    });
+
+    it('assigns normal/Wii U createId when only temporary flag was set (treated as null)', () => {
+      // avatarId[0] = 0x20: only the temporary bit. After clearing it becomes 0,
+      // so isArrayNull fires and a fresh normal/Wii U createId is generated.
+      const src = base64ToBytes(normalVer3);
+      src[0x0C] = 0b00100000;
+      // Zero out the rest of the createId (avatarId bytes 1-3 + clientId).
+      TestUtility.zeroRange(src, 0x0D, 0x16);
+
+      const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+      ConvUtility.decodeDataType(src, MiiDataType.VER3_STORE_DATA, info, extra);
+      ConvUtility.adjustExtra(extra, MiiDataType.VER3_STORE_DATA);
+
+      // Normal/Wii U: bits 7, 6, 4 set (0b11010000 = 0xD0).
+      expect(extra.createId[0] & 0b11010000).toBe(0b11010000);
+      expect(extra.createId[0] & 0b00100000).toBe(0); // still no temporary bit
+    });
+
+    it('assigns normal/Wii U createId when createId is fully null', () => {
+      const src = base64ToBytes(normalVer3);
+      // Zero out avatarId (0x0C-0x0F) and clientId (0x10-0x15).
+      TestUtility.zeroRange(src, 0x0C, 0x16);
+
+      const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+      ConvUtility.decodeDataType(src, MiiDataType.VER3_STORE_DATA, info, extra);
+      ConvUtility.adjustExtra(extra, MiiDataType.VER3_STORE_DATA);
+
+      expect(extra.createId[0] & 0b11010000).toBe(0b11010000);
+    });
+  });
+
+  describe('Library-specific behavior tests', () => {
+    it('fills null name with default when encoding to CharInfo', () => {
+      // Ver3StoreData with an all-zero name field.
+      const emptyNameVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
+
+      const studioUrl =
+        ConvUtility.convertDataType(emptyNameVer3, MiiDataType.VER3_DATA, MiiDataType.STUDIO_URL_DATA);
+      if (!studioUrl) throw new Error('data conversion failure.');
+
+      const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+      ConvUtility.decodeDataType(studioUrl, MiiDataType.STUDIO_URL_DATA, info, extra);
+      ConvUtility.adjustExtra(extra, MiiDataType.NX_CHAR_INFO);
+      const out = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
+      ConvUtility.encodeDataType(out, MiiDataType.NX_CHAR_INFO, info, extra);
+
+      const name = Char16.char16ToString(extra.nickname, extra.nickname.length);
+      expect(name.slice(0, 3)).toBe('Mii');
+    });
+  });
+
+  describe('nn::mii::CharInfo pedantic tests', () => {
+    it('generates valid createId from all-zero CoreData', () => {
+      const emptyCore = new Uint8Array(48); // Empty nn::mii::CoreData
+
+      const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+      ConvUtility.decodeDataType(emptyCore, MiiDataType.NX_CORE, info, extra);
+      ConvUtility.adjustExtra(extra, MiiDataType.NX_CHAR_INFO);
+
+      // CreateID should be 16 random bytes with proper UUID v4 bits
+      // Version 4 UUID: bits 12-15 of first octet should be 0100
+      // NOTE: nn::mii does NOT STRICTLY check this
+      // expect((createId[6] & 0xF0) >> 4).toBe(4);
+
+      // clock_seq_hi_and_reserved: two high bits must be 10 (RFC 4122 / nn::mii::CreateId::IsValid).
+      expect(extra.createId[8] & 0xC0).toBe(0x80);
+    });
+
+    it('continuously terminates name after first null character', () => {
+      const input = 'Should\u0000Not';
+      const decoder = new TextDecoder('utf-16');
+
+      // Ver3StoreData with an all-zero name field.
+      const emptyNameVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
+
+      const nameBuffer = new Uint16Array(emptyNameVer3.buffer, 0x1A, 0x20);
+      for (let i = 0; i < input.length; i++) {
+        nameBuffer[i] = input.charCodeAt(i);
+      }
+
+      const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+      ConvUtility.decodeDataType(emptyNameVer3, MiiDataType.VER3_STORE_DATA, info, extra);
+      expect(decoder.decode(extra.nickname)).toBe(input);
+      ConvUtility.adjustExtra(extra, MiiDataType.NX_CHAR_INFO);
+
+      // Every character from the null onward must be replaced with null.
+      expect(decoder.decode(extra.nickname))
+        .toBe('Should\u0000\u0000\u0000\u0000');
+    });
+  });
   // describe
 });

@@ -218,8 +218,8 @@ class Normalize {
  * @param {TestDataTableElement} entry
  * @param {boolean} [fromNX]
  */
-const testConvEntry = (entry, fromNX = false) => () => {
-  /** @type {Uint8Array} */ const srcBytes = new Uint8Array(96);
+const testConversionEntry = (entry, fromNX = false) => () => {
+  /** @type {Uint8Array} */ const srcVer3 = new Uint8Array(96);
   /** @type {Uint8Array} */ let expectedCore;
   /** @type {Uint8Array} */ let expectedStudio;
 
@@ -227,7 +227,7 @@ const testConvEntry = (entry, fromNX = false) => () => {
     // Prepare byte buffers once per entry.
     const src = base64ToBytes(entry.ver3StoreData);
     expect(src.length).toBeGreaterThanOrEqual(92); // .toHaveLength(96);
-    srcBytes.set(src);
+    srcVer3.set(src);
 
     if (entry.nnmiiCoreData) {
       expectedCore = base64ExToBytes(entry.nnmiiCoreData);
@@ -270,8 +270,8 @@ const testConvEntry = (entry, fromNX = false) => () => {
       const roundTrip = conv.convertDataToType(rawRfl, conv.ver3Format, null, false);
 
       /** Source bytes copied for normalization. */
-      const srcBytesForCompare = new Uint8Array(srcBytes.length);
-      srcBytesForCompare.set(srcBytes);
+      const srcBytesForCompare = new Uint8Array(srcVer3.length);
+      srcBytesForCompare.set(srcVer3);
       normalize(srcBytesForCompare);
       normalize(roundTrip);
 
@@ -283,7 +283,7 @@ const testConvEntry = (entry, fromNX = false) => () => {
   if (entry.studioCharInfo) {
     if (!fromNX) {
       it('converts Ver3StoreData -> Studio CharInfo', () => {
-        const studio = conv.convertDataToType(srcBytes, conv.studioFormat, null);
+        const studio = conv.convertDataToType(srcVer3, conv.studioFormat, null);
 
         TestUtility.expectBuffersEqual(studio, expectedStudio);
       });
@@ -309,8 +309,8 @@ const testConvEntry = (entry, fromNX = false) => () => {
       // Set copyable to 1 for source - always gets set to 1 in destinati
 
       /** Source bytes copied for normalization. */
-      const srcBytesForCompare = new Uint8Array(srcBytes.length);
-      srcBytesForCompare.set(srcBytes);
+      const srcBytesForCompare = new Uint8Array(srcVer3.length);
+      srcBytesForCompare.set(srcVer3);
       normalize(srcBytesForCompare);
       normalize(roundTrip);
 
@@ -344,8 +344,8 @@ const testConvEntry = (entry, fromNX = false) => () => {
       // TODO: Continuity Termination
 
       /** Source bytes copied for normalization. */
-      const srcBytesForCompare = new Uint8Array(srcBytes.length);
-      srcBytesForCompare.set(srcBytes);
+      const srcBytesForCompare = new Uint8Array(srcVer3.length);
+      srcBytesForCompare.set(srcVer3);
       normalize(srcBytesForCompare);
       normalize(roundTrip);
 
@@ -419,14 +419,14 @@ describe('Mii data cross-conversion tests', () => {
     }
 
     const name = `${entry.label} / ${entry.details}`;
-    describe(name, testConvEntry(entry));
+    describe(name, testConversionEntry(entry));
     // describe
   }
   // testDataTable.forEach
 
   for (const entry of testDataTableFromNX) {
     const name = `${entry.label} / ${entry.details}`;
-    describe(name, testConvEntry(entry, /* fromNX */ true));
+    describe(name, testConversionEntry(entry, /* fromNX */ true));
     // describe
   }
   // testDataTableFromNX.forEach
