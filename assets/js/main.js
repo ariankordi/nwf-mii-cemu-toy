@@ -12,8 +12,8 @@ import {
 } from './data-conversion.js';
 import { bindResultTemplateHandlers } from './convert-dropdown.js';
 import {
-  crc16, parseHexOrB64ToUint8Array,
-  uint8ArrayToBase64, base64ToUint8Array,
+  crc16, parseHexOrB64ToBytes,
+  bytesToBase64, base64ToBytes,
   extractUTF16Text, findSupportedTypeBySize
 } from './common.js';
 
@@ -516,7 +516,7 @@ if (iframeMode) {
     console.log('data input:', data);
 
     if (data) { // not empty, null, or undefined
-      const inputData = parseHexOrB64ToUint8Array(data);
+      const inputData = parseHexOrB64ToBytes(data);
 
       // run the function to convert the data from the image to raw studio data
       const studioData = convertDataToType(inputData, studioFormat);
@@ -631,7 +631,7 @@ async function handleNNIDDataFetch(apiUrl, nnidInput, nnidLoaded, nnidDataInput,
         } else if (!data.data) {
           throw new Error('No data attribute in response');
         }
-        decodedData = base64ToUint8Array(data.data);
+        decodedData = base64ToBytes(data.data);
         if (data.user_id) {
           nnidInput.value = data.user_id;
         }
@@ -875,7 +875,7 @@ fileInput.addEventListener('input', function () {
     /** Remove the 'data:;base64,' part */
     const base64Data = e.target.result.split(',')[1];
     // decode so we can verify it and read the mii name
-    const data = base64ToUint8Array(base64Data);
+    const data = base64ToBytes(base64Data);
 
     const type = findSupportedTypeBySize(data.length);
 
@@ -944,7 +944,7 @@ dataInput.addEventListener('input', function () {
   // decode so we can verify it and read the mii name
   let data;
   try {
-    data = parseHexOrB64ToUint8Array(dataInput.value);
+    data = parseHexOrB64ToBytes(dataInput.value);
   } catch (error) {
     dataInput.setCustomValidity('We tried to decode as hex and Base64 and failed at both: ' + error);
     return;
@@ -1032,7 +1032,7 @@ function fillNameInDetailsFromDataString(parent, dataString) {
   const nameFieldElement = firstSummaryInParent.firstElementChild;
   // assuming the top are defined   all well and good and yes.
 
-  const data = parseHexOrB64ToUint8Array(dataString);
+  const data = parseHexOrB64ToBytes(dataString);
   const type = findSupportedTypeBySize(data.length);
   // asssuuumiiinggg it will always be supported
   const nameString = getNameFromSupportedType(data, type);
@@ -1248,7 +1248,7 @@ function setDataConvertInline(data, type, dataField, dataRealField) {
 
   // set real value that will be read by conversion
   dataRealField.disabled = false;
-  dataRealField.value = uint8ArrayToBase64(data);
+  dataRealField.value = bytesToBase64(data);
 }
 
 globalThis.setDataConvertInline = setDataConvertInline;

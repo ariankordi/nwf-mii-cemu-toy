@@ -27,12 +27,7 @@ import * as Gen3Studio from '../kaitai-dist/Gen3Studio.cjs';
 import * as Gen3Switch from '../kaitai-dist/Gen3Switch.cjs';
 import * as Gen3Switchgame from '../kaitai-dist/Gen3Switchgame.cjs';
 import * as TomodachiLifeQrCode from '../kaitai-dist/TomodachiLifeQrCode.cjs';
-import {
-  /** Text utility - used in {@link handleConvertDetailsToggle}, {@link handleDownloadDataFileButton} */
-  parseHexOrB64ToUint8Array, uint8ArrayToBase64, base64ToUint8Array,
-  /** CRC-16/CCITT - used in {@link encode3DSStoreDataFromStruct}, {@link wrapVer3StoreDataForQR} */
-  crc16
-} from './common.js';
+import { bytesToHex, crc16 } from './common.js';
 import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
 import { MiiLogoQrCode } from './MiiLogoQrCode.js';
@@ -1136,14 +1131,6 @@ const convertDataToType = (data, outputFormat, inputFormat, optionalBoolToEncode
 // //  Codec Utilities, String Utilities
 // // ---------------------------------------------------------------------
 
-/**
- * U8 -> Hex / https://www.xaymar.com/articles/2020/12/08/fastest-uint8array-to-hex-string-conversion-in-javascript/
- * @param {Array<number>|Uint8Array} bytes - Input data to encode.
- * @returns {string} Hexadecimal representation of `buffer`.
- */
-const bytesToHex = bytes => Array.prototype.map.call(bytes,
-  (/** @type {{ toString: (arg0: number) => string; }} */ x) => x.toString(16).padStart(2, '0')).join('');
-
 // !! == ALL BELOW TAKEN FROM "mii2studio in js ai slop attempt 1" FIDDLE == !!
 
 // Helper functions
@@ -1480,7 +1467,6 @@ export {
   studioURLObfuscationEncode,
   studioURLEncodeHex,
   parseTomodachiLifeQRCodeData,
-  bytesToHex,
   DEFAULT_NAME_IF_NONE,
   // for tests:
   removeEverythingAfterNullTerminator,

@@ -1,19 +1,26 @@
 const stripSpaces = str => str.replace(/\s+/g, '');
-const hexToUint8Array = hex => new Uint8Array(hex.match(/.{1,2}/g).map(byte => Number.parseInt(byte, 16)));
-const base64ToUint8Array = (base64) => {
+const hexToBytes = hex => new Uint8Array(hex.match(/.{1,2}/g).map(byte => Number.parseInt(byte, 16)));
+/**
+ * U8 -> Hex / https://www.xaymar.com/articles/2020/12/08/fastest-uint8array-to-hex-string-conversion-in-javascript/
+ * @param {Array<number>|Uint8Array} bytes - Input data to encode.
+ * @returns {string} Hexadecimal representation of `bytes`.
+ */
+const bytesToHex = bytes => Array.prototype.map.call(bytes,
+  (/** @type {{ toString: (arg0: number) => string; }} */ x) => x.toString(16).padStart(2, '0')).join('');
+const base64ToBytes = (base64) => {
   // Replace URL-safe Base64 characters
   const normalizedBase64 = base64.replace(/-/g, '+').replace(/_/g, '/');
   // Add padding if necessary
   const paddedBase64 = normalizedBase64.padEnd(normalizedBase64.length + (4 - (normalizedBase64.length % 4)) % 4, '=');
   return Uint8Array.from(atob(paddedBase64), c => c.charCodeAt(0));
 };
-const uint8ArrayToBase64 = data => btoa(String.fromCharCode.apply(null, data));
+const bytesToBase64 = data => btoa(String.fromCharCode.apply(null, data));
 
-const parseHexOrB64ToUint8Array = (text) => {
+const parseHexOrB64ToBytes = (text) => {
   // decode it to a uint8array whether it's hex or base64
   const textData = stripSpaces(text);
   // check if it's base 16 exclusively, otherwise assume base64
-  return /^[0-9a-fA-F]+$/.test(textData) ? hexToUint8Array(textData) : base64ToUint8Array(textData);
+  return /^[0-9a-fA-F]+$/.test(textData) ? hexToBytes(textData) : base64ToBytes(textData);
 };
 
 /**
@@ -168,10 +175,11 @@ const findSupportedTypeBySize =
   size => supportedTypes.find(type => type.sizes.includes(size));
 
 export {
-  hexToUint8Array,
-  base64ToUint8Array,
-  parseHexOrB64ToUint8Array,
-  uint8ArrayToBase64,
+  hexToBytes,
+  bytesToHex,
+  base64ToBytes,
+  parseHexOrB64ToBytes,
+  bytesToBase64,
   extractUTF16Text,
   findSupportedTypeBySize,
   crc16
