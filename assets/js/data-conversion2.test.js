@@ -6,56 +6,10 @@ import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import { parse } from 'csv-parse/sync';
 import { Char16, DataConversionUtilityTodoMoveThis as ConvUtility, MiiDataSize, MiiDataType, MiiExtraInfo, MiiVisualInfo } from './MiiDataLibrary.mjs';
+import { base64ToBytes, bytesToHex, hexToBytes } from './common.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-// #region Utility: Base64 -> U8, Hex -> U8, U8 -> Hex
-// // ---------------------------------------------------------------------
-// //  Utility: Base64 -> U8, Hex -> U8, U8 -> Hex
-// // ---------------------------------------------------------------------
-// Merge to class: CodecUtility, TextCodingUtil, TextCodec
-
-/**
- * Base64 -> U8 / https://stackoverflow.com/a/41106346
- * @param {string} base64 - Input Base64 data to decode.
- * @returns {Uint8Array} Decoded input data.
- */
-const base64ToBytes = base64 => Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-/**
- * Hex -> U8
- * @param {string} hex - Input hex data to decode.
- * @returns {Uint8Array} Decoded input data.
- */
-const hexToBytes = hex => Uint8Array.from({ length: hex.length >>> 1 }, (_, i) =>
-  Number.parseInt(hex.slice(i << 1, (i << 1) + 2), 16));
-
-/**
- * U8 -> Hex / https://www.xaymar.com/articles/2020/12/08/fastest-uint8array-to-hex-string-conversion-in-javascript/
- * @param {Array<number>|Uint8Array} bytes - Input data to encode.
- * @returns {string} Hexadecimal representation of `buffer`.
- */
-const bytesToHex = bytes => Array.prototype.map.call(bytes,
-  (/** @type {{ toString: (arg0: number) => string; }} */ x) =>
-    x.toString(16).padStart(2, '0')).join(''); // padStart: ES2017
-
-/**
- * Base64 -> U8 function that also supports Base64URL
- * encoding, and adds padding if it is missing.
- * @param {string} base64 - Input Base64 or Base64URL data to decode.
- * @returns {Uint8Array} Decoded input data.
- */
-function base64ExToBytes(base64) {
-  // Replace URL-safe characters with regular Base64 equivalents.
-  base64 = base64.replace(/-/g, '+').replace(/_/g, '/');
-  // Add padding to the Base64 string if it is missing.
-  while (base64.length % 4 !== 0) {
-    base64 += '=';
-  }
-  return base64ToBytes(base64);
-}
-
-// #endregion
 
 class TestUtility {
   /**
@@ -218,7 +172,7 @@ const testConversionEntry = (entry, fromNX = false) => () => {
     srcVer3.set(src);
 
     if (entry.nnmiiCoreData) {
-      expectedCore = base64ExToBytes(entry.nnmiiCoreData);
+      expectedCore = base64ToBytes(entry.nnmiiCoreData);
       expect(expectedCore).toHaveLength(48);
     }
 
@@ -392,7 +346,7 @@ const testConversionEntry = (entry, fromNX = false) => () => {
 
   if (entry.nfpStoreData && entry.nnmiiCharInfo) {
     it('converts NfpStoreData -> CharInfo', () => {
-      const nfpBytes = base64ExToBytes(/** @type {string} */(entry.nfpStoreData));
+      const nfpBytes = base64ToBytes(/** @type {string} */(entry.nfpStoreData));
       const expectedCharInfo = hexToBytes(/** @type {string} */(entry.nnmiiCharInfo));
 
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
