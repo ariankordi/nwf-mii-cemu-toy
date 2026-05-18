@@ -438,7 +438,17 @@ export class DataConversionUtilityTodoMoveThis
 
 	public static encodeDataType(dst: Uint8Array, type: MiiDataType, info: MiiVisualInfo, ex: MiiExtraInfo): void;
 
+	public static isDataTypeNx(t: MiiDataType): boolean;
+
 	public static convertWiiExtraForVer3Personal(extra: MiiExtraInfo): void;
 
 	static #convertWiiCreateIdToVer3(idData: Uint8Array, authorId: Uint8Array): void;
+
+	public static adjustExtra(extra: MiiExtraInfo, type: MiiDataType): void;
+
+	static #adjustExtraVer3(extra: MiiExtraInfo): void;
+
+	static #adjustExtraNx(extra: MiiExtraInfo): void;
+
+	public static applyNfpExtension(info: MiiVisualInfo, src: Readonly<Uint8Array>, offset?: number): void;
 }

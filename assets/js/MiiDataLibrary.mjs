@@ -1503,6 +1503,11 @@ export class DataConversionUtilityTodoMoveThis
 		}
 	}
 
+	static isDataTypeNx(t)
+	{
+		return t >= MiiDataType.NX_CHAR_INFO;
+	}
+
 	static convertWiiExtraForVer3Personal(extra)
 	{
 		console.assert(extra.hasFlag(MiiExtraFlag.WII_CREATE_ID));
@@ -1515,7 +1520,7 @@ export class DataConversionUtilityTodoMoveThis
 		extra.positionInRoom = extra.roomIndex = 0;
 		extra.ngWord = false;
 		extra.birthPlatform = 1;
-		extra.copyable = false;
+		extra.copyable = true;
 		DataConversionUtilityTodoMoveThis.#convertWiiCreateIdToVer3(extra.createId, extra.authorId);
 	}
 
@@ -1531,4 +1536,68 @@ export class DataConversionUtilityTodoMoveThis
 			idData[offset + 1] = (x ^ x << 5 ^ authorId[i]) & 255;
 		}
 	}
+
+	static adjustExtra(extra, type)
+	{
+		if (!extra.hasFlag(MiiExtraFlag.NICKNAME) || extra.nickname[0] == 0) {
+			extra.setFlag(MiiExtraFlag.NICKNAME);
+			extra.nickname.set(DataConversionUtilityTodoMoveThis.#ADJUST_EXTRA_DEFAULT_NICKNAME_FOR_NX);
+		}
+		if (DataConversionUtilityTodoMoveThis.isDataTypeNx(type)) {
+			DataConversionUtilityTodoMoveThis.#adjustExtraNx(extra);
+		}
+		else {
+			DataConversionUtilityTodoMoveThis.#adjustExtraVer3(extra);
+		}
+	}
+
+	static #adjustExtraVer3(extra)
+	{
+		let hasVer3 = extra.hasFlag(MiiExtraFlag.VER3_PERSONAL);
+		if (!hasVer3) {
+			extra.setFlag(MiiExtraFlag.VER3_PERSONAL);
+			extra.positionInRoom = extra.roomIndex = 0;
+			extra.ngWord = false;
+			extra.birthPlatform = 3;
+			extra.copyable = true;
+			for (let i = 0; i < 8; i++)
+				extra.authorId[i] = 0;
+		}
+		else {
+			extra.createId[0] &= ~32;
+		}
+		if (!hasVer3 || extra.createId[0] == 0) {
+			extra.createId.set(DataConversionUtilityTodoMoveThis.#ADJUST_EXTRA_VER3_TEMP_CREATE_ID_PLEASE_REPLACE);
+		}
+	}
+
+	static #adjustExtraNx(extra)
+	{
+		let end = 1;
+		for (; end < 10; end++)
+			if (extra.nickname[end] == 0)
+				break;
+		for (; end < 10; end++)
+			extra.nickname[end] = 0;
+		if (!extra.hasFlag(MiiExtraFlag.NX_CREATE_ID) || extra.createId[0] == 0) {
+			extra.createId[8] &= 63;
+			extra.createId[8] |= 128;
+		}
+	}
+
+	static applyNfpExtension(info, src, offset = 0)
+	{
+		info.facelineColor = src[offset + 0];
+		info.hairColor = src[offset + 1];
+		info.eyeColor = src[offset + 2];
+		info.eyebrowColor = src[offset + 3];
+		info.mouthColor = src[offset + 4];
+		info.beardColor = src[offset + 5];
+		info.glassColor = src[offset + 6];
+		info.glassType = src[offset + 7];
+	}
+
+	static #ADJUST_EXTRA_DEFAULT_NICKNAME_FOR_NX = new Uint16Array([ 77, 105, 105, 0 ]);
+
+	static #ADJUST_EXTRA_VER3_TEMP_CREATE_ID_PLEASE_REPLACE = new Uint8Array([ 208, 0, 0, 74, 109, 183, 106, 67, 0, 9 ]);
 }
