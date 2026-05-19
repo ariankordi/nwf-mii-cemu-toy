@@ -206,7 +206,7 @@ const testConversionEntry = (entry, fromNX = false) => () => {
       debugger
       // set author id from original data
       extra.authorId.set(srcVer3.subarray(0x04, 0x0C));
-      ConvUtility.convertWiiExtraForVer3Personal(extra);
+      ConvUtility.convertRflExtraForVer3(extra);
 
       const roundTrip = new Uint8Array(MiiDataSize.VER3_STORE_DATA);
       ConvUtility.encodeDataType(roundTrip, MiiDataType.VER3_STORE_DATA, info, extra);

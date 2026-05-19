@@ -52,13 +52,13 @@ export class MiiDecoder
 
 	static #convVer3ToNx(info: MiiVisualInfo): void;
 
-	public static visualFrom3dsWiiuCore(src: Readonly<Uint8Array>, info: MiiVisualInfo): void;
+	public static visualFromVer3Core(src: Readonly<Uint8Array>, info: MiiVisualInfo): void;
 
-	public static from3dsWiiuCore(src: Readonly<Uint8Array>, info: MiiVisualInfo, ex: MiiExtraInfo): void;
+	public static fromVer3Core(src: Readonly<Uint8Array>, info: MiiVisualInfo, ex: MiiExtraInfo): void;
 
-	public static from3dsWiiuData(src: Readonly<Uint8Array>, info: MiiVisualInfo, ex: MiiExtraInfo): void;
+	public static fromVer3Data(src: Readonly<Uint8Array>, info: MiiVisualInfo, ex: MiiExtraInfo): void;
 
-	public static from3dsWiiuStoreData(src: Readonly<Uint8Array>, info: MiiVisualInfo, ex: MiiExtraInfo): boolean;
+	public static fromVer3StoreData(src: Readonly<Uint8Array>, info: MiiVisualInfo, ex: MiiExtraInfo): boolean;
 
 	public static visualFromNxCore(src: Readonly<Uint8Array>, info: MiiVisualInfo): void;
 
@@ -114,13 +114,13 @@ export class MiiEncoder
 
 	public static storeU16BigEndian(value: number, dst: Uint8Array, dstOffset: number): void;
 
-	public static visualTo3dsWiiuCore(dst: Uint8Array, info: MiiVisualInfo): void;
+	public static visualToVer3Core(dst: Uint8Array, info: MiiVisualInfo): void;
 
-	public static to3dsWiiuCore(dst: Uint8Array, info: MiiVisualInfo, ex: MiiExtraInfo): void;
+	public static toVer3Core(dst: Uint8Array, info: MiiVisualInfo, ex: MiiExtraInfo): void;
 
-	public static to3dsWiiuData(dst: Uint8Array, info: MiiVisualInfo, ex: MiiExtraInfo): void;
+	public static toVer3Data(dst: Uint8Array, info: MiiVisualInfo, ex: MiiExtraInfo): void;
 
-	public static to3dsWiiuStoreData(dst: Uint8Array, info: MiiVisualInfo, ex: MiiExtraInfo): void;
+	public static toVer3StoreData(dst: Uint8Array, info: MiiVisualInfo, ex: MiiExtraInfo): void;
 
 	public static toStudioData(dst: Uint8Array, info: MiiVisualInfo): void;
 
@@ -222,7 +222,7 @@ export const MiiExtraFlag = {
 	FAVORITE_LOCAL_BIRTH : 3,
 	CREATOR_NAME : 4,
 	REGION_FONT_MOVE : 5,
-	WII_CREATE_ID : 6,
+	RFL_CREATE_ID : 6,
 	VER3_PERSONAL : 7,
 	NX_CREATE_ID : 8,
 	NX_DEVICE_CRC : 9
@@ -393,12 +393,7 @@ export const MiiDataType = {
 	 * 47/0x2F bytes. NA/"Mii Studio" web editor format with obfuscation.
 	 * This obfuscated form is used in the "data=" URL param for the /miis/image.png endpoint.
 	 */
-	STUDIO_URL_DATA : 14,
-	/**
-	 * Represents the biggest Mii data format,
-	 * in order to provide a maximum buffer size.
-	 */
-	LARGEST : 7
+	STUDIO_URL_DATA : 14
 } as const;
 
 export const MiiDataSize = {
@@ -414,7 +409,12 @@ export const MiiDataSize = {
 	NX_STORE_DATA : 68,
 	NX_CORE_PARAM : 28,
 	STUDIO_DATA : 46,
-	STUDIO_URL_DATA : 47
+	STUDIO_URL_DATA : 47,
+	/**
+	 * Represents the biggest Mii data format,
+	 * in order to provide a maximum buffer size.
+	 */
+	MAX_SIZE : 96
 } as const;
 
 export class MiiFormat
@@ -440,9 +440,9 @@ export class DataConversionUtilityTodoMoveThis
 
 	public static isDataTypeNx(t: MiiDataType): boolean;
 
-	public static convertWiiExtraForVer3Personal(extra: MiiExtraInfo): void;
+	public static convertRflExtraForVer3(extra: MiiExtraInfo): void;
 
-	static #convertWiiCreateIdToVer3(idData: Uint8Array, authorId: Uint8Array): void;
+	static #convertRflCreateIdToVer3(idData: Uint8Array, authorId: Uint8Array): void;
 
 	public static adjustExtra(extra: MiiExtraInfo, type: MiiDataType): void;
 
