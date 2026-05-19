@@ -146,7 +146,7 @@ export class MiiDecoder
 			info.height = 127;
 	}
 
-	static visualFrom3dsWiiuCore(src, info)
+	static visualFromVer3Core(src, info)
 	{
 		info.beardColor = src[66] >> 3 & 7;
 		info.beardType = src[66] & 7;
@@ -197,9 +197,9 @@ export class MiiDecoder
 		MiiDecoder.#convVer3ToNx(info);
 	}
 
-	static from3dsWiiuCore(src, info, ex)
+	static fromVer3Core(src, info, ex)
 	{
-		MiiDecoder.visualFrom3dsWiiuCore(src, info);
+		MiiDecoder.visualFromVer3Core(src, info);
 		ex.clearFlag();
 		ex.setFlag(MiiExtraFlag.NICKNAME);
 		ex.setFlag(MiiExtraFlag.SPECIAL);
@@ -223,16 +223,16 @@ export class MiiDecoder
 		MiiDecoder.#loadArrayU16LittleEndian(src, 26, ex.nickname, 0, 10);
 	}
 
-	static from3dsWiiuData(src, info, ex)
+	static fromVer3Data(src, info, ex)
 	{
-		MiiDecoder.from3dsWiiuCore(src, info, ex);
+		MiiDecoder.fromVer3Core(src, info, ex);
 		ex.setFlag(MiiExtraFlag.CREATOR_NAME);
 		MiiDecoder.#loadArrayU16LittleEndian(src, 72, ex.creatorName, 0, 10);
 	}
 
-	static from3dsWiiuStoreData(src, info, ex)
+	static fromVer3StoreData(src, info, ex)
 	{
-		MiiDecoder.from3dsWiiuData(src, info, ex);
+		MiiDecoder.fromVer3Data(src, info, ex);
 		return Crc16Ccitt.calculate(src, MiiDataSize.VER3_STORE_DATA) == 0;
 	}
 
@@ -495,7 +495,7 @@ export class MiiDecoder
 		ex.setFlag(MiiExtraFlag.NICKNAME);
 		ex.setFlag(MiiExtraFlag.SPECIAL);
 		ex.setFlag(MiiExtraFlag.FAVORITE_LOCAL_BIRTH);
-		ex.setFlag(MiiExtraFlag.WII_CREATE_ID);
+		ex.setFlag(MiiExtraFlag.RFL_CREATE_ID);
 		ex.birthMonth = src[0] >> 2 & 15;
 		ex.birthDay = src[1] >> 5 | (src[0] & 3) << 3;
 		ex.favorite = MiiDecoder.#i2b(src[1] & 1);
@@ -593,7 +593,7 @@ export class MiiEncoder
 		dst[dstOffset + 1] = value & 255;
 	}
 
-	static visualTo3dsWiiuCore(dst, info)
+	static visualToVer3Core(dst, info)
 	{
 		let facelineColor = NxToVer3.TO_VER3_FACELINE_COLOR[info.facelineColor];
 		let hairColor = NxToVer3.TO_VER3_HAIR_COLOR[info.hairColor];
@@ -669,9 +669,9 @@ export class MiiEncoder
 		dst[24] = (dst[24] & 254) | (info.gender & 1);
 	}
 
-	static to3dsWiiuCore(dst, info, ex)
+	static toVer3Core(dst, info, ex)
 	{
-		MiiEncoder.visualTo3dsWiiuCore(dst, info);
+		MiiEncoder.visualToVer3Core(dst, info);
 		if (ex.hasFlag(MiiExtraFlag.NICKNAME)) {
 			MiiEncoder.#storeArrayU16LittleEndian(ex.nickname, 0, dst, 26, 10);
 		}
@@ -698,17 +698,17 @@ export class MiiEncoder
 		}
 	}
 
-	static to3dsWiiuData(dst, info, ex)
+	static toVer3Data(dst, info, ex)
 	{
-		MiiEncoder.to3dsWiiuCore(dst, info, ex);
+		MiiEncoder.toVer3Core(dst, info, ex);
 		if (ex.hasFlag(MiiExtraFlag.CREATOR_NAME)) {
 			MiiEncoder.#storeArrayU16LittleEndian(ex.creatorName, 0, dst, 72, 10);
 		}
 	}
 
-	static to3dsWiiuStoreData(dst, info, ex)
+	static toVer3StoreData(dst, info, ex)
 	{
-		MiiEncoder.to3dsWiiuData(dst, info, ex);
+		MiiEncoder.toVer3Data(dst, info, ex);
 		Crc16Ccitt.updateBigEndian(dst, MiiDataSize.VER3_STORE_DATA);
 	}
 
@@ -1002,7 +1002,7 @@ export class MiiEncoder
 			dst[1] = (dst[1] & 254) | (MiiEncoder.#b2i(ex.favorite) & 1);
 			dst[33] = (dst[33] & 251) | (MiiEncoder.#b2i(ex.localOnly) & 1) * 4;
 		}
-		if (ex.hasFlag(MiiExtraFlag.WII_CREATE_ID)) {
+		if (ex.hasFlag(MiiExtraFlag.RFL_CREATE_ID)) {
 			dst.set(ex.createId.subarray(0, 8), 24);
 		}
 	}
@@ -1097,7 +1097,7 @@ export const MiiExtraFlag = {
 	FAVORITE_LOCAL_BIRTH : 3,
 	CREATOR_NAME : 4,
 	REGION_FONT_MOVE : 5,
-	WII_CREATE_ID : 6,
+	RFL_CREATE_ID : 6,
 	VER3_PERSONAL : 7,
 	NX_CREATE_ID : 8,
 	NX_DEVICE_CRC : 9
@@ -1298,12 +1298,7 @@ export const MiiDataType = {
 	 * 47/0x2F bytes. NA/"Mii Studio" web editor format with obfuscation.
 	 * This obfuscated form is used in the "data=" URL param for the /miis/image.png endpoint.
 	 */
-	STUDIO_URL_DATA : 14,
-	/**
-	 * Represents the biggest Mii data format,
-	 * in order to provide a maximum buffer size.
-	 */
-	LARGEST : 7
+	STUDIO_URL_DATA : 14
 }
 
 export const MiiDataSize = {
@@ -1319,7 +1314,12 @@ export const MiiDataSize = {
 	NX_STORE_DATA : 68,
 	NX_CORE_PARAM : 28,
 	STUDIO_DATA : 46,
-	STUDIO_URL_DATA : 47
+	STUDIO_URL_DATA : 47,
+	/**
+	 * Represents the biggest Mii data format,
+	 * in order to provide a maximum buffer size.
+	 */
+	MAX_SIZE : 96
 }
 
 export class MiiFormat
@@ -1430,13 +1430,13 @@ export class DataConversionUtilityTodoMoveThis
 		case MiiDataType.RFL_STORE_DATA:
 			return MiiDecoder.fromRflStoreData(src, info, ex);
 		case MiiDataType.VER3_CORE:
-			MiiDecoder.from3dsWiiuCore(src, info, ex);
+			MiiDecoder.fromVer3Core(src, info, ex);
 			return true;
 		case MiiDataType.VER3_DATA:
-			MiiDecoder.from3dsWiiuData(src, info, ex);
+			MiiDecoder.fromVer3Data(src, info, ex);
 			return true;
 		case MiiDataType.VER3_STORE_DATA:
-			return MiiDecoder.from3dsWiiuStoreData(src, info, ex);
+			return MiiDecoder.fromVer3StoreData(src, info, ex);
 		case MiiDataType.NX_CHAR_INFO:
 			MiiDecoder.fromNxCharInfo(src, info, ex);
 			return true;
@@ -1472,13 +1472,13 @@ export class DataConversionUtilityTodoMoveThis
 			MiiEncoder.toRflStoreData(dst, info, ex);
 			break;
 		case MiiDataType.VER3_CORE:
-			MiiEncoder.to3dsWiiuCore(dst, info, ex);
+			MiiEncoder.toVer3Core(dst, info, ex);
 			break;
 		case MiiDataType.VER3_DATA:
-			MiiEncoder.to3dsWiiuData(dst, info, ex);
+			MiiEncoder.toVer3Data(dst, info, ex);
 			break;
 		case MiiDataType.VER3_STORE_DATA:
-			MiiEncoder.to3dsWiiuStoreData(dst, info, ex);
+			MiiEncoder.toVer3StoreData(dst, info, ex);
 			break;
 		case MiiDataType.NX_CHAR_INFO:
 			MiiEncoder.toNxCharInfo(dst, info, ex);
@@ -1508,9 +1508,9 @@ export class DataConversionUtilityTodoMoveThis
 		return t >= MiiDataType.NX_CHAR_INFO;
 	}
 
-	static convertWiiExtraForVer3Personal(extra)
+	static convertRflExtraForVer3(extra)
 	{
-		console.assert(extra.hasFlag(MiiExtraFlag.WII_CREATE_ID));
+		console.assert(extra.hasFlag(MiiExtraFlag.RFL_CREATE_ID));
 		extra.clearFlag();
 		extra.setFlag(MiiExtraFlag.NICKNAME);
 		extra.setFlag(MiiExtraFlag.CREATOR_NAME);
@@ -1521,10 +1521,10 @@ export class DataConversionUtilityTodoMoveThis
 		extra.ngWord = false;
 		extra.birthPlatform = 1;
 		extra.copyable = true;
-		DataConversionUtilityTodoMoveThis.#convertWiiCreateIdToVer3(extra.createId, extra.authorId);
+		DataConversionUtilityTodoMoveThis.#convertRflCreateIdToVer3(extra.createId, extra.authorId);
 	}
 
-	static #convertWiiCreateIdToVer3(idData, authorId = new Uint8Array(8))
+	static #convertRflCreateIdToVer3(idData, authorId = new Uint8Array(8))
 	{
 		let offset = 8;
 		idData[offset] = 127;
