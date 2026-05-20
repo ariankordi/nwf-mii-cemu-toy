@@ -27,10 +27,9 @@ import * as Gen3Studio from '../kaitai-dist/Gen3Studio.cjs';
 import * as Gen3Switch from '../kaitai-dist/Gen3Switch.cjs';
 import * as Gen3Switchgame from '../kaitai-dist/Gen3Switchgame.cjs';
 import * as TomodachiLifeQrCode from '../kaitai-dist/TomodachiLifeQrCode.cjs';
-import { bytesToHex, crc16 } from './common.js';
+import { bytesToHex } from './common.js';
 import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
-import { MiiLogoQrCode } from './MiiLogoQrCode.js';
 
 // below is an UGLY!!!!!!! workaround to importing
 // UMD modules, from ESM, for browser and node (bundler)
@@ -1178,6 +1177,27 @@ const isArrayNull = array => array.every(i => i === 0);
 // // ---------------------------------------------------------------------
 // //  Encoding Methods
 // // ---------------------------------------------------------------------
+
+/**
+ * Calculates the CRC-16/CCITT/XMODEM checksum for the specified input data.
+ * Courtesy of Luciano Barcaro: https://stackoverflow.com/a/30357446
+ * @param {Uint8Array|Array<number>} data - The data to create a checksum of.
+ * @returns {number} The calculated CRC-16 checksum.
+ */
+function crc16(data) {
+  let msb = 0;
+  let lsb = 0;
+
+  for (let i = 0; i < data.length; i++) {
+    const c = data[i];
+    let x = c ^ msb;
+    x ^= (x >> 4);
+    msb = (lsb ^ (x >> 3) ^ (x << 4)) & 0xFF;
+    lsb = (x ^ (x << 5)) & 0xFF;
+  }
+
+  return (msb << 8) | lsb;
+}
 
 /**
  * NOTE: customized for the kaitai by GPT-4o...
