@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Remove NNID from Archive</title>
+    <title>Remove NNID from Arian's Archive</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
     <link rel="stylesheet" href="/assets/style.css">
     <style>
         body { max-width: 480px; margin: 3rem auto; padding: 0 1rem; }
@@ -29,16 +30,47 @@
         #status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         #status.error   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .contact-note { font-size: 0.85rem; margin-top: 0.4rem; }
+        details { margin-bottom: 1.25rem; font-size: 0.9rem; }
+        summary { cursor: pointer; font-weight: bold; }
+        details ul { margin: 0.5rem 0 0; padding-left: 1.25rem; text-align: left; }
+        details li { margin: 0.4rem 0; }
     </style>
 </head>
 <body>
-    <h1>Remove NNID from Archive</h1>
+    <h1>Remove NNID from Arian's Archive</h1>
+
+    <details>
+        <summary>Please read before continuing.</summary>
+        <ul>
+            <li>
+                <strong>This form is for individuals who want their own data removed for privacy reasons. Do not abuse it.</strong>
+                <ul>
+                <li>
+                    If you attempt to use this to mass-erase records that are not yours, I will find out and be very angry.
+                </li>
+                <li>
+                        On a related note: if you are using the NNID archive for stalking or harassment, shame on you.
+                </li>
+                </ul>
+            <li>
+                This form only removes your Nintendo Network ID from <em>my</em> personal archive.
+                It does not delete or hide anything from Nintendo's own records.
+            </li>
+            <li>
+                Additionally, my archive has been posted publicly online, since... it is an archive.
+                Submitting this form will not remove your NNID from any of those copies. Sorry.
+            </li>
+            <li>
+                The hourly limit exists to make it slightly harder for idiots to delete everything.
+                If you have a legitimate removal request and run into the limit, please contact me directly. I am more than happy to help.
+            </li>
+        </ul>
+    </details>
+
     <p class="subtitle">
         If you'd like your old Nintendo Network ID to be removed from the archive, enter it below.
         <br>
         Up to 8 removals are processed per hour.
-        <br>
-        This tool is only meant for individuals who want their old data removed for privacy reasons.
     </p>
 
     <form id="remove-form">
@@ -56,6 +88,7 @@
     -->
     <div id="status" role="alert"
         data-msg-success='"%s" has been removed from the archive.'
+        data-msg-forbidden='Are you trying to break the website? What do you have against me, bro? I&apos;m just trying to render Mii (REAL).'
         data-msg-not-found='"%s" was not found in the archive.'
         data-msg-rate-limit='The hourly removal limit has been reached. Please try again later, or contact me directly if it is urgent.'
         data-msg-error='An unexpected error occurred. Please try again.'
@@ -100,6 +133,9 @@
             } else if (resp.status === 404) {
                 status.className = 'error';
                 status.textContent = msg('msgNotFound');
+            } else if (resp.status === 403) {
+                status.className = 'error';
+                status.textContent = msg('msgForbidden');
             } else if (resp.status === 429) {
                 status.className = 'error';
                 status.textContent = msg('msgRateLimit');
