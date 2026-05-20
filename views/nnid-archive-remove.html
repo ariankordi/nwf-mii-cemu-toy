@@ -8,7 +8,7 @@
     <style>
         body { max-width: 480px; margin: 3rem auto; padding: 0 1rem; }
         h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
-        p.subtitle { margin-top: 0; color: #666; font-size: 0.9rem; }
+        .subtitle { margin-top: 0; color: #666; font-size: 0.9rem; }
         label { display: block; margin-bottom: 0.25rem; font-weight: bold; }
         input[type="text"] {
             width: 100%; box-sizing: border-box;
@@ -28,6 +28,7 @@
         }
         #status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         #status.error   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .contact-note { font-size: 0.85rem; margin-top: 0.4rem; }
     </style>
 </head>
 <body>
@@ -48,7 +49,21 @@
         <button type="submit" id="submit-btn">Submit Removal</button>
     </form>
 
-    <div id="status" role="alert"></div>
+    <!--
+        All user-visible status strings live here as data attributes so they can
+        be translated without touching the JavaScript.
+        %s is replaced at runtime with the submitted NNID.
+    -->
+    <div id="status" role="alert"
+        data-msg-success='"%s" has been removed from the archive.'
+        data-msg-not-found='"%s" was not found in the archive.'
+        data-msg-rate-limit='The hourly removal limit has been reached. Please try again later, or contact me directly if it is urgent.'
+        data-msg-error='An unexpected error occurred. Please try again.'
+        data-msg-network='Network error: could not reach the server.'
+    ></div>
+    <p class="contact-note" id="contact-hint" style="display:none">
+        You can reach me at <a href="mailto:ariankordi@ariankordi.net">ariankordi@ariankordi.net</a>.
+    </p>
 
     <script>
     document.getElementById('remove-form').addEventListener('submit', async function(e) {
@@ -57,40 +72,46 @@
         const nnid = document.getElementById('nnid-input').value.trim();
         const btn = document.getElementById('submit-btn');
         const status = document.getElementById('status');
+        const contactHint = document.getElementById('contact-hint');
 
         if (!nnid) return;
 
         btn.disabled = true;
         status.style.display = 'none';
         status.className = '';
+        contactHint.style.display = 'none';
+
+        /** Fill in the %s placeholder in a message string. */
+        function msg(key) {
+            return (status.dataset[key] || '').replace('%s', nnid);
+        }
 
         try {
-            const resp = await fetch('/nnid-archive-remove.action', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nnid }),
-            });
-            const data = await resp.json().catch(() => ({}));
+            const resp = await fetch(
+                '/nnid-archive-remove/' + encodeURIComponent(nnid),
+                { method: 'POST' }
+            );
 
             status.style.display = 'block';
-            if (resp.ok && data.removed) {
+            if (resp.ok) {
                 status.className = 'success';
-                status.textContent = `"${nnid}" has been removed from the archive.`;
+                status.textContent = msg('msgSuccess');
                 document.getElementById('nnid-input').value = '';
             } else if (resp.status === 404) {
                 status.className = 'error';
-                status.textContent = `"${nnid}" was not found in the archive.`;
+                status.textContent = msg('msgNotFound');
             } else if (resp.status === 429) {
                 status.className = 'error';
-                status.textContent = 'The hourly removal limit has been reached. Please try again later.';
+                status.textContent = msg('msgRateLimit');
+                contactHint.style.display = 'block';
             } else {
                 status.className = 'error';
-                status.textContent = data.error || 'An unexpected error occurred. Please try again.';
+                status.textContent = msg('msgError');
             }
-        } catch (err) {
+        } catch (_) {
             status.style.display = 'block';
             status.className = 'error';
-            status.textContent = 'Network error: could not reach the server.';
+            status.textContent = msg('msgNetwork');
         } finally {
             btn.disabled = false;
         }
