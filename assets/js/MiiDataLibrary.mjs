@@ -1,5 +1,8 @@
 // Generated automatically with "fut". Do not edit.
 
+/**
+ * Utility for converting 16-bit strings to/from UTF-8.
+ */
 export class Char16
 {
 
@@ -12,56 +15,58 @@ export class Char16
 	 * @param src Source array of 16-bit code points.
 	 * @param characterCount Amount of characters from the original string to process.
 	 */
-	static char16ToUtf8(dst, src, characterCount)
+	static toUtf8(dst, src, characterCount, srcOffset = 0, dstOffset = 0)
 	{
 		console.assert(characterCount > 0);
 		let iDst = 0;
-		for (let i = 0; i < characterCount && src[i] != 0; i++) {
-			let chr = src[i];
+		for (let i = 0; i < characterCount && src[srcOffset + i] != 0; i++) {
+			let chr = src[srcOffset + i];
 			if (chr <= 127)
-				dst[iDst++] = chr;
+				dst[dstOffset + iDst++] = chr;
 			else if (chr <= 2047) {
-				dst[iDst + 0] = 192 | chr >> 6;
-				dst[iDst + 1] = 128 | (chr & 63);
+				dst[dstOffset + iDst + 0] = 192 | chr >> 6;
+				dst[dstOffset + iDst + 1] = 128 | (chr & 63);
 				iDst += 2;
 			}
 			else {
-				if (chr >= 55296 && chr <= 57343)
+				if (chr >= 55296 && chr <= 57343) {
 					chr = 65533;
-				dst[iDst + 0] = 224 | chr >> 12;
-				dst[iDst + 1] = 128 | (chr >> 6 & 63);
-				dst[iDst + 2] = 128 | (chr & 63);
+				}
+				dst[dstOffset + iDst + 0] = 224 | chr >> 12;
+				dst[dstOffset + iDst + 1] = 128 | (chr >> 6 & 63);
+				dst[dstOffset + iDst + 2] = 128 | (chr & 63);
 				iDst += 3;
 			}
 		}
 		return iDst;
 	}
 
-	static utf8ToChar16(dst, src, srcSize)
+	static fromUtf8(dst, src, srcSize, srcOffset = 0, dstOffset = 0)
 	{
 		console.assert(srcSize > 0);
-		let iDst = 0;
-		for (let i = 0; i < srcSize && src[i] != 0; iDst++) {
+		let dstIndex = 0;
+		for (let i = 0; i < srcSize && src[srcOffset + i] != 0; dstIndex++) {
+			let current = src[srcOffset + i];
 			let chr = 0;
-			if ((src[i] & 224) == 224 && (src[i] & 16) == 0) {
-				chr = (src[i + 0] & 15) << 12 | (src[i + 1] & 63) << 6 | (src[i + 2] & 63) << 0;
+			if ((current & 224) == 224 && (current & 16) == 0) {
+				chr = (src[srcOffset + i] & 15) << 12 | (src[srcOffset + i + 1] & 63) << 6 | (src[srcOffset + i + 2] & 63) << 0;
 				i += 3;
 			}
-			else if ((src[i] & 192) == 192 && (src[i] & 32) == 0) {
-				chr = (src[i + 0] & 31) << 6 | (src[i + 1] & 63) << 0;
+			else if ((current & 192) == 192 && (current & 32) == 0) {
+				chr = (src[srcOffset + i] & 31) << 6 | (src[srcOffset + i + 1] & 63) << 0;
 				i += 2;
 			}
 			else
-				chr = src[i++] & 127;
-			dst[iDst] = chr;
+				chr = src[srcOffset + i++] & 127;
+			dst[dstOffset + dstIndex] = chr;
 		}
-		return iDst;
+		return dstIndex;
 	}
 
-	static char16ToString(src, characterCount)
+	static toString(src, characterCount, srcOffset = 0)
 	{
 		let buf = new Uint8Array(characterCount * 3);
-		let length = Char16.char16ToUtf8(buf, src, characterCount);
+		let length = Char16.toUtf8(buf, src, characterCount, srcOffset);
 		return new TextDecoder().decode(buf.subarray(0, length));
 	}
 }

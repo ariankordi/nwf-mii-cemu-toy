@@ -1,5 +1,8 @@
 // Generated automatically with "fut". Do not edit.
 
+/**
+ * Utility for converting 16-bit strings to/from UTF-8.
+ */
 export class Char16
 {
 	private constructor();
@@ -13,11 +16,11 @@ export class Char16
 	 * @param src Source array of 16-bit code points.
 	 * @param characterCount Amount of characters from the original string to process.
 	 */
-	public static char16ToUtf8(dst: Uint8Array, src: Readonly<Uint16Array>, characterCount: number): number;
+	public static toUtf8(dst: Uint8Array, src: Readonly<Uint16Array>, characterCount: number, srcOffset?: number, dstOffset?: number): number;
 
-	public static utf8ToChar16(dst: Uint16Array, src: Readonly<Uint8Array>, srcSize: number): number;
+	public static fromUtf8(dst: Uint16Array, src: Readonly<Uint8Array>, srcSize: number, srcOffset?: number, dstOffset?: number): number;
 
-	public static char16ToString(src: Readonly<Uint16Array>, characterCount: number): string;
+	public static toString(src: Readonly<Uint16Array>, characterCount: number, srcOffset?: number): string;
 }
 
 /**

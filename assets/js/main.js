@@ -11,9 +11,10 @@ import { bindResultTemplateHandlers } from './convert-dropdown.js';
 import {
   parseHexOrB64ToBytes,
   bytesToBase64, base64ToBytes,
-  extractUTF16Text, findSupportedTypeBySize
+  findSupportedTypeBySize,
+  getArray16From8
 } from './common.js';
-import { Crc16Ccitt } from './MiiDataLibrary.mjs';
+import { Char16, Crc16Ccitt } from './MiiDataLibrary.mjs';
 
 // handle unhandled promise rejections as well as errors
 window.addEventListener('unhandledrejection', function (event) {
@@ -670,11 +671,9 @@ function getNameFromSupportedType(data, type) {
   }
   // specifically return null for no offset name
   // so that the next function uses the type name instead
-
-  // Use the new extractUTF16Text function to get the name string
-  const nameString = extractUTF16Text(data, type.offsetName, type.isNameU16BE, type.nameLength);
-
-  return nameString;
+  const length = 10;
+  const array16 = getArray16From8(data.subarray(type.offsetName), !type.isNameU16BE, length);
+  return Char16.toString(array16, length);
 }
 
 /**
