@@ -277,48 +277,12 @@ const submitButton = document.getElementById('submit');
 
 let formSubmitting = false;
 
-const ACTIVATE_ARIAN_HANDLER = location.host === 'mii-unsecure.ariankordi.net';
-/** AKnet_1.0 */
-const ACTIVATE_ARIAN_HANDLER_NNID = 'aknet10';
-
 /** @param {SubmitEvent} event */
 function onFormSubmit(event) {
   event.preventDefault(); // Prevent the default form submission via HTTP
   formSubmitting = true;
   submitButton.disabled = true; // Disable the button
   submitButton.setAttribute('value', submitButton.dataset.value);
-
-  let arianHandlerResult = false;
-  if (ACTIVATE_ARIAN_HANDLER &&
-    nnid.value.replace(/[_\-.]/g, '').toLowerCase() ===
-    ACTIVATE_ARIAN_HANDLER_NNID &&
-    arianHandler !== undefined) {
-    try {
-      arianHandlerResult = arianHandler();
-    } catch (error) {
-      /*
-      const errorDiv = document.createElement('div');
-      errorDiv.textContent = error.message;
-      errorDiv.style.color = 'red'; // Set text color to red
-      document.body.insertBefore(errorDiv, document.body.firstChild); // Insert at the beginning of the body
-      submitButton.disabled = false; // Re-enable the button
-      submitButton.removeAttribute('value');
-      */
-      const errorLi = getErrorLi();
-      errorLi.textContent = error.message;
-      errorLi.style.display = '';
-
-      formSubmitting = false;
-      submitButton.disabled = false; // Re-enable the button
-      submitButton.removeAttribute('value');
-
-      resultList.insertBefore(errorLi, resultList.firstChild); // Insert at the top
-    } finally {
-      if (arianHandlerResult) {
-        return;
-      }
-    }
-  }
 
   // Generate a new request ID for each submission
   // combine the two IDs together separating with a dash
@@ -1286,54 +1250,6 @@ globalThis.nfpDidLoadCallback = (storeData, input, inputReal, loadedElement) => 
   displayNameFromSupportedType(storeData, loadedElement, type, (checkResult === 2));
 
   setDataConvertInline(storeData, type, input, inputReal);
-}
-
-/**
- * wario land 3
- * @returns {boolean|string}
- */
-function arianHandler() {
-  // Get the path to complicated.html from a meta tag in the current document
-  const metaComplicatedHtml = document.querySelector('meta[itemprop=arianhandler-html-path]');
-  if (!metaComplicatedHtml || !metaComplicatedHtml.content) {
-    alert('arianHandler HTML tag not found so we cannot initiate Wario Land 3 :(');
-    return false;
-  }
-  const complicatedHtmlPath = metaComplicatedHtml.content;
-
-  fetch(complicatedHtmlPath)
-    .then((response) => {
-      if (!response.ok) {
-        // Throw an error with response status and statusText
-        throw new Error(
-          'HTTP Error: ' + response.status + ' ' + response.statusText
-        );
-      }
-      return response.text();
-    })
-    .then((html) => {
-      const div = document.createElement('div');
-      div.innerHTML = html;
-      document.body.append(div);
-
-      // Determine the ROM URL based on the current document's language
-      const romMetaName = document.documentElement.lang.startsWith('es') ? 'rom-path-es' : 'rom-path';
-      const romUrl = div.querySelector('meta[name=' + romMetaName + ']').content;
-
-      // Start fetching the ROM and store the promise in a global variable
-      window['romPromise'] = fetch(romUrl).then(response => response.arrayBuffer());
-
-      // Load the scripts defined in complicated.html
-      const scripts = div.getElementsByTagName('script');
-      for (const script of Array.from(scripts)) {
-        if (script.src) {
-          const newScript = document.createElement('script');
-          newScript.src = script.src;
-          document.head.append(newScript);
-        }
-      }
-    });
-  return true;
 }
 
 /**
