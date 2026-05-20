@@ -203,7 +203,7 @@ const testConversionEntry = (entry, fromNX = false) => () => {
 
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
       ConvUtility.decodeDataType(rawRfl, MiiDataType.RFL_DATA, info, extra);
-      debugger
+
       // set author id from original data
       extra.authorId.set(srcVer3.subarray(0x04, 0x0C));
       ConvUtility.convertRflExtraForVer3(extra);
@@ -327,7 +327,7 @@ const testConversionEntry = (entry, fromNX = false) => () => {
 
   if (entry.nnmiiCharInfo && !fromNX) {
     it('converts nn::mii::CoreData -> nn::mii::CharInfo', () => {
-      const expectedCharInfo = hexToBytes(/** @type {string} */(entry.nnmiiCharInfo));
+      const expectedCharInfo = hexToBytes(/** @type {string} */ (entry.nnmiiCharInfo));
 
       const actualCharInfo =
         ConvUtility.convertDataType(expectedCore, MiiDataType.NX_CORE, MiiDataType.NX_CHAR_INFO);
@@ -341,7 +341,30 @@ const testConversionEntry = (entry, fromNX = false) => () => {
       TestUtility.expectBuffersEqual(actualCharInfo, expectedCharInfo);
     });
   }
-  // cannot convert back to CharInfo, due to not being able to encode CoreData
+
+  if (entry.nnmiiCharInfo && entry.nnmiiCoreData) {
+    it('converts nn::mii::CharInfo -> nn::mii::CoreData', () => {
+      const charInfoBytes = hexToBytes(/** @type {string} */ (entry.nnmiiCharInfo));
+
+      const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+      ConvUtility.decodeDataType(charInfoBytes, MiiDataType.NX_CHAR_INFO, info, extra);
+      ConvUtility.adjustExtra(extra, MiiDataType.NX_CORE);
+
+      const actual = new Uint8Array(MiiDataSize.NX_CORE);
+      ConvUtility.encodeDataType(actual, MiiDataType.NX_CORE, info, extra);
+
+      /** clear name from coredata */
+      const normalizeCoreName = (/** @type {Uint8Array} */ data) =>
+        TestUtility.fillPattern(data, 0x1c, 0x1c + 0x10);
+
+      // ok um some coredata examples just have the name "Mii"
+      // this will be zeroed out in coredata and charinfo
+      normalizeCoreName(actual);
+      normalizeCoreName(expectedCore);
+
+      TestUtility.expectBuffersEqual(actual, expectedCore);
+    });
+  }
   // nnmiiCharInfo
 
   if (entry.nfpStoreData && entry.nnmiiCharInfo) {
