@@ -1,32 +1,77 @@
-const stripSpaces = str => str.replace(/\s+/g, '');
-const hexToUint8Array = hex => new Uint8Array(hex.match(/.{1,2}/g).map(byte => Number.parseInt(byte, 16)));
-const base64ToUint8Array = (base64) => {
-  // Replace URL-safe Base64 characters
-  const normalizedBase64 = base64.replace(/-/g, '+').replace(/_/g, '/');
-  // Add padding if necessary
-  const paddedBase64 = normalizedBase64.padEnd(normalizedBase64.length + (4 - (normalizedBase64.length % 4)) % 4, '=');
-  return Uint8Array.from(atob(paddedBase64), c => c.charCodeAt(0));
-};
-const uint8ArrayToBase64 = data => btoa(String.fromCharCode.apply(null, data));
+// #region Utility: Base64 -> U8, Hex -> U8, U8 -> Hex
+// // ---------------------------------------------------------------------
+// //  Utility: Base64 -> U8, Hex -> U8, U8 -> Hex
+// // ---------------------------------------------------------------------
+// Merge to class: CodecUtility, TextCodingUtil, TextCodec
 
-const parseHexOrB64ToUint8Array = (text) => {
+/**
+ * Base64 -> U8 / https://stackoverflow.com/a/41106346
+ * @param {string} base64 - Input Base64 data to decode.
+ * @returns {Uint8Array} Decoded input data.
+ */
+const base64ToBytesCore = base64 => Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+/**
+ * Hex -> U8
+ * @param {string} hex - Input hex data to decode.
+ * @returns {Uint8Array} Decoded input data.
+ */
+const hexToBytes = hex => Uint8Array.from({ length: hex.length >>> 1 }, (_, i) =>
+  Number.parseInt(hex.slice(i << 1, (i << 1) + 2), 16));
+
+/**
+ * U8 -> Hex / https://www.xaymar.com/articles/2020/12/08/fastest-uint8array-to-hex-string-conversion-in-javascript/
+ * @param {Array<number>|Uint8Array} bytes - Input data to encode.
+ * @returns {string} Hexadecimal representation of `buffer`.
+ */
+const bytesToHex = bytes => Array.prototype.map.call(bytes,
+  (/** @type {{ toString: (arg0: number) => string; }} */ x) =>
+    x.toString(16).padStart(2, '0')).join(''); // padStart: ES2017
+
+/**
+ * U8 -> Base64
+ * @param {Array<number>|Uint8Array} bytes - Input data to encode.
+ * @returns {string} Base64 representation of `buffer`.
+ */
+const bytesToBase64 = bytes =>
+// fromCharCode should be compatible with Uint8Array, but its param type is number[].
+  btoa(String.fromCharCode.apply(null, /** @type {Array<number>} */ (bytes)));
+
+/**
+ * Base64 -> U8 function that also supports Base64URL
+ * encoding, and adds padding if it is missing.
+ * @param {string} base64 - Input Base64 or Base64URL data to decode.
+ * @returns {Uint8Array} Decoded input data.
+ */
+function base64ToBytes(base64) {
+  // Replace URL-safe characters with regular Base64 equivalents.
+  base64 = base64.replace(/-/g, '+').replace(/_/g, '/');
+  // Add padding to the Base64 string if it is missing.
+  while (base64.length % 4 !== 0) {
+    base64 += '=';
+  }
+  return base64ToBytesCore(base64);
+}
+
+// #endregion
+
+const stripSpaces = str => str.replace(/\s+/g, '');
+
+const parseHexOrB64ToBytes = (text) => {
   // decode it to a uint8array whether it's hex or base64
   const textData = stripSpaces(text);
   // check if it's base 16 exclusively, otherwise assume base64
-  return /^[0-9a-fA-F]+$/.test(textData) ? hexToUint8Array(textData) : base64ToUint8Array(textData);
+  return /^[0-9a-fA-F]+$/.test(textData) ? hexToBytes(textData) : base64ToBytesCore(textData);
 };
 
 /**
  * Calculates the CRC-16/CCITT/XMODEM checksum for the specified input data.
  * Courtesy of Luciano Barcaro: https://stackoverflow.com/a/30357446
  * @param {Uint8Array|Array<number>} data - The data to create a checksum of.
- * @param {number} [current] - The starting CRC value, defaulting to 0.
  * @returns {number} The calculated CRC-16 checksum.
  */
-function crc16(data, current = 0x0000) {
-  const crc = current;
-  let msb = crc >> 8;
-  let lsb = crc & 0xFF;
+function crc16(data) {
+  let msb = 0;
+  let lsb = 0;
 
   for (let i = 0; i < data.length; i++) {
     const c = data[i];
@@ -168,10 +213,11 @@ const findSupportedTypeBySize =
   size => supportedTypes.find(type => type.sizes.includes(size));
 
 export {
-  hexToUint8Array,
-  base64ToUint8Array,
-  parseHexOrB64ToUint8Array,
-  uint8ArrayToBase64,
+  hexToBytes,
+  bytesToHex,
+  base64ToBytes,
+  parseHexOrB64ToBytes,
+  bytesToBase64,
   extractUTF16Text,
   findSupportedTypeBySize,
   crc16
