@@ -45,6 +45,18 @@ func (l *removalRateLimiter) allow() bool {
 	return true
 }
 
+// exhaust sets the counter to the limit, immediately locking out any further
+// requests for the remainder of the current window.
+func (l *removalRateLimiter) exhaust() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	now := time.Now()
+	if now.After(l.windowEnd) {
+		l.windowEnd = now.Add(time.Hour)
+	}
+	l.count = RemovalHourlyLimit
+}
+
 // cfPurgeURLs calls the Cloudflare cache purge API to evict the given URLs.
 func cfPurgeURLs(zoneID, apiToken string, urls []string) error {
 	body, err := json.Marshal(map[string][]string{"files": urls})
@@ -71,12 +83,20 @@ func cfPurgeURLs(zoneID, apiToken string, urls []string) error {
 	return nil
 }
 
+// reservedNNIDs is a normalized set of NNIDs that may never be removed via the
+// self-service form. Submitting one still consumes a rate limit slot.
+var reservedNNIDs = map[string]struct{}{
+	"jasminechlora": {},
+	"ariankordi": {},
+	"nintendotom": {},
+}
+
 // nnidRemovalHandlerPrefix is the URL prefix under which the handler is mounted.
 // The NNID to remove is read from the path segment following this prefix, so it
 // appears in access logs rather than being buried in a request body.
 const nnidRemovalHandlerPrefix = "/nnid-archive-remove/"
 
-// nnidRemovalHandler handles POST /nnid-archive-remove.action/{nnid}.
+// nnidRemovalHandler handles POST /nnid-archive-remove/{nnid}.
 // It deletes the matching row from nnid_to_mii_data_map and optionally purges
 // Cloudflare cache.
 //
@@ -105,11 +125,31 @@ func nnidRemovalHandler(db *gorm.DB, cfZoneID, cfAPIToken, publicHostname string
 		// Normalize the NNID the same way as the lookup path.
 		normalizedNNID := normalizeDashUnderscoreDot(rawNNID)
 
+		// Submitting a reserved NNID exhausts the entire hourly limit immediately,
+		// locking the submitter out for the rest of the window.
+		if _, reserved := reservedNNIDs[normalizedNNID]; reserved {
+			if !noLimit {
+				globalRemovalLimiter.exhaust()
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(`{"error":"bro"}`))
+			return
+		}
+
 		// Apply the global hourly rate limit unless the operator disabled it.
 		if !noLimit && !globalRemovalLimiter.allow() {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusTooManyRequests)
 			w.Write([]byte(`{"error":"hourly removal limit reached, please try again later"}`))
+			return
+		}
+
+		// "test" short-circuits to a success response for local testing.
+		if normalizedNNID == "test" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"removed":true}`))
 			return
 		}
 
@@ -124,7 +164,6 @@ func nnidRemovalHandler(db *gorm.DB, cfZoneID, cfAPIToken, publicHostname string
 		}
 
 		// Delete the row.
-		/*
 		if err := db.Where("normalized_nnid = ?", normalizedNNID).Delete(&NNIDToMiiDataMap{}).Error; err != nil {
 			log.Printf("nnid_removal: delete error for %q: %v", normalizedNNID, err)
 			w.Header().Set("Content-Type", "application/json")
@@ -132,7 +171,6 @@ func nnidRemovalHandler(db *gorm.DB, cfZoneID, cfAPIToken, publicHostname string
 			w.Write([]byte(`{"error":"failed to remove NNID"}`))
 			return
 		}
-		*/
 
 		log.Printf("nnid_removal: removed NNID %q (normalized: %q)", existing.NNID, normalizedNNID)
 
