@@ -281,6 +281,12 @@ func main() {
 	upstreamAddrs := flag.String("upstreams", "", "Comma-separated list of upstream TCP server addresses. If you specify this, it will use round robin load balancing with all of the upstreams.")
 	flag.BoolVar(&useXForwardedFor, "use-x-forwarded-for", false, "Use X-Forwarded-For header for client IP")
 
+	// Cloudflare cache purge credentials for the NNID removal endpoint.
+	// Both must be set together to enable purging; if either is empty, purging is skipped.
+	var cfZoneID, cfAPIToken string
+	flag.StringVar(&cfZoneID, "cloudflare-zone-id", "", "Cloudflare zone ID for cache purge on NNID removal (optional)")
+	flag.StringVar(&cfAPIToken, "cloudflare-api-token", "", "Cloudflare API token with Cache Purge permission (optional)")
+
 	flag.Parse()
 
 	// // Configure logging
@@ -375,6 +381,15 @@ func main() {
 		}
 	}
 	initNNIDFetchDatabases(nnasCacheDBConn, nnidToMiiMapDBConn)
+
+	// Register the NNID removal endpoint when the mii map DB is available.
+	if mdb != nil {
+		// Use the first hostname for building Cloudflare purge URLs.
+		firstHostname := strings.SplitN(hostnamesSniAllowArg, ",", 2)[0]
+		http.HandleFunc("/nnid-archive-remove.action", nnidRemovalHandler(mdb, cfZoneID, cfAPIToken, firstHostname))
+		log.Println("NNID removal endpoint enabled at /nnid_remove")
+	}
+
 	// nnid lookups
 	// TODO: YOU MAY WANT TO RENAME THESE TO BE MORE CONCISELY FOR NNID
 	http.HandleFunc(nnidLookupHandlerPrefix, nnidLookupHandler) // mii_data
@@ -424,6 +439,12 @@ func main() {
 
 
 
+	// NNID removal self-service page.
+	http.HandleFunc("/nnid-archive-remove", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		http.ServeFile(w, r, "views/nnid-archive-remove.html")
+	})
+
 	// index = /index.html
 	http.HandleFunc("/", endpointsHandler)
 
@@ -449,9 +470,6 @@ func main() {
 	var udsListener *net.Listener
 	if unixSocket != "" {
 		os.Remove(unixSocket)
-		/*if _, err := os.Stat(unixSocket); err == nil {
-			os.Remove(unixSocket)
-		}*/
 		var udsListenerNew net.Listener
 		udsListenerNew, err = net.Listen("unix", unixSocket)
 		if err != nil {

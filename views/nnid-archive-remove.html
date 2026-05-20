@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Remove NNID from Archive</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="/assets/style.css">
+    <style>
+        body { max-width: 480px; margin: 3rem auto; padding: 0 1rem; }
+        h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+        p.subtitle { margin-top: 0; color: #666; font-size: 0.9rem; }
+        label { display: block; margin-bottom: 0.25rem; font-weight: bold; }
+        input[type="text"] {
+            width: 100%; box-sizing: border-box;
+            padding: 0.5rem; font-size: 1rem;
+            border: 1px solid #ccc; border-radius: 4px;
+            margin-bottom: 0.75rem;
+        }
+        button {
+            padding: 0.5rem 1.25rem; font-size: 1rem;
+            background: #c0392b; color: #fff;
+            border: none; border-radius: 4px; cursor: pointer;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #status {
+            margin-top: 1rem; padding: 0.75rem;
+            border-radius: 4px; display: none;
+        }
+        #status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        #status.error   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>Remove NNID from Archive</h1>
+    <p class="subtitle">
+        If you'd like your old Nintendo Network ID to be removed from the archive, enter it below.
+        <br>
+        Up to 8 removals are processed per hour.
+        <br>
+        This tool is only meant for individuals who want their old data removed for privacy reasons.
+    </p>
+
+    <form id="remove-form">
+        <label for="nnid-input">Nintendo Network ID</label>
+        <input type="text" id="nnid-input" name="nnid"
+               placeholder="Enter the old Nintendo Network ID you'd like removed." autocomplete="off"
+               maxlength="16" required>
+        <button type="submit" id="submit-btn">Submit Removal</button>
+    </form>
+
+    <div id="status" role="alert"></div>
+
+    <script>
+    document.getElementById('remove-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const nnid = document.getElementById('nnid-input').value.trim();
+        const btn = document.getElementById('submit-btn');
+        const status = document.getElementById('status');
+
+        if (!nnid) return;
+
+        btn.disabled = true;
+        status.style.display = 'none';
+        status.className = '';
+
+        try {
+            const resp = await fetch('/nnid-archive-remove.action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nnid }),
+            });
+            const data = await resp.json().catch(() => ({}));
+
+            status.style.display = 'block';
+            if (resp.ok && data.removed) {
+                status.className = 'success';
+                status.textContent = `"${nnid}" has been removed from the archive.`;
+                document.getElementById('nnid-input').value = '';
+            } else if (resp.status === 404) {
+                status.className = 'error';
+                status.textContent = `"${nnid}" was not found in the archive.`;
+            } else if (resp.status === 429) {
+                status.className = 'error';
+                status.textContent = 'The hourly removal limit has been reached. Please try again later.';
+            } else {
+                status.className = 'error';
+                status.textContent = data.error || 'An unexpected error occurred. Please try again.';
+            }
+        } catch (err) {
+            status.style.display = 'block';
+            status.className = 'error';
+            status.textContent = 'Network error: could not reach the server.';
+        } finally {
+            btn.disabled = false;
+        }
+    });
+    </script>
+</body>
+</html>
