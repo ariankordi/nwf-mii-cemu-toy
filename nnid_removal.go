@@ -71,41 +71,29 @@ func cfPurgeURLs(zoneID, apiToken string, urls []string) error {
 	return nil
 }
 
-// nnidRemovalHandler handles POST /nnid_remove.
-// It expects a form field or JSON field "nnid", deletes the matching row from
-// nnid_to_mii_data_map, and optionally purges Cloudflare cache.
+// nnidRemovalHandlerPrefix is the URL prefix under which the handler is mounted.
+// The NNID to remove is read from the path segment following this prefix, so it
+// appears in access logs rather than being buried in a request body.
+const nnidRemovalHandlerPrefix = "/nnid-archive-remove/"
+
+// nnidRemovalHandler handles POST /nnid-archive-remove.action/{nnid}.
+// It deletes the matching row from nnid_to_mii_data_map and optionally purges
+// Cloudflare cache.
 //
 // Parameters (injected at registration time):
 //   - db: GORM database pointing at the nnid_to_mii_data_map table.
 //   - cfZoneID, cfAPIToken: Cloudflare credentials (empty = disabled).
 //   - publicHostname: used to build cache purge URLs (e.g. "mii-unsecure.ariankordi.net").
-func nnidRemovalHandler(db *gorm.DB, cfZoneID, cfAPIToken, publicHostname string) http.HandlerFunc {
+//   - noLimit: when true the hourly rate limit is bypassed entirely.
+func nnidRemovalHandler(db *gorm.DB, cfZoneID, cfAPIToken, publicHostname string, noLimit bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
-		// Parse the NNID from either JSON body or form data.
-		var rawNNID string
-		contentType := r.Header.Get("Content-Type")
-		if strings.Contains(contentType, "application/json") {
-			var payload struct {
-				NNID string `json:"nnid"`
-			}
-			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-				http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
-				return
-			}
-			rawNNID = payload.NNID
-		} else {
-			if err := r.ParseForm(); err != nil {
-				http.Error(w, `{"error":"invalid form"}`, http.StatusBadRequest)
-				return
-			}
-			rawNNID = r.FormValue("nnid")
-		}
-
+		// Read the NNID from the URL path so it is visible in access logs.
+		rawNNID := strings.TrimPrefix(r.URL.Path, nnidRemovalHandlerPrefix)
 		rawNNID = strings.TrimSpace(rawNNID)
 		if rawNNID == "" {
 			w.Header().Set("Content-Type", "application/json")
@@ -117,8 +105,8 @@ func nnidRemovalHandler(db *gorm.DB, cfZoneID, cfAPIToken, publicHostname string
 		// Normalize the NNID the same way as the lookup path.
 		normalizedNNID := normalizeDashUnderscoreDot(rawNNID)
 
-		// Apply the global hourly rate limit.
-		if !globalRemovalLimiter.allow() {
+		// Apply the global hourly rate limit unless the operator disabled it.
+		if !noLimit && !globalRemovalLimiter.allow() {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusTooManyRequests)
 			w.Write([]byte(`{"error":"hourly removal limit reached, please try again later"}`))

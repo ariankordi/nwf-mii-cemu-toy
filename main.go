@@ -287,6 +287,11 @@ func main() {
 	flag.StringVar(&cfZoneID, "cloudflare-zone-id", "", "Cloudflare zone ID for cache purge on NNID removal (optional)")
 	flag.StringVar(&cfAPIToken, "cloudflare-api-token", "", "Cloudflare API token with Cache Purge permission (optional)")
 
+	// When set, bypasses the hourly removal rate limit entirely.
+	// Use temporarily when handling a backlog of manual removal requests.
+	var removalNoLimit bool
+	flag.BoolVar(&removalNoLimit, "removal-no-limit", false, "Disable the hourly rate limit on the NNID removal endpoint")
+
 	flag.Parse()
 
 	// // Configure logging
@@ -386,8 +391,8 @@ func main() {
 	if mdb != nil {
 		// Use the first hostname for building Cloudflare purge URLs.
 		firstHostname := strings.SplitN(hostnamesSniAllowArg, ",", 2)[0]
-		http.HandleFunc("/nnid-archive-remove.action", nnidRemovalHandler(mdb, cfZoneID, cfAPIToken, firstHostname))
-		log.Println("NNID removal endpoint enabled at /nnid_remove")
+		http.HandleFunc(nnidRemovalHandlerPrefix, nnidRemovalHandler(mdb, cfZoneID, cfAPIToken, firstHostname, removalNoLimit))
+		log.Println("NNID removal endpoint enabled at", nnidRemovalHandlerPrefix)
 	}
 
 	// nnid lookups
