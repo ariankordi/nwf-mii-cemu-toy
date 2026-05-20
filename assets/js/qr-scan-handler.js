@@ -5,13 +5,11 @@
  */
 
 import QrScanner from 'qr-scanner';
-import {
-  extractUTF16Text, findSupportedTypeBySize
-} from './common.js';
+import { findSupportedTypeBySize } from './common.js';
 import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
 import TomoExtraData from './TomoExtraData.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
-import { Crc16Ccitt } from './MiiDataLibrary.mjs';
+import { Char16, Crc16Ccitt } from './MiiDataLibrary.mjs';
 
 const qrFileInput = document.getElementById('qr-file');
 const video = document.getElementById('qr-video');
@@ -293,7 +291,7 @@ async function handleDecryption(result) {
     decryptedData = new Uint8Array([...decryptedData, ...extra]);
   }
 
-  const miiName = extractUTF16Text(decryptedData, 0x1A);
+  const miiName = Char16.toString(new Uint16Array(decryptedData, 0x1A), 10);
   if (Crc16Ccitt.calculate(decryptedData.subarray(0, 96), 96) !== 0) {
     showStatus('no-mii', 'CRC16 checksum failed.');
     // scanning should continue then

@@ -1,6 +1,7 @@
 // @ts-check
+import { Char16 } from './MiiDataLibrary.mjs';
 import * as maboii from './WalleV-maboii.mjs';
-import { extractUTF16Text, bytesToBase64, base64ToBytes } from './common.js';
+import { bytesToBase64, base64ToBytes, getArray16From8 } from './common.js';
 
 /** @type {ReturnType<maboii.loadMasterKeys>} */ let keys;
 /** Loads keys for maboii.js, ignoring if they are already loaded. */
@@ -45,10 +46,6 @@ const nfpDataLoaded = document.getElementById('nfp-data-loaded');
 const nfpFigureLoaded = document.getElementById('nfp-figure-loaded');
 const nfpError = document.getElementById('nfp-error');
 
-// assuming errorTextQuery is already defined (copying fileInput handler here)
-
-// TODO: IMPORTS: uint8ArrayToBase64 findSupportedTypeBySize displayNameFromSupportedType setDataConvertInline
-
 // handle adding form input on file input, or fail
 nfpFileInput.addEventListener('input', function () {
   if (!nfpFileInput || !nfpFileInput.files[0]) {
@@ -71,8 +68,9 @@ nfpFileInput.addEventListener('input', function () {
   const parseStoreDataFromNfpDecrypted = (unpacked) => {
     // figure name is utf-16be
     const accessor = new NfpDataAccessor(unpacked);
-    const figureName = extractUTF16Text(accessor.getName(),
-      0, /* isBigEndian */ true, /* nameLength */ 10);
+
+    const nameBuffer = getArray16From8(accessor.getName(), false);
+    const figureName = Char16.toString(nameBuffer, nameBuffer.length);
 
     let storeData = accessor.getStoreData();
 

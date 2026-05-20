@@ -1,3 +1,5 @@
+// @ts-check
+
 // #region Utility: Base64 -> U8, Hex -> U8, U8 -> Hex
 // // ---------------------------------------------------------------------
 // //  Utility: Base64 -> U8, Hex -> U8, U8 -> Hex
@@ -54,45 +56,21 @@ function base64ToBytes(base64) {
 
 // #endregion
 
-const stripSpaces = str => str.replace(/\s+/g, '');
+const stripSpaces = (/** @type {string} */ str) => str.replace(/\s+/g, '');
 
-const parseHexOrB64ToBytes = (text) => {
+const parseHexOrB64ToBytes = (/** @type {string} */ text) => {
   // decode it to a uint8array whether it's hex or base64
   const textData = stripSpaces(text);
   // check if it's base 16 exclusively, otherwise assume base64
   return /^[0-9a-fA-F]+$/.test(textData) ? hexToBytes(textData) : base64ToBytesCore(textData);
 };
 
-/**
- * @param {Uint8Array|Array<number>} data
- * @param {number} [startOffset]
- * @param {boolean} [isBigEndian]
- * @param {number} [nameLength]
- * @returns {string}
- */
-function extractUTF16Text(data, startOffset, isBigEndian = false, nameLength = 10) {
-  // Default to 10 characters (20 bytes) if nameLength is not provided
-  const length = nameLength * 2;
-  let endPosition = startOffset;
+const getArray16 = (/** @type {DataView} */ view, littleEndian = true) =>
+  Uint16Array.from({ length: view.byteLength / 2 },
+    (_, i) => view.getUint16(i * 2, littleEndian));
 
-  // Determine the byte order based on the isBigEndian flag
-  // NOTE: TextDecoder only works on newish browsers
-  // despite the rest of this script using pre-ES6 syntax
-  // TODO: TEST ON OLDER BROWSERS!!!!!!!!!!
-  const decoder = new TextDecoder(isBigEndian ? 'utf-16be' : 'utf-16le');
-
-  // Find the position of the null terminator (0x00 0x00)
-  while (endPosition < startOffset + length) {
-    if (data[endPosition] === 0x00 && data[endPosition + 1] === 0x00) {
-      break;
-    }
-    endPosition += 2; // Move in 2-byte increments (UTF-16)
-  }
-
-  // Extract and decode the name bytes
-  const nameBytes = data.slice(startOffset, endPosition);
-  return decoder.decode(nameBytes);
-}
+const getArray16From8 = (/** @type {Uint8Array} */ u8, littleEndian = true) =>
+  getArray16(new DataView(u8.buffer, u8.byteOffset, u8.byteLength), littleEndian);
 
 //
 // common formats
@@ -187,6 +165,7 @@ export {
   base64ToBytes,
   parseHexOrB64ToBytes,
   bytesToBase64,
-  extractUTF16Text,
+  getArray16,
+  getArray16From8,
   findSupportedTypeBySize
 };
