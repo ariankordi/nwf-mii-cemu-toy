@@ -6,14 +6,12 @@
 
 import QrScanner from 'qr-scanner';
 import {
-  // CRC-16/CCITT/XMODEM implementation.
-  crc16,
-  extractUTF16Text,
-  findSupportedTypeBySize
+  extractUTF16Text, findSupportedTypeBySize
 } from './common.js';
 import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
 import TomoExtraData from './TomoExtraData.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
+import { Crc16Ccitt } from './MiiDataLibrary.mjs';
 
 const qrFileInput = document.getElementById('qr-file');
 const video = document.getElementById('qr-video');
@@ -296,16 +294,7 @@ async function handleDecryption(result) {
   }
 
   const miiName = extractUTF16Text(decryptedData, 0x1A);
-
-  // crc16 verify
-  const dataCrc16 = decryptedData.slice(94, 96);
-  // convert the decrypted qr crc16 to uint16
-  const dataCrc16u16 = (dataCrc16[0] << 8) | dataCrc16[1];
-
-  // now calculate the expected crc16 for the data
-  const expectedCrc16 = crc16(decryptedData.slice(0, 94));
-
-  if (expectedCrc16 !== dataCrc16u16) {
+  if (Crc16Ccitt.calculate(decryptedData.subarray(0, 96), 96) !== 0) {
     showStatus('no-mii', 'CRC16 checksum failed.');
     // scanning should continue then
     return;

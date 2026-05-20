@@ -64,27 +64,6 @@ const parseHexOrB64ToBytes = (text) => {
 };
 
 /**
- * Calculates the CRC-16/CCITT/XMODEM checksum for the specified input data.
- * Courtesy of Luciano Barcaro: https://stackoverflow.com/a/30357446
- * @param {Uint8Array|Array<number>} data - The data to create a checksum of.
- * @returns {number} The calculated CRC-16 checksum.
- */
-function crc16(data) {
-  let msb = 0;
-  let lsb = 0;
-
-  for (let i = 0; i < data.length; i++) {
-    const c = data[i];
-    let x = c ^ msb;
-    x ^= (x >> 4);
-    msb = (lsb ^ (x >> 3) ^ (x << 4)) & 0xFF;
-    lsb = (x ^ (x << 5)) & 0xFF;
-  }
-
-  return (msb << 8) | lsb;
-}
-
-/**
  * @param {Uint8Array|Array<number>} data
  * @param {number} [startOffset]
  * @param {boolean} [isBigEndian]
@@ -183,22 +162,12 @@ const supportedTypes = [
     sizes: [48, 68],
     offsetName: 0x1C
   },
-  // TODO: DON'T KNOW THE CRC, DON'T HAVE SAMPLES EITHER
+  // TODO: crc is at 0x44? checksums all before that?
   /* {
     name: 'nn::mii::StoreData',
     sizes: [68],
     offsetName: 0x1C,
   }, */
-  /*
-        <!-- switch mii store data types:
-        nn::mii::CoreData - 48 bytes
-          * size from method nn::mii::detail::CoreDataRaw::SetDefault
-            - contains memset for 0x30 = size is 0x30/48
-        nn::mii::StoreData - 68 bytes, i think
-          * size from method nn::mii::detail::StoreDataRaw::UpdateDeviceCrc -> nn::mii::detail::CalculateAndSetCrc16
-            - sets total size to 0x44 = size is 0x44/68
-        -->
-  */
   {
     name: 'Mii Studio Data',
     sizes: [46, 47] // ignoring the encoded format for now
@@ -219,6 +188,5 @@ export {
   parseHexOrB64ToBytes,
   bytesToBase64,
   extractUTF16Text,
-  findSupportedTypeBySize,
-  crc16
+  findSupportedTypeBySize
 };

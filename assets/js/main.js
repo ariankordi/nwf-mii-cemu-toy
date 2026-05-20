@@ -9,10 +9,11 @@
 // @ts-check
 import { bindResultTemplateHandlers } from './convert-dropdown.js';
 import {
-  crc16, parseHexOrB64ToBytes,
+  parseHexOrB64ToBytes,
   bytesToBase64, base64ToBytes,
   extractUTF16Text, findSupportedTypeBySize
 } from './common.js';
+import { Crc16Ccitt } from './MiiDataLibrary.mjs';
 
 // handle unhandled promise rejections as well as errors
 window.addEventListener('unhandledrejection', function (event) {
@@ -465,15 +466,15 @@ const CheckTypeReturn = {
 
 const ACCEPT_OCTET_STREAM = false;
 
-const nnidInput = document.getElementById('nnid');
-const nnidDataInput = document.getElementById('nnid-data');
+const nnidInput = /** @type {HTMLInputElement} */ (document.getElementById('nnid'));
+const nnidDataInput = /** @type {HTMLInputElement} */ (document.getElementById('nnid-data'));
 const nnidRandomButton = document.getElementById('random-nnid');
 const nnidLoaded = document.getElementById('nnid-loaded');
 const nnidLastModified = document.getElementById('nnid-last-modified');
 let nnidDebounceTimeout;
 
-const pnidInput = document.getElementById('pnid');
-const pnidDataInput = document.getElementById('pnid-data');
+const pnidInput = /** @type {HTMLInputElement} */ (document.getElementById('pnid'));
+const pnidDataInput = /** @type {HTMLInputElement} */ (document.getElementById('pnid-data'));
 const pnidLoaded = document.getElementById('pnid-loaded');
 let pnidDebounceTimeout;
 
@@ -651,40 +652,6 @@ const verifyCRC16Checkbox = document.getElementById('verifyCRC16');
 verifyCRC16Checkbox.addEventListener('change', function () {
   globalThis.globalVerifyCRC16 = !this.checked;
 });
-
-/*
-function extractNameFromSupportedType(data, type) {
-  if(!type) {
-    // No supported type found for the given data size
-    return null;
-  }
-
-  if(!type.offsetName) {
-    return type.name; // Return the type name if no offset is provided
-  }
-
-  // Extract UTF-16 LE Mii name starting at the specified offset
-  const startOffset = type.offsetName;
-  const nameLength = 0x14;
-  let endPosition = startOffset;
-  // Find the position of the null terminator (0x00 0x00)
-  while(endPosition < startOffset + nameLength) {
-    if(data[endPosition] === 0x00 && data[endPosition + 1] === 0x00) {
-      break;
-    }
-    endPosition += 2; // Move in 2-byte increments (UTF-16 LE)
-  }
-
-  const textFormat = type.nameFormat === undefined ? 'utf-16le' : type.nameFormat;
-
-  // NOTE: TextDecoder only works on newish browsers
-  // despite the rest of this script using pre-ES6 syntax
-  // TODO: TEST ON OLDER BROWSERS!!!!!!!!!!
-  const nameBytes = data.slice(startOffset, endPosition);
-  const nameString = new TextDecoder(textFormat).decode(nameBytes);
-  return nameString;
-}
-*/
 
 const crc16ChecksumFailedText = document.getElementById('crc16-checksum-failed-text');
 
@@ -1096,11 +1063,8 @@ function checkSupportedTypeBySize(data, type, checkCRC16) {
   }
 
   if (type.offsetCRC16) {
-    const dataCrc16 = data.slice(type.offsetCRC16, type.offsetCRC16 + 2);
-    const dataCrc16u16 = (dataCrc16[0] << 8) | dataCrc16[1];
-    const expectedCrc16 = crc16(data.slice(0, type.offsetCRC16));
-
-    if (expectedCrc16 !== dataCrc16u16) {
+    if (Crc16Ccitt.calculate(
+      new Uint8Array(data), type.offsetCRC16 + 2) !== 0) {
       if (checkCRC16) {
         fileErrorInvalidChecksum.style.display = '';
         return CheckTypeReturn.ERROR;
