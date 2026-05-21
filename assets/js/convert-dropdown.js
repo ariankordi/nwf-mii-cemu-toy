@@ -2,6 +2,7 @@
 import { base64ToBytes, bytesToBase64, bytesToHex, parseHexOrB64ToBytes } from './common.js';
 import {
   DataConversionUtilityTodoMoveThis as ConvUtility,
+  Crc16Ccitt,
   MiiDataSize,
   MiiDataType,
   MiiDecoder,
@@ -11,35 +12,41 @@ import {
   MiiVisualInfo,
   StudioObfuscation
 } from './MiiDataLibrary.mjs';
-import { MiiLogoQrCode } from './MiiLogoQrCode.js';
 import Tomo3dsExtraAccessor from './Tomo3dsExtraAccessor.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
 import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
+import { MiiLogoQrCode } from './MiiLogoQrCode.js';
+
+const wrappedMiiData = new WrappedMiiDataSubtle(KeySlot0x31Keys[KeyType.Production]);
+
+const DATA_TYPE_NFP = MiiDataType.VER3_STORE_DATA + 30;
+const DATA_TYPE_TOMO3DS = MiiDataType.VER3_STORE_DATA + 31;
 
 /**
- * Maps MiiDataType values to display strings and legacy class names.
- * technicalName is shown in the UI; className is used for download filenames.
- * @type {Record<number, {technicalName: string, className: string}>}
+ * Maps MiiDataType values to display strings.
+ * @type {Record<number, string>}
  */
-const MiiDataTypeInfo = {
-  [MiiDataType.RFL_CORE]: { technicalName: 'RFLiHiddenCharData (Wii)', className: 'Gen1Wii' },
-  [MiiDataType.RFL_DATA]: { technicalName: 'RFLCharData/RFLStoreData (Wii)', className: 'Gen1Wii' },
-  [MiiDataType.RFL_STORE_DATA]: { technicalName: 'RFLCharData/RFLStoreData (Wii)', className: 'Gen1Wii' },
-  [MiiDataType.VER3_CORE]: { technicalName: 'CFL/FFL/AFL/Ver3 (3DS/Wii U) StoreData', className: 'Gen2Wiiu3dsMiitomo' },
-  [MiiDataType.VER3_DATA]: { technicalName: 'CFL/FFL/AFL/Ver3 (3DS/Wii U) StoreData', className: 'Gen2Wiiu3dsMiitomo' },
-  [MiiDataType.VER3_STORE_DATA]: { technicalName: 'CFL/FFL/AFL/Ver3 (3DS/Wii U) StoreData', className: 'Gen2Wiiu3dsMiitomo' },
-  [MiiDataType.NX_CHAR_INFO]: { technicalName: 'nn::mii::CharInfo (Switch)', className: 'Gen3Switchgame' },
-  [MiiDataType.NX_CORE]: { technicalName: 'nn::mii::StoreData/nn::mii::CoreData (Switch)', className: 'Gen3Switch' },
-  [MiiDataType.NX_STORE_DATA]: { technicalName: 'nn::mii::StoreData/nn::mii::CoreData (Switch)', className: 'Gen3Switch' },
-  [MiiDataType.NX_CORE_PARAM]: { technicalName: 'nn::mii::CoreData (no name) (Switch)', className: 'Gen3Switch' },
-  [MiiDataType.STUDIO_DATA]: { technicalName: 'Mii Studio Data', className: 'Gen3Studio' },
-  [MiiDataType.STUDIO_URL_DATA]: { technicalName: 'Mii Studio Data', className: 'Gen3Studio' },
+const MiiDataTypeNames = {
+  [MiiDataType.RFL_CORE]: 'RFLiHiddenCharData (Wii)',
+  [MiiDataType.RFL_DATA]: 'RFLCharData (Wii)',
+  [MiiDataType.RFL_STORE_DATA]: 'RFLStoreData (Wii)',
+  [MiiDataType.VER3_CORE]: '3DS/Wii U MiiDataCore',
+  [MiiDataType.VER3_DATA]: '3DS/Wii U MiiDataOfficial',
+  [MiiDataType.VER3_STORE_DATA]: '{CFL/FFL/Ver3}StoreData (3DS/Wii U)',
+  [MiiDataType.NX_CHAR_INFO]: 'nn::mii::CharInfo (Switch)',
+  [MiiDataType.NX_CORE]: 'nn::mii::CoreData (Switch)',
+  [MiiDataType.NX_STORE_DATA]: 'nn::mii::StoreData (Switch)',
+  [MiiDataType.NX_CORE_PARAM]: 'nn::mii::CoreData (Minimal, Switch)',
+  [MiiDataType.STUDIO_DATA]: 'Mii Studio Data',
+  [MiiDataType.STUDIO_URL_DATA]: 'Mii Studio URL Data',
+  [DATA_TYPE_NFP]: 'Ver3StoreData + NfpStoreDataExtention (amiibo Data)',
+  [DATA_TYPE_TOMO3DS]: 'CFLiMiiDataPacket + Tomodachi Life 3DS QR Data'
 };
 
 /**
  * @typedef {Object} MiiConversionResult
  * @property {number} inputType - MiiDataType of the detected input.
- * @property {{technicalName: string, className: string}|undefined} typeInfo - Display info for input format.
+ * @property {string=} typeName - Display name for input format.
  * @property {Uint8Array} studioData - 46-byte Mii Studio raw data.
  * @property {Uint8Array} ver3StoreData - 96-byte Ver3StoreData.
  * @property {Uint8Array} ver3ForQR - 96-byte Ver3StoreData with QR overrides (birthPlatform=CTR, copyable=true).
@@ -56,18 +63,17 @@ const MiiDataTypeInfo = {
  * @throws {Error} If the input size is not recognized or conversion fails.
  */
 const convertMiiData = (rawInput) => {
+  const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+  let inputType = MiiFormat.getTypeFromSize(rawInput.length);
+
   /** sizeof(VER3_STORE_DATA) + sizeof(NfpStoreDataExtention) */
   const NFP_SIZE = MiiDataSize.VER3_STORE_DATA + 8;
 
   const TOMO3DS_SIZE = MiiDataSize.VER3_STORE_DATA + 240;
 
-  /**
-   * @param {MiiVisualInfo} info
-   * @param {MiiExtraInfo} extra
-   * @param {Uint8Array} ver3Raw
-   * @returns {MiiConversionResult}
-   */
-  const postVer3Extension = (info, extra, ver3Raw) => {
+  const postVer3Extension = (/** @type {MiiVisualInfo} */ info,
+    /** @type {MiiExtraInfo} */ extra, /** @type {Uint8Array} */ ver3Raw,
+    /** @type {number} */ inputType) => {
     const studioData = new Uint8Array(MiiDataSize.STUDIO_DATA);
     MiiEncoder.toStudioData(studioData, info);
 
@@ -75,80 +81,105 @@ const convertMiiData = (rawInput) => {
     ConvUtility.adjustExtra(extra, MiiDataType.NX_CHAR_INFO);
     MiiEncoder.toNxCharInfo(charInfoData, info, extra);
 
-    // The embedded Ver3 bytes already have correct Ver3 colors; copy them.
-    const ver3StoreData = new Uint8Array(ver3Raw);
-    const ver3ForQR = buildVer3ForQR(ver3Raw);
-
-    const inputType = MiiDataType.VER3_STORE_DATA;
-    return { inputType, typeInfo: MiiDataTypeInfo[inputType], studioData, ver3StoreData, ver3ForQR, charInfoData };
+    return /** @type {MiiConversionResult} */ ({
+      inputType,
+      typeName: MiiDataTypeNames[inputType],
+      studioData,
+      // The embedded Ver3 bytes already have correct Ver3 colors; copy them.
+      ver3StoreData: ver3Raw.slice(),
+      ver3ForQR: buildVer3ForQR(ver3Raw),
+      charInfoData
+    });
   };
 
+  // Always decode Ver3StoreData and ignore CRC (assumed correct).
   if (rawInput.length === NFP_SIZE) {
     const ver3Raw = rawInput.subarray(0, MiiDataSize.VER3_STORE_DATA);
-    const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
-    // CRC return value is intentionally ignored — amiibo data may have an invalid CRC.
-    MiiDecoder.fromVer3StoreData(ver3Raw, info, extra);
+    MiiDecoder.fromVer3Data(ver3Raw, info, extra);
     // Overwrite visual colors with the NX common colors from the extension.
     ConvUtility.applyNfpExtension(info, rawInput, MiiDataSize.VER3_STORE_DATA);
 
-    return postVer3Extension(info, extra, ver3Raw);
+    return postVer3Extension(info, extra, ver3Raw, DATA_TYPE_NFP);
   } else if (rawInput.length === TOMO3DS_SIZE) {
     const ver3Raw = rawInput.subarray(0, MiiDataSize.VER3_STORE_DATA);
     const extraRaw = rawInput.subarray(MiiDataSize.VER3_STORE_DATA);
-    const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
-    MiiDecoder.fromVer3StoreData(ver3Raw, info, extra);
+    MiiDecoder.fromVer3Data(ver3Raw, info, extra);
 
     const accessor = new Tomo3dsExtraAccessor(extraRaw);
+    // Apply hair/eyebrow/beard colors from hair dye.
     Tomo3dsExtraAccessor.applyHairDye(info,
       accessor.getHairDyeMode(), accessor.getHairDye());
 
-    return postVer3Extension(info, extra, ver3Raw);
+    return postVer3Extension(info, extra, ver3Raw, DATA_TYPE_TOMO3DS);
   }
 
-  const inputType = MiiFormat.getTypeFromSize(rawInput.length);
   if (inputType === MiiDataType.UNKNOWN) {
-    throw new Error('Input format is an unknown size of: ' + rawInput.length);
+    throw new Error(`Input format is an unknown size of: ${rawInput.length}`);
   }
 
-  const studioData = ConvUtility.convertDataType(rawInput, inputType, MiiDataType.STUDIO_DATA);
-  const ver3StoreData = ConvUtility.convertDataType(rawInput, inputType, MiiDataType.VER3_STORE_DATA);
-  const charInfoData = ConvUtility.convertDataType(rawInput, inputType, MiiDataType.NX_CHAR_INFO);
-  if (!ver3StoreData || !studioData || !charInfoData) throw new Error('data conversion failure (possible CRC mismatch)');
+  if (!ConvUtility.decodeDataType(rawInput, inputType, info, extra)) {
+    throw new Error('data conversion failure (CRC mismatch)');
+  }
+
+  // we need separate extra info instances for ver3 and for nx
+  // NOTE: we can totally use ConvUtility.convertDataType,
+  // but that method pulls in all encode/decode methods which is undesired
+  const extraForVer3 = new MiiExtraInfo(), extraForNx = new MiiExtraInfo();
+  ConvUtility.decodeDataType(rawInput, inputType, info, extraForVer3);
+  ConvUtility.decodeDataType(rawInput, inputType, info, extraForNx);
+  ConvUtility.adjustExtra(extraForVer3, MiiDataType.VER3_STORE_DATA);
+  ConvUtility.adjustExtra(extraForNx, MiiDataType.NX_CHAR_INFO);
+
+  const ver3StoreData = new Uint8Array(MiiDataSize.VER3_STORE_DATA),
+        studioData = new Uint8Array(MiiDataSize.STUDIO_DATA),
+        charInfoData = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
+  MiiEncoder.toVer3StoreData(ver3StoreData, info, extra);
+  MiiEncoder.toStudioData(studioData, info);
+  MiiEncoder.toNxCharInfo(charInfoData, info, extra);
 
   // Build QR from the already-converted ver3 to avoid an extra full decode cycle.
   const ver3ForQR = buildVer3ForQR(ver3StoreData);
 
-  return { inputType, typeInfo: MiiDataTypeInfo[inputType], studioData, ver3StoreData, ver3ForQR, charInfoData };
+  return {
+    inputType,
+    typeName: MiiDataTypeNames[inputType],
+    studioData,
+    ver3StoreData,
+    ver3ForQR,
+    charInfoData
+  };
 };
 
 /**
  * Takes existing Ver3StoreData bytes and returns a copy with QR-specific
  * overrides applied: birthPlatform=3 (CTR) and copyable=true.
- * Accepting already-converted Ver3 avoids re-converting from the original input.
- * @param {Uint8Array} ver3Raw - 96-byte Ver3StoreData.
+ * @param {Uint8Array} ver3StoreData - 96-byte Ver3StoreData.
  * @returns {Uint8Array}
  */
-const buildVer3ForQR = (ver3Raw) => {
-  const info = new MiiVisualInfo(), ex = new MiiExtraInfo();
-  // decodeDataType may return false on CRC mismatch but still fills info/ex.
-  ConvUtility.decodeDataType(ver3Raw, MiiDataType.VER3_STORE_DATA, info, ex);
-  ConvUtility.adjustExtra(ex, MiiDataType.VER3_STORE_DATA);
-  ex.birthPlatform = 3; // FFL_BIRTH_PLATFORM_CTR — required to scan on 3DS/Wii U
-  ex.copyable = true;
-  const dst = new Uint8Array(MiiDataSize.VER3_STORE_DATA);
-  ConvUtility.encodeDataType(dst, MiiDataType.VER3_STORE_DATA, info, ex);
+const buildVer3ForQR = (ver3StoreData) => {
+  const dst = ver3StoreData.slice(); // Copy.
+  // Mii data created on Wii U, Miitomo, and Switch
+  // have birthPlatform set to 4 (= Wii U). That data is
+  // not scannable as a QR code on 3DS because it will
+  // fail verification if birthPlatform > 3.
+
+  // Set birthPlatform bitfield to 3 (CFLi_BIRTH_PLATFORM_CTR)
+  dst[3] = dst[3] & 143 | (/* birthPlatform */ 3 & 7);
+  // Allow the Mii to be copied, for convenience.
+  dst[1] |= 1; // copyable = 1
+  Crc16Ccitt.updateBigEndian(ver3StoreData, MiiDataSize.VER3_STORE_DATA);
   return dst;
 };
 
 /**
  * Derives a base name for download files.
  * Uses the Mii name if non-empty, otherwise a timestamp + format class.
- * @param {string} name
- * @param {{technicalName: string, className: string}|undefined} typeInfo
- * @returns {string}
  */
-const buildFileBaseName = (name, typeInfo) => {
-  if (name) return name;
+const buildFileBaseName = (/** @type {string} */ name,
+  /** @type {string=} */ typeName) => {
+  if (name) {
+    return name;
+  }
   /** @param {number} n */
   const pad2 = n => (n < 10 ? '0' : '') + n;
   const now = new Date();
@@ -158,12 +189,14 @@ const buildFileBaseName = (name, typeInfo) => {
     pad2(now.getHours()) + '-' +
     pad2(now.getMinutes()) + '-' +
     pad2(now.getSeconds()) + '-' +
-    (typeInfo?.className ?? 'Unknown');
+    (typeName || 'Unknown');
 };
 
 const handleConvertDetailsToggle = (/** @type {ToggleEvent} */ event) => {
   const target = /** @type {HTMLDetailsElement|null} */ (event.target);
-  if (!target || !target.open || target.dataset.revealed) {
+  if (!target || !target.open || // not toggled open? ignore
+    // or already revealed, we do not need to do anything
+    target.dataset.revealed) {
     return;
   }
 
@@ -174,7 +207,9 @@ const handleConvertDetailsToggle = (/** @type {ToggleEvent} */ event) => {
 
   const rawInput = parseHexOrB64ToBytes(dataValue);
   const name = target.dataset.name || 'Mii';
+
   const result = convertMiiData(rawInput);
+
   applyConversionToDetails(target, result, name);
   target.dataset.revealed = '1';
 };
@@ -187,70 +222,83 @@ const handleConvertDetailsToggle = (/** @type {ToggleEvent} */ event) => {
  * @param {string} name - Mii name for the QR code and file base name.
  */
 const applyConversionToDetails = (target, result, name) => {
-  const { studioData, ver3StoreData, ver3ForQR, charInfoData, typeInfo } = result;
+  const { studioData, ver3StoreData, ver3ForQR, charInfoData, typeName } = result;
 
-  if (typeInfo) {
-    target.getElementsByClassName('input-type')[0].textContent = typeInfo.technicalName;
+  if (typeName) {
+    /** @type {HTMLElement} */ (target.querySelector('.input-type'))
+      .textContent = typeName;
   }
 
   const studioCode = bytesToHex(studioData);
-  target.getElementsByClassName('studio-code')[0].textContent = studioCode;
-  /** @type {HTMLAnchorElement} */ (target.getElementsByClassName('mii-instructions-link')[0]).href += studioCode;
+  /** @type {HTMLElement} */ (target.querySelector('.studio-code'))
+    .textContent = studioCode;
+  /** @type {HTMLAnchorElement} */ (target.querySelector('.mii-instructions-link'))
+    .href += studioCode;
 
-  const studioImageElement = /** @type {HTMLElement} */ (target.getElementsByClassName('image-80')[0]);
+  const studioImageElement = /** @type {HTMLElement} */ (target.querySelector('.image-80'));
   const studioURLBytes = new Uint8Array(47);
   StudioObfuscation.encode(studioURLBytes, studioData, 0);
   studioImageElement.setAttribute('src', studioImageElement.dataset.src + bytesToHex(studioURLBytes));
 
   const ver3StoreDataB64 = bytesToBase64(ver3StoreData);
-  target.getElementsByClassName('ver3storedata')[0].textContent = ver3StoreDataB64;
+  /** @type {HTMLElement} */ (target.querySelector('.ver3storedata'))
+    .textContent = ver3StoreDataB64;
 
-  const fileBaseName = buildFileBaseName(name, typeInfo);
+  const fileBaseName = buildFileBaseName(name, typeName);
 
-  const ffsdBtn = /** @type {HTMLButtonElement} */ (target.getElementsByClassName('download-ffsd')[0]);
-  ffsdBtn.dataset.data = ver3StoreDataB64;
-  ffsdBtn.dataset.filename = fileBaseName + '.ffsd';
+  const addButton = (/** @type {HTMLElement} */ el,
+    /** @type {string} */ name, /** @type {string=} */ data) => {
+    data && (el.dataset.data = data);
+    el.dataset.filename = name;
+  };
 
-  const charInfoBtn = /** @type {HTMLButtonElement} */ (target.getElementsByClassName('download-switch-charinfo')[0]);
-  charInfoBtn.dataset.data = bytesToBase64(charInfoData);
-  charInfoBtn.dataset.filename = fileBaseName + '.charinfo';
+  addButton(/** @type {HTMLElement} */ (target.querySelector('button.download-ffsd')),
+    `${fileBaseName}.ffsd`, ver3StoreDataB64);
+  addButton(/** @type {HTMLElement} */ (target.querySelector('button.download-switch-charinfo')),
+    `${fileBaseName}.charinfo`, bytesToBase64(charInfoData));
+  addButton(/** @type {HTMLElement} */ (target.querySelector('button.download-studio-data')),
+    `${fileBaseName}.mnms`, bytesToBase64(studioData));
 
-  const studioBtn = /** @type {HTMLButtonElement} */ (target.getElementsByClassName('download-studio-data')[0]);
-  studioBtn.dataset.data = bytesToBase64(studioData);
-  studioBtn.dataset.filename = fileBaseName + '.mnms';
-
-  const modelDownloadButtons = target.getElementsByClassName('model-download-button');
-  const imgSearchIfItExists = target.parentElement.getElementsByTagName('img');
-  if (modelDownloadButtons.length && imgSearchIfItExists.length) {
-    const linkButWithGlbInsteadOfPng = imgSearchIfItExists[0].src
+  const modelButton = target.querySelector('.model-download-button');
+  const imgElement = target.parentElement && target.parentElement.querySelector('img');
+  if (modelButton && imgElement) {
+    const linkAdjustGlb = imgElement.src
+      // switch shader has transparent faceline
+      // texture which will look wrong so we remove it
       .replace('&shaderType=switch', '')
       .replace('.png?', '.glb?');
-    modelDownloadButtons[0].setAttribute('action', linkButWithGlbInsteadOfPng);
+    modelButton.setAttribute('action', linkAdjustGlb);
   }
 
-  // QR code is async (AES-wrap + PNG generation).
-  const qrCodeImage = target.getElementsByClassName('image-qr')[0];
+  // QR code is async (AES encryption + PNG generation).
+  const qrCodeImage = /** @type {HTMLImageElement} */ (target.querySelector('.image-qr'));
   const qrData = new Uint8Array(WrappedMiiDataLength);
-  (new WrappedMiiDataSubtle(KeySlot0x31Keys[KeyType.Production]))
-    .encrypt(qrData, ver3ForQR)
+  wrappedMiiData.encrypt(qrData, ver3ForQR)
     .then(() => MiiLogoQrCode.generatePng(qrData, name))
-    .then((src) => { /** @type {HTMLImageElement} */ (qrCodeImage).src = src; });
+    .then((src) => { qrCodeImage.src = src; });
 };
 
 const handleDownloadDataFileButton = (/** @type {MouseEvent} */ event) => {
   event.preventDefault();
-  if (!event.target) return;
-
+  if (!event.target) {
+    return;
+  }
+  // define a filename with the name, TBD: if name is generic then prepend date maybe?
   const el = /** @type {HTMLElement} */ (event.target);
   const filename = el.dataset.filename;
-  if (!filename) throw new Error('download button does not have data-filename attribute');
+  if (!filename) {
+    throw new Error('download button does not have data-filename attribute');
+  }
   const dataText = el.dataset.data;
-  if (!dataText) throw new Error('download button does not have data-data attribute');
+  if (!dataText) {
+    throw new Error('download button does not have data-data attribute, where base64 data is supposed to go');
+  }
 
   const link = document.createElement('a');
   link.href = URL.createObjectURL(new Blob([base64ToBytes(dataText)]));
   link.download = filename;
   link.click();
+  // revoke the object url after the download is complete
   URL.revokeObjectURL(link.href);
 };
 
@@ -270,12 +318,13 @@ const bindResultTemplateHandlers = (cloneEl, copyHandler) => {
     details.addEventListener('toggle', handleConvertDetailsToggle);
   }
 
-  const studioCopyButton = cloneEl.querySelector('.copy-studio-url');
+  const studioCopyButton = /** @type {HTMLButtonElement} */ (cloneEl.querySelector('.copy-studio-url'));
   if (studioCopyButton) {
     studioCopyButton.addEventListener('click', copyHandler);
   }
 
-  for (const btn of cloneEl.querySelectorAll('.download-studio-data, .download-switch-charinfo, .download-ffsd')) {
+  for (const btn of /** @type {NodeListOf<HTMLButtonElement>} */
+      (cloneEl.querySelectorAll('.download-studio-data, .download-switch-charinfo, .download-ffsd'))) {
     btn.addEventListener('click', handleDownloadDataFileButton);
   }
 };
