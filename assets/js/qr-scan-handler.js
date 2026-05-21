@@ -289,9 +289,6 @@ async function handleDecryption(result) {
     if (ret) {
       decryptedData = ret;
     }
-  } else if (bytes.length == 122) { // miic
-    const extra = bytes.slice(WrappedMiiDataLength);
-    decryptedData = new Uint8Array([...decryptedData, ...extra]);
   }
 
   const miiName = Char16.toString(new Uint16Array(decryptedData, 0x1A), 10);

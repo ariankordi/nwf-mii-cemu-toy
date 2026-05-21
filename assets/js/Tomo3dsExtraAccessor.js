@@ -73,13 +73,13 @@ class Tomo3dsExtraAccessor {
    * via Euclidean distance.
    * @type {Readonly<Uint8Array>}
    */
-  static HairDyeToCommonColorTable = Object.freeze(new Uint8Array([
+  static HairDyeToCommonColorTable = new Uint8Array([
     // Corresponds to the in-game color selection layout (6 columns, left to right):
     55, 51, 50, 12, 16, 12, 67, 61,
     51, 64, 69, 66, 65, 86, 85, 93,
     92, 19, 20, 20, 15, 32, 35, 26,
     38, 41, 43, 18, 95, 97, 97, 99
-  ]));
+  ]);
 }
 
 export default Tomo3dsExtraAccessor;
