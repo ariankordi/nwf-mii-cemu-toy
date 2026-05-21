@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import { parse } from 'csv-parse/sync';
 import { Char16, DataConversionUtilityTodoMoveThis as ConvUtility, MiiDataSize, MiiDataType, MiiExtraInfo, MiiVisualInfo } from './MiiDataLibrary.mjs';
-import { base64ToBytes, bytesToHex, hexToBytes } from './common.js';
+import { base64ExToBytes, bytesToHex, hexToBytes } from './common.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -167,12 +167,12 @@ const testConversionEntry = (entry, fromNX = false) => () => {
 
   beforeAll(() => {
     // Prepare byte buffers once per entry.
-    const src = base64ToBytes(entry.ver3StoreData);
+    const src = base64ExToBytes(entry.ver3StoreData);
     expect(src.length).toBeGreaterThanOrEqual(92); // .toHaveLength(96);
     srcVer3.set(src);
 
     if (entry.nnmiiCoreData) {
-      expectedCore = base64ToBytes(entry.nnmiiCoreData);
+      expectedCore = base64ExToBytes(entry.nnmiiCoreData);
       expect(expectedCore).toHaveLength(48);
     }
 
@@ -369,7 +369,7 @@ const testConversionEntry = (entry, fromNX = false) => () => {
 
   if (entry.nfpStoreData && entry.nnmiiCharInfo) {
     it('converts NfpStoreData -> CharInfo', () => {
-      const nfpBytes = base64ToBytes(/** @type {string} */(entry.nfpStoreData));
+      const nfpBytes = base64ExToBytes(/** @type {string} */(entry.nfpStoreData));
       const expectedCharInfo = hexToBytes(/** @type {string} */(entry.nnmiiCharInfo));
 
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
@@ -419,7 +419,7 @@ describe('Mii data cross-conversion tests', () => {
 
     it('clears temporary flag (bit 5) when encoding', () => {
       // Set bit 5 in avatarId[0] in the raw bytes before encoding.
-      const src = base64ToBytes(normalVer3);
+      const src = base64ExToBytes(normalVer3);
       src[0x0C] |= 0b00100000; // FFLI_CREATE_ID_FLAG_TEMPORARY
 
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
@@ -432,7 +432,7 @@ describe('Mii data cross-conversion tests', () => {
     it('assigns normal/Wii U createId when only temporary flag was set (treated as null)', () => {
       // avatarId[0] = 0x20: only the temporary bit. After clearing it becomes 0,
       // so isArrayNull fires and a fresh normal/Wii U createId is generated.
-      const src = base64ToBytes(normalVer3);
+      const src = base64ExToBytes(normalVer3);
       src[0x0C] = 0b00100000;
       // Zero out the rest of the createId (avatarId bytes 1-3 + clientId).
       TestUtility.zeroRange(src, 0x0D, 0x16);
@@ -447,7 +447,7 @@ describe('Mii data cross-conversion tests', () => {
     });
 
     it('assigns normal/Wii U createId when createId is fully null', () => {
-      const src = base64ToBytes(normalVer3);
+      const src = base64ExToBytes(normalVer3);
       // Zero out avatarId (0x0C-0x0F) and clientId (0x10-0x15).
       TestUtility.zeroRange(src, 0x0C, 0x16);
 
@@ -462,7 +462,7 @@ describe('Mii data cross-conversion tests', () => {
   describe('Library-specific behavior tests', () => {
     it('fills null name with default when encoding to CharInfo', () => {
       // Ver3StoreData with an all-zero name field.
-      const emptyNameVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
+      const emptyNameVer3 = base64ExToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
 
       const studioUrl =
         ConvUtility.convertDataType(emptyNameVer3, MiiDataType.VER3_DATA, MiiDataType.STUDIO_URL_DATA);
@@ -501,7 +501,7 @@ describe('Mii data cross-conversion tests', () => {
       const decoder = new TextDecoder('utf-16');
 
       // Ver3StoreData with an all-zero name field.
-      const emptyNameVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
+      const emptyNameVer3 = base64ExToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
 
       const nameBuffer = new Uint16Array(emptyNameVer3.buffer, 0x1A, 0x20);
       for (let i = 0; i < input.length; i++) {

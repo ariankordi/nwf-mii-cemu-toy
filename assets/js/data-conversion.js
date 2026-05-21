@@ -173,7 +173,7 @@ const supportedFormats = [{
 // for NfpStoreDataExtention:
 {
   className: 'Gen2Wiiu3dsMiitomo',
-  sizes: [104, 106, 108], // 106/108 = for mii-creator ".miic"
+  sizes: [104],
   technicalName: 'Ver3StoreData + NfpStoreDataExtention (amiibo Data)',
   version: 3,
   parseExtensionFunction: 'parseNfpStoreDataExtention',
