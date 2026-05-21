@@ -11,6 +11,9 @@ import TomoExtraData from './TomoExtraData.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
 import { Char16, Crc16Ccitt } from './MiiDataLibrary.mjs';
 
+// disable BarcodeDetector api as it does not support binary data
+QrScanner.setBarcodeDetectorDisabled();
+
 const qrFileInput = document.getElementById('qr-file');
 const video = document.getElementById('qr-video');
 const camList = document.getElementById('cam-list');
