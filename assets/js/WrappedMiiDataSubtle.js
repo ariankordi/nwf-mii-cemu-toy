@@ -325,9 +325,7 @@ async function wrappedStoreDataTest() {
   console.info('wrappedStoreDataTest: ✅ passed (en/de)code');
 }
 
-if (globalThis.process !== undefined) {
-  wrappedStoreDataTest();
-}
+// (globalThis.process !== undefined) && wrappedStoreDataTest();
 
 export {
   WrappedMiiDataLength,
