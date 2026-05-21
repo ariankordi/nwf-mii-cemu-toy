@@ -28,14 +28,11 @@ import * as Gen3Switch from '../kaitai-dist/Gen3Switch.cjs';
 import * as Gen3Switchgame from '../kaitai-dist/Gen3Switchgame.cjs';
 import * as TomodachiLifeQrCode from '../kaitai-dist/TomodachiLifeQrCode.cjs';
 import {
-  /** Text utility - used in {@link handleConvertDetailsToggle}, {@link handleDownloadDataFileButton} */
-  parseHexOrB64ToUint8Array, uint8ArrayToBase64, base64ToUint8Array,
   /** CRC-16/CCITT - used in {@link encode3DSStoreDataFromStruct}, {@link wrapVer3StoreDataForQR} */
   crc16
 } from './common.js';
 import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
-import { MiiLogoQrCode } from './MiiLogoQrCode.js';
 
 // below is an UGLY!!!!!!! workaround to importing
 // UMD modules, from ESM, for browser and node (bundler)
