@@ -1,5 +1,5 @@
 // @ts-check
-import { base64ToUint8Array, parseHexOrB64ToUint8Array, uint8ArrayToBase64 } from './common.js';
+import { base64ToBytes, parseHexOrB64ToBytes, bytesToBase64 } from './common.js';
 import { bytesToHex, convertDataToType, DEFAULT_NAME_IF_NONE, findInputFormatFromSize, studioFormat, studioURLEncodeHex, supportedFormats, ver3Format, wrapVer3StoreDataForQR } from './data-conversion.js';
 import { MiiLogoQrCode } from './MiiLogoQrCode.js';
 
@@ -37,7 +37,7 @@ const handleConvertDetailsToggle = (/** @type {ToggleEvent} */ event) => {
   // the name of the input type will be put in this element
   const inputTypeElement = target.getElementsByClassName('input-type')[0];
 
-  const inputData = parseHexOrB64ToUint8Array(dataValue);
+  const inputData = parseHexOrB64ToBytes(dataValue);
 
   // const studioURLDataElement = event.target.getElementsByClassName('studio-url-data')[0];
   const studioImageElement = /** @type {HTMLElement} */ (target.getElementsByClassName('image-80')[0]);
@@ -76,7 +76,7 @@ const handleConvertDetailsToggle = (/** @type {ToggleEvent} */ event) => {
   }
 
   const ver3StoreData = convertDataToType(inputData, ver3Format, inputFormat);
-  const ver3StoreDataB64 = uint8ArrayToBase64(ver3StoreData);
+  const ver3StoreDataB64 = bytesToBase64(ver3StoreData);
   ver3StoreDataElement.textContent = ver3StoreDataB64;
   // finally make a qr code
   const ver3StoreDataForQR = convertDataToType(inputData, ver3Format, inputFormat, true);
@@ -150,7 +150,7 @@ const convertDataAndBindToDLButton = (button, inputData, formatName, inputFormat
   const data = convertDataToType(inputData,
     /** @type {import('./data-conversion.js').FormatDefinition} */ (format), inputFormat);
 
-  const dataString = uint8ArrayToBase64(data);
+  const dataString = bytesToBase64(data);
   button.dataset.data = dataString;
 };
 
@@ -169,7 +169,7 @@ const handleDownloadDataFileButton = (/** @type {MouseEvent} */ event) => {
     throw new Error('download button does not have data-data attribute, where base64 data is supposed to go');
   }
 
-  const data = base64ToUint8Array(dataText);
+  const data = base64ToBytes(dataText);
 
   // create and download a new blob from the uint8array we made
   const blob = new Blob([data]);
