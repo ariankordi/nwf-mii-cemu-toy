@@ -14,7 +14,7 @@ import {
   findSupportedTypeBySize,
   getArray16From8
 } from './common.js';
-import { Char16, Crc16Ccitt } from './MiiDataLibrary.mjs';
+import { Char16, Crc16Ccitt, DataConversionUtilityTodoMoveThis as ConvUtility, MiiDecoder, MiiVisualInfo, MiiEncoder, MiiDataSize } from './MiiDataLibrary.mjs';
 
 // handle unhandled promise rejections as well as errors
 window.addEventListener('unhandledrejection', function (event) {
@@ -1091,9 +1091,19 @@ function setDataConvertInline(data, type, dataField, dataRealField) {
     return;
   }
 
-  throw new Error('implement this function.');
-  // convert to stuuuuuudioooooo
-  const studioCode = 'foobar';
+  let studioCode;
+  const info = new MiiVisualInfo();
+  switch (data.length) {
+    case 104:
+      MiiDecoder.visualFromVer3Core(data, info);
+      ConvUtility.applyNfpExtension(info, data.subarray(96));
+      const studioBuffer = new Uint8Array(MiiDataSize.STUDIO_DATA);
+      MiiEncoder.toStudioData(studioBuffer, info);
+      studioCode = bytesToBase64(studioBuffer);
+      break;
+    default:
+      throw new Error('im confused');
+  }
 
   // set data field
   dataField.value = studioCode;
