@@ -110,7 +110,6 @@ const supportedTypes = [
   {
     name: 'FFLStoreData',
     sizes: [104, // 104 = 96 + nfpstoredataextention length
-      106, 108, // mii-creator custom format
       336 // plus tomodachi life qr code extension
     ],
     offsetCRC16: 94,

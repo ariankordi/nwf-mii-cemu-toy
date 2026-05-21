@@ -474,7 +474,7 @@ describe('Mii data cross-conversion tests', () => {
       const out = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
       ConvUtility.encodeDataType(out, MiiDataType.NX_CHAR_INFO, info, extra);
 
-      const name = Char16.char16ToString(extra.nickname, extra.nickname.length);
+      const name = Char16.toString(extra.nickname, extra.nickname.length);
       expect(name.slice(0, 3)).toBe('Mii');
     });
   });
