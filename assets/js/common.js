@@ -6,64 +6,63 @@
 // // ---------------------------------------------------------------------
 // Merge to class: CodecUtility, TextCodingUtil, TextCodec
 
-/**
- * Base64 -> U8 / https://stackoverflow.com/a/41106346
- * @param {string} base64 - Input Base64 data to decode.
- * @returns {Uint8Array} Decoded input data.
- */
-const base64ToBytesCore = base64 => Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-/**
- * Hex -> U8
- * @param {string} hex - Input hex data to decode.
- * @returns {Uint8Array} Decoded input data.
- */
-const hexToBytes = hex => Uint8Array.from({ length: hex.length >>> 1 }, (_, i) =>
-  Number.parseInt(hex.slice(i << 1, (i << 1) + 2), 16));
+// Base64
 
-/**
- * U8 -> Hex / https://www.xaymar.com/articles/2020/12/08/fastest-uint8array-to-hex-string-conversion-in-javascript/
- * @param {Array<number>|Uint8Array} bytes - Input data to encode.
- * @returns {string} Hexadecimal representation of `buffer`.
- */
-const bytesToHex = bytes => Array.prototype.map.call(bytes,
-  (/** @type {{ toString: (arg0: number) => string; }} */ x) =>
-    x.toString(16).padStart(2, '0')).join(''); // padStart: ES2017
+/** Base64 -> Bytes / https://stackoverflow.com/a/41106346 */
+const base64ToBytes = (/** @type {string} */ base64) =>
+  Uint8Array.from(atob(base64), c => c.charCodeAt(0));
 
-/**
- * U8 -> Base64
- * @param {Array<number>|Uint8Array} bytes - Input data to encode.
- * @returns {string} Base64 representation of `buffer`.
- */
-const bytesToBase64 = bytes =>
-// fromCharCode should be compatible with Uint8Array, but its param type is number[].
-  btoa(String.fromCharCode.apply(null, /** @type {Array<number>} */ (bytes)));
+/** Bytes -> Base64 */
+const bytesToBase64 = (/** @type {ArrayLike<number>} */ bytes) =>
+  btoa(String.fromCharCode.apply(null, bytes));
+
+// Base64: Extended
 
 /**
  * Base64 -> U8 function that also supports Base64URL
  * encoding, and adds padding if it is missing.
  * @param {string} base64 - Input Base64 or Base64URL data to decode.
- * @returns {Uint8Array} Decoded input data.
  */
-function base64ToBytes(base64) {
+function base64ExToBytes(base64) {
   // Replace URL-safe characters with regular Base64 equivalents.
   base64 = base64.replace(/-/g, '+').replace(/_/g, '/');
   // Add padding to the Base64 string if it is missing.
   while (base64.length % 4 !== 0) {
     base64 += '=';
   }
-  return base64ToBytesCore(base64);
+  return base64ToBytes(base64);
 }
+
+// Hex
+
+/** Hex -> Bytes */
+const hexToBytes = (/** @type {string} */ hex) =>
+  Uint8Array.from({ length: hex.length >>> 1 }, (_, i) =>
+    Number.parseInt(hex.slice(i << 1, (i << 1) + 2), 16));
+
+/** U8 -> Hex / https://www.xaymar.com/articles/2020/12/08/fastest-uint8array-to-hex-string-conversion-in-javascript/ */
+const bytesToHex = (/** @type {ArrayLike<number>} */ bytes) =>
+  Array.prototype.map.call(bytes,
+    (/** @type {{ toString: (arg0: number) => string; }} */ x) =>
+      x.toString(16).padStart(2, '0')).join('');
 
 // #endregion
 
 const stripSpaces = (/** @type {string} */ str) => str.replace(/\s+/g, '');
 
+/**
+ * Parses either hex or Base64 -> U8.
+ * Additionally strips spaces from the input.
+ */
 const parseHexOrB64ToBytes = (/** @type {string} */ text) => {
-  // decode it to a uint8array whether it's hex or base64
-  const textData = stripSpaces(text);
-  // check if it's base 16 exclusively, otherwise assume base64
-  return /^[0-9a-fA-F]+$/.test(textData) ? hexToBytes(textData) : base64ToBytesCore(textData);
+    text = text.replace(/\s+/g, ''); // Strip spaces.
+    // Check if it is hex, otherwise assume it is Base64.
+    return /^[0-9a-fA-F]+$/.test(text)
+      ? hexToBytes(text)
+      : base64ExToBytes(text);
 };
+
+// Uint16Array conversion.
 
 const getArray16 = (/** @type {DataView} */ view, littleEndian = true) =>
   Uint16Array.from({ length: view.byteLength / 2 },
@@ -162,6 +161,7 @@ export {
   hexToBytes,
   bytesToHex,
   base64ToBytes,
+  base64ExToBytes,
   parseHexOrB64ToBytes,
   bytesToBase64,
   getArray16,
