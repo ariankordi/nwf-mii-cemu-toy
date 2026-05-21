@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Remove NNID from Arian's Archive</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="stylesheet" href="/assets/style.css">
+    <style>
+        body { max-width: 480px; margin: 3rem auto; padding: 0 1rem; }
+        h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+        .subtitle { margin-top: 0; color: #666; font-size: 0.9rem; }
+        label { display: block; margin-bottom: 0.25rem; font-weight: bold; }
+        input[type="text"] {
+            width: 100%; box-sizing: border-box;
+            padding: 0.5rem; font-size: 1rem;
+            border: 1px solid #ccc; border-radius: 4px;
+            margin-bottom: 0.75rem;
+        }
+        button {
+            padding: 0.5rem 1.25rem; font-size: 1rem;
+            background: #c0392b; color: #fff;
+            border: none; border-radius: 4px; cursor: pointer;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #status {
+            margin-top: 1rem; padding: 0.75rem;
+            border-radius: 4px; display: none;
+        }
+        #status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        #status.error   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .contact-note { font-size: 0.85rem; margin-top: 0.4rem; }
+        details { margin-bottom: 1.25rem; font-size: 0.9rem; }
+        summary { cursor: pointer; font-weight: bold; }
+        details ul { margin: 0.5rem 0 0; padding-left: 1.25rem; text-align: left; }
+        details li { margin: 0.4rem 0; }
+    </style>
+</head>
+<body>
+    <h1>Remove NNID from Arian's Archive</h1>
+
+    <details>
+        <summary>Please read before continuing.</summary>
+        <ul>
+            <li>
+                <strong>This form is for individuals who want their own data removed for privacy reasons. Do not abuse it.</strong>
+                <ul>
+                <li>
+                    If you attempt to use this to mass-erase records that are not yours, I will find out and be very angry.
+                </li>
+                <li>
+                        On a related note: if you are using the NNID archive for stalking or harassment, shame on you.
+                </li>
+                </ul>
+            <li>
+                This form only removes your Nintendo Network ID from <em>my</em> personal archive.
+                It does not delete or hide anything from Nintendo's own records.
+            </li>
+            <li>
+                Additionally, my archive has been posted publicly online, since... it is an archive.
+                Submitting this form will not remove your NNID from any of those copies. Sorry.
+            </li>
+            <li>
+                The hourly limit exists to make it slightly harder for idiots to delete everything.
+                If you have a legitimate removal request and run into the limit, please contact me directly. I am more than happy to help.
+            </li>
+        </ul>
+    </details>
+
+    <p class="subtitle">
+        If you'd like your old Nintendo Network ID to be removed from the archive, enter it below.
+        <br>
+        Up to 8 removals are processed per hour.
+    </p>
+
+    <form id="remove-form">
+        <label for="nnid-input">Nintendo Network ID</label>
+        <input type="text" id="nnid-input" name="nnid"
+               placeholder="Enter the old Nintendo Network ID you'd like removed." autocomplete="off"
+               maxlength="16" required>
+        <button type="submit" id="submit-btn">Submit Removal</button>
+    </form>
+
+    <!--
+        All user-visible status strings live here as data attributes so they can
+        be translated without touching the JavaScript.
+        %s is replaced at runtime with the submitted NNID.
+    -->
+    <div id="status" role="alert"
+        data-msg-success='"%s" has been removed from the archive.'
+        data-msg-forbidden='Are you trying to break the website? What do you have against me, bro? I&apos;m just trying to render Mii (REAL).'
+        data-msg-not-found='"%s" was not found in the archive.'
+        data-msg-rate-limit='The hourly removal limit has been reached. Please try again later, or contact me directly if it is urgent.'
+        data-msg-error='An unexpected error occurred. Please try again.'
+        data-msg-network='Network error: could not reach the server.'
+    ></div>
+    <p class="contact-note" id="contact-hint" style="display:none">
+        You can reach me at <a href="mailto:ariankordi@ariankordi.net">ariankordi@ariankordi.net</a>.
+    </p>
+
+    <script>
+    document.getElementById('remove-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const nnid = document.getElementById('nnid-input').value.trim();
+        const btn = document.getElementById('submit-btn');
+        const status = document.getElementById('status');
+        const contactHint = document.getElementById('contact-hint');
+
+        if (!nnid) return;
+
+        btn.disabled = true;
+        status.style.display = 'none';
+        status.className = '';
+        contactHint.style.display = 'none';
+
+        /** Fill in the %s placeholder in a message string. */
+        function msg(key) {
+            return (status.dataset[key] || '').replace('%s', nnid);
+        }
+
+        try {
+            const resp = await fetch(
+                '/nnid-archive-remove/' + encodeURIComponent(nnid),
+                { method: 'POST' }
+            );
+
+            status.style.display = 'block';
+            if (resp.ok) {
+                status.className = 'success';
+                status.textContent = msg('msgSuccess');
+                document.getElementById('nnid-input').value = '';
+            } else if (resp.status === 404) {
+                status.className = 'error';
+                status.textContent = msg('msgNotFound');
+            } else if (resp.status === 403) {
+                status.className = 'error';
+                status.textContent = msg('msgForbidden');
+            } else if (resp.status === 429) {
+                status.className = 'error';
+                status.textContent = msg('msgRateLimit');
+                contactHint.style.display = 'block';
+            } else {
+                status.className = 'error';
+                status.textContent = msg('msgError');
+            }
+        } catch (_) {
+            status.style.display = 'block';
+            status.className = 'error';
+            status.textContent = msg('msgNetwork');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+    </script>
+</body>
+</html>
