@@ -30,23 +30,18 @@ import { Char16 } from './MiiDataLibrary.mjs';
 class Tomo3dsExtraAccessor {
   constructor(/** @type {Uint8Array} */ data) {
     /** @private */ this._data = data;
-    /** @private */ this._data16 = new Uint16Array(data);
+    /** @private */ this._data16 = new Uint16Array(data.buffer, data.byteOffset);
   }
 
-  /*
-  getFirstName = () => extractUTF16Text(this._data, 0, false, 16);
-  getLastName = () => extractUTF16Text(this._data, 32, false, 16);
-  getIslandName = () => extractUTF16Text(this._data, 216, false, 9);
-  */
   getFirstName = () => Char16.toString(this._data16, 16, 0);
   getLastName = () => Char16.toString(this._data16, 16, 32/2);
   getIslandName = () => Char16.toString(this._data16, 9, 216/2);
 
   /** @returns {number} 5-bit hair dye color index. */
-  getHairDye = () => this._data[67] & 0x1F;
+  getHairDye = () => (this._data[67] >> 1) & 0b00011111; // Bits 5-1
 
   /** @returns {number} 0 = no dye, 1 = hair only, 2 = hair + eyebrow + beard. */
-  getHairDyeMode = () => (this._data[67] >> 5) & 0x3;
+  getHairDyeMode = () => (this._data[67] >> 6) & 0b00000011; // Bits 7-6
 
   /**
    * Applies hair dye color to Mii visual data if hair dye is active.

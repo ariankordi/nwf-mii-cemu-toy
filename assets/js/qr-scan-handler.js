@@ -5,11 +5,12 @@
  */
 
 import QrScanner from 'qr-scanner';
-import { findSupportedTypeBySize } from './common.js';
+import { findSupportedTypeBySize, getArray16From8 } from './common.js';
 import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
 import TomoExtraData from './TomoExtraData.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
 import { Char16, Crc16Ccitt } from './MiiDataLibrary.mjs';
+import Tomo3dsExtraAccessor from './Tomo3dsExtraAccessor.js';
 
 // disable BarcodeDetector api as it does not support binary data
 QrScanner.setBarcodeDetectorDisabled !== undefined && QrScanner.setBarcodeDetectorDisabled();
@@ -226,17 +227,12 @@ async function handleTomodachiLife3DSData(bytes, data) {
     return extra;
   }
 
-  throw new Error('implement this');
-  extra = new Uint8Array([...data, ...extra]);
-  const dataObj = {};
-  // NOTE may not be defined:
-  // parseTomodachiLifeQRCodeData(extra, dataObj);
-  // TODO check if that worked and props are there
-
-  qrLoadedTL.children[0].textContent = dataObj.firstName;
-  qrLoadedTL.children[1].textContent = dataObj.lastName;
-  qrLoadedTL.children[2].textContent = dataObj.islandName;
-  qrLoadedTLHairDye.style.display = dataObj.hairDyeMode ? '' : 'none';
+  const accessor = new Tomo3dsExtraAccessor(extra);
+  qrLoadedTL.children[0].textContent = accessor.getFirstName();
+  qrLoadedTL.children[1].textContent = accessor.getLastName();
+  qrLoadedTL.children[2].textContent = accessor.getIslandName();
+  qrLoadedTLHairDye.style.display =
+    accessor.getHairDyeMode() !== 0 ? '' : 'none';
 
   return extra;
 }
@@ -287,11 +283,12 @@ async function handleDecryption(result) {
   if (isTomodachi3ds) {
     const ret = await handleTomodachiLife3DSData(bytes, decryptedData);
     if (ret) {
-      decryptedData = ret;
+      decryptedData = new Uint8Array([...decryptedData, ...ret]);
     }
   }
 
-  const miiName = Char16.toString(new Uint16Array(decryptedData, 0x1A), 10);
+  const name16 = getArray16From8(decryptedData.subarray(0x1A), true);
+  const miiName = Char16.toString(name16, 10);
   if (Crc16Ccitt.calculate(decryptedData.subarray(0, 96), 96) !== 0) {
     showStatus('no-mii', 'CRC16 checksum failed.');
     // scanning should continue then

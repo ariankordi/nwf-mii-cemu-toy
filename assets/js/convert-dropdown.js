@@ -12,6 +12,7 @@ import {
   StudioObfuscation
 } from './MiiDataLibrary.mjs';
 import { MiiLogoQrCode } from './MiiLogoQrCode.js';
+import Tomo3dsExtraAccessor from './Tomo3dsExtraAccessor.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
 import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
 
@@ -58,14 +59,15 @@ const convertMiiData = (rawInput) => {
   /** sizeof(VER3_STORE_DATA) + sizeof(NfpStoreDataExtention) */
   const NFP_SIZE = MiiDataSize.VER3_STORE_DATA + 8;
 
-  if (rawInput.length === NFP_SIZE) {
-    const ver3Raw = rawInput.subarray(0, MiiDataSize.VER3_STORE_DATA);
-    const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
-    // CRC return value is intentionally ignored — amiibo data may have an invalid CRC.
-    MiiDecoder.fromVer3StoreData(ver3Raw, info, extra);
-    // Overwrite visual colors with the NX common colors from the extension.
-    ConvUtility.applyNfpExtension(info, rawInput, MiiDataSize.VER3_STORE_DATA);
+  const TOMO3DS_SIZE = MiiDataSize.VER3_STORE_DATA + 240;
 
+  /**
+   * @param {MiiVisualInfo} info
+   * @param {MiiExtraInfo} extra
+   * @param {Uint8Array} ver3Raw
+   * @returns {MiiConversionResult}
+   */
+  const postVer3Extension = (info, extra, ver3Raw) => {
     const studioData = new Uint8Array(MiiDataSize.STUDIO_DATA);
     MiiEncoder.toStudioData(studioData, info);
 
@@ -79,6 +81,28 @@ const convertMiiData = (rawInput) => {
 
     const inputType = MiiDataType.VER3_STORE_DATA;
     return { inputType, typeInfo: MiiDataTypeInfo[inputType], studioData, ver3StoreData, ver3ForQR, charInfoData };
+  };
+
+  if (rawInput.length === NFP_SIZE) {
+    const ver3Raw = rawInput.subarray(0, MiiDataSize.VER3_STORE_DATA);
+    const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+    // CRC return value is intentionally ignored — amiibo data may have an invalid CRC.
+    MiiDecoder.fromVer3StoreData(ver3Raw, info, extra);
+    // Overwrite visual colors with the NX common colors from the extension.
+    ConvUtility.applyNfpExtension(info, rawInput, MiiDataSize.VER3_STORE_DATA);
+
+    return postVer3Extension(info, extra, ver3Raw);
+  } else if (rawInput.length === TOMO3DS_SIZE) {
+    const ver3Raw = rawInput.subarray(0, MiiDataSize.VER3_STORE_DATA);
+    const extraRaw = rawInput.subarray(MiiDataSize.VER3_STORE_DATA);
+    const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+    MiiDecoder.fromVer3StoreData(ver3Raw, info, extra);
+
+    const accessor = new Tomo3dsExtraAccessor(extraRaw);
+    Tomo3dsExtraAccessor.applyHairDye(info,
+      accessor.getHairDyeMode(), accessor.getHairDye());
+
+    return postVer3Extension(info, extra, ver3Raw);
   }
 
   const inputType = MiiFormat.getTypeFromSize(rawInput.length);

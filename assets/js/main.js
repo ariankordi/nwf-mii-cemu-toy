@@ -15,6 +15,7 @@ import {
   getArray16From8
 } from './common.js';
 import { Char16, Crc16Ccitt, DataConversionUtilityTodoMoveThis as ConvUtility, MiiDecoder, MiiVisualInfo, MiiEncoder, MiiDataSize } from './MiiDataLibrary.mjs';
+import Tomo3dsExtraAccessor from './Tomo3dsExtraAccessor.js';
 
 // handle unhandled promise rejections as well as errors
 window.addEventListener('unhandledrejection', function (event) {
@@ -1091,19 +1092,27 @@ function setDataConvertInline(data, type, dataField, dataRealField) {
     return;
   }
 
-  let studioCode;
   const info = new MiiVisualInfo();
+  const extraData = data.subarray(MiiDataSize.VER3_STORE_DATA);
+  const studioBuffer = new Uint8Array(MiiDataSize.STUDIO_DATA);
   switch (data.length) {
     case 104:
       MiiDecoder.visualFromVer3Core(data, info);
-      ConvUtility.applyNfpExtension(info, data.subarray(96));
-      const studioBuffer = new Uint8Array(MiiDataSize.STUDIO_DATA);
+      ConvUtility.applyNfpExtension(info, extraData);
       MiiEncoder.toStudioData(studioBuffer, info);
-      studioCode = bytesToBase64(studioBuffer);
+      break;
+    case 336:
+      MiiDecoder.visualFromVer3Core(data, info);
+      const accessor = new Tomo3dsExtraAccessor(extraData);
+      Tomo3dsExtraAccessor.applyHairDye(info,
+        accessor.getHairDyeMode(), accessor.getHairDye());
+      MiiEncoder.toStudioData(studioBuffer, info);
       break;
     default:
       throw new Error('im confused');
   }
+
+  const studioCode = bytesToBase64(studioBuffer);
 
   // set data field
   dataField.value = studioCode;
