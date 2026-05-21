@@ -6,30 +6,15 @@
 
 import { Char16 } from './MiiDataLibrary.mjs';
 
-// Byte layout of the 240-byte extra (from TomodachiLifeQrCode.ksy):
-// 0–31:   firstName     (32 bytes, UTF-16LE, up to 16 chars)
-// 32–63:  lastName      (32 bytes, UTF-16LE, up to 16 chars)
-// 64–66:  unknownBirthdayAge (3 bytes)
-// 67:     packed byte — bits 0–4 = hairDye (5-bit index, LE),
-//                       bits 5–6 = hairDyeMode (2-bit, LE)
-// 68–79:  unknown (12 bytes)
-// 80–111: catchphrase   (32 bytes, UTF-16LE)
-// 112–119: unknown3Clothing (8 bytes)
-// 120–135: islandId1    (16 bytes)
-// 136–151: islandId2    (16 bytes)
-// 152–159: miiAuthorId  (8 bytes)
-// 160–169: miiCreateId  (10 bytes)
-// 170–175: voice fields (6 bytes)
-// 176–180: character fields (5 bytes)
-// 181–199: unknown5     (19 bytes)
-// 200–215: islandId3    (16 bytes)
-// 216–233: islandName   (18 bytes, UTF-16LE, up to 9 chars)
-// 234–239: unknown6     (6 bytes)
+// Byte layout is from tomodachi_life_qr_code.ksy.
+// Reference: https://github.com/ariankordi/nwf-mii-cemu-toy/blob/7570faefff49737a0d87cd4496eb5064657860cf/kaitai-structs/tomodachi_life_qr_code.ksy
 
 /** Basic accessor for the 240-byte extra data in Tomodachi Life 3DS QR codes. */
 class Tomo3dsExtraAccessor {
   constructor(/** @type {Uint8Array} */ data) {
     /** @private */ this._data = data;
+    // Note: This is little-endian. To convert it
+    // on big-endian browsers, use: getArray16From8(data)
     /** @private */ this._data16 = new Uint16Array(data.buffer, data.byteOffset);
   }
 
@@ -37,11 +22,11 @@ class Tomo3dsExtraAccessor {
   getLastName = () => Char16.toString(this._data16, 16, 32/2);
   getIslandName = () => Char16.toString(this._data16, 9, 216/2);
 
-  /** @returns {number} 5-bit hair dye color index. */
-  getHairDye = () => (this._data[67] >> 1) & 0b00011111; // Bits 5-1
+  /** @returns {number} Hair dye color index (0-31). */
+  getHairDye = () => (this._data[67] >> 1) & 0x1F; // Bits 5-1
 
-  /** @returns {number} 0 = no dye, 1 = hair only, 2 = hair + eyebrow + beard. */
-  getHairDyeMode = () => (this._data[67] >> 6) & 0b00000011; // Bits 7-6
+  /** @returns {number} 0 = none, 1 = hair only, 2 = hair + eyebrow + beard. */
+  getHairDyeMode = () => (this._data[67] >> 6) & 3; // Bits 7-6
 
   /**
    * Applies hair dye color to Mii visual data if hair dye is active.
@@ -50,22 +35,29 @@ class Tomo3dsExtraAccessor {
    */
   static applyHairDye(/** @type {import('./MiiDataLibrary.mjs').MiiVisualInfo} */ info,
     /** @type {number} */ mode, /** @type {number} */ color) {
-    if (mode === 0) {
-      return; // 0 = no dye active.
+    if (color < 0 || color > 31) {
+      return; // Out-of-bounds color value.
     }
 
     const commonColor = Tomo3dsExtraAccessor.HairDyeToCommonColorTable[color];
-    info.hairColor = commonColor;
-    if (mode !== 1) { // Mode 2 applies to hair + eyebrow + beard.
-      info.eyebrowColor = commonColor;
-      info.beardColor = commonColor;
-    }
+		switch (mode) {
+			case 2: // Apply to hair, eyebrow, and beard.
+        info.eyebrowColor = commonColor;
+        info.beardColor = commonColor;
+			// Fall-through and also apply to hair.
+			case 1: // Apply to hair only.
+        info.hairColor = commonColor;
+				break;
+			// Default: do not apply hair dye.
+		}
   }
 
   /**
    * Maps Tomodachi Life 3DS hair dye indices (0–31) to Switch common colors.
-   * Derived by taking the nearest common color to each TL hair dye RGB value
-   * via Euclidean distance.
+   * Derived by taking the nearest common color to each
+   * hair dye RGB value via Euclidean distance.
+   *
+   * r2-bintable-extract/scripts/misc/clone-tl3ds-to-common-mapping.ts
    * @type {Readonly<Uint8Array>}
    */
   static HairDyeToCommonColorTable = new Uint8Array([

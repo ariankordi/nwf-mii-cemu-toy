@@ -227,7 +227,8 @@ function saveSpecifiedFieldsToLocalStorage() {
 /** Loads fields from local storage that have HTML elements with data-save property attached. */
 function loadSpecifiedFieldsFromLocalStorage() {
   // go through every input that has the data-save attribute
-  for (const element of document.querySelectorAll('[data-save]')) {
+  for (const element of /** @type {NodeListOf<HTMLInputElement>} */
+    (document.querySelectorAll('[data-save]'))) {
     let inputName = element.name;
     if (!inputName) {
       // use id as name if the name is not available
@@ -766,9 +767,9 @@ fileInput.addEventListener('input', function () {
   return;
 });
 
-const dataInput = document.getElementById('data');
-const dataInputReal = document.getElementById('data-real');
-const dataLoaded = document.getElementById('data-loaded');
+const dataInput = /** @type {HTMLInputElement} */ (document.getElementById('data'));
+const dataInputReal = /** @type {HTMLInputElement} */ (document.getElementById('data-real'));
+const dataLoaded = /** @type {HTMLElement} */ (document.getElementById('data-loaded'));
 
 // same but for base64 mii data
 dataInput.addEventListener('input', function () {
