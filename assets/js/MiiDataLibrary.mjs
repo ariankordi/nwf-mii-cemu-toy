@@ -224,7 +224,7 @@ export class MiiDecoder
 		ex.localOnly = MiiDecoder.#i2b(src[48] & 1);
 		ex.authorId.set(src.subarray(4, 12));
 		ex.createId.set(src.subarray(12, 22));
-		ex.isSpecial = Ver3CreateId.isTemporary(ex.createId[0]);
+		ex.isSpecial = !Ver3CreateId.isNormal(ex.createId[0]);
 		MiiDecoder.#loadArrayU16LittleEndian(src, 26, ex.nickname, 0, 10);
 	}
 
@@ -506,7 +506,7 @@ export class MiiDecoder
 		ex.favorite = MiiDecoder.#i2b(src[1] & 1);
 		ex.localOnly = MiiDecoder.#i2b(src[33] >> 2 & 1);
 		ex.createId.set(src.subarray(24, 32));
-		ex.isSpecial = Ver3CreateId.isTemporary(ex.createId[0]);
+		ex.isSpecial = !Ver3CreateId.isNormal(ex.createId[0]);
 		MiiDecoder.#loadArrayU16BigEndian(src, 2, ex.nickname, 0, 10);
 	}
 
@@ -700,6 +700,9 @@ export class MiiEncoder
 			dst[3] = (dst[3] & 143) | (ex.birthPlatform & 7) << 4;
 			dst.set(ex.authorId, 4);
 			dst.set(ex.createId.subarray(0, 10), 12);
+		}
+		if (ex.hasFlag(MiiExtraFlag.SPECIAL)) {
+			dst[12] = Ver3CreateId.setNormal(dst[12], !ex.isSpecial);
 		}
 	}
 
@@ -1010,6 +1013,9 @@ export class MiiEncoder
 		if (ex.hasFlag(MiiExtraFlag.RFL_CREATE_ID)) {
 			dst.set(ex.createId.subarray(0, 8), 24);
 		}
+		if (ex.hasFlag(MiiExtraFlag.SPECIAL)) {
+			dst[24] = Ver3CreateId.setNormal(dst[24], !ex.isSpecial);
+		}
 	}
 
 	static toRflData(dst, info, ex)
@@ -1110,6 +1116,16 @@ export const MiiExtraFlag = {
 
 export class MiiExtraInfo
 {
+
+	static COMMON_NAME_LENGTH = 10;
+
+	static NX_CREATE_ID_LENGTH = 16;
+
+	static VER3_CREATE_ID_LENGTH = 10;
+
+	static VER3_AUTHOR_ID_LENGTH = 8;
+
+	static RFL_CREATE_ID_LENGTH = 8;
 	flag;
 	/**
 	 * 10-character nickname.
@@ -1182,7 +1198,12 @@ export class Ver3CreateId
 
 	static isNormal(idByte0)
 	{
-		return (idByte0 & 128) == 1;
+		return (idByte0 & 128) == 128;
+	}
+
+	static setNormal(idByte0, value)
+	{
+		return value ? idByte0 | 128 : idByte0 & ~128;
 	}
 
 	static isTemporary(idByte0)
@@ -1402,25 +1423,15 @@ export class MiiFormat
 export class DataConversionUtilityTodoMoveThis
 {
 
-	static convertDataTypeBuffers(src, dst, srcType, dstType)
+	static convertDataTypeTo(src, dst, srcType, dstType)
 	{
 		const info = new MiiVisualInfo();
 		const ex = new MiiExtraInfo();
 		if (!DataConversionUtilityTodoMoveThis.decodeDataType(src, srcType, info, ex)) {
 			return false;
 		}
-		DataConversionUtilityTodoMoveThis.encodeDataType(dst, dstType, info, ex);
+		DataConversionUtilityTodoMoveThis.encodeDataTypeTo(dst, dstType, info, ex);
 		return true;
-	}
-
-	static convertDataType(src, srcType, dstType)
-	{
-		let size = MiiFormat.getSize(dstType);
-		let dst = new Uint8Array(size);
-		if (!DataConversionUtilityTodoMoveThis.convertDataTypeBuffers(src, dst, srcType, dstType)) {
-			return null;
-		}
-		return dst;
 	}
 
 	static decodeDataType(src, type, info, ex)
@@ -1464,7 +1475,7 @@ export class DataConversionUtilityTodoMoveThis
 		}
 	}
 
-	static encodeDataType(dst, type, info, ex)
+	static encodeDataTypeTo(dst, type, info, ex)
 	{
 		switch (type) {
 		case MiiDataType.RFL_CORE:
@@ -1508,6 +1519,24 @@ export class DataConversionUtilityTodoMoveThis
 		}
 	}
 
+	static convertDataType(src, srcType, dstType)
+	{
+		let size = MiiFormat.getSize(dstType);
+		let dst = new Uint8Array(size);
+		if (!DataConversionUtilityTodoMoveThis.convertDataTypeTo(src, dst, srcType, dstType)) {
+			return null;
+		}
+		return dst;
+	}
+
+	static encodeDataType(type, info, ex)
+	{
+		let size = MiiFormat.getSize(type);
+		let dst = new Uint8Array(size);
+		DataConversionUtilityTodoMoveThis.encodeDataTypeTo(dst, type, info, ex);
+		return dst;
+	}
+
 	static isDataTypeNx(t)
 	{
 		return t >= MiiDataType.NX_CHAR_INFO;
@@ -1542,21 +1571,29 @@ export class DataConversionUtilityTodoMoveThis
 		}
 	}
 
-	static adjustExtra(extra, type)
+	static adjustExtra(extra, type, newId)
 	{
 		if (!extra.hasFlag(MiiExtraFlag.NICKNAME) || extra.nickname[0] == 0) {
 			extra.setFlag(MiiExtraFlag.NICKNAME);
 			extra.nickname.set(DataConversionUtilityTodoMoveThis.#ADJUST_EXTRA_DEFAULT_NICKNAME_FOR_NX);
 		}
 		if (DataConversionUtilityTodoMoveThis.isDataTypeNx(type)) {
-			DataConversionUtilityTodoMoveThis.#adjustExtraNx(extra);
+			DataConversionUtilityTodoMoveThis.adjustExtraForNx(extra, newId);
 		}
 		else {
-			DataConversionUtilityTodoMoveThis.#adjustExtraVer3(extra);
+			DataConversionUtilityTodoMoveThis.adjustExtraForVer3(extra, newId);
 		}
 	}
 
-	static #adjustExtraVer3(extra)
+	static #isAllZeroes(bytes, size)
+	{
+		for (let i = 0; i < size; i++)
+			if (bytes[i] != 0)
+				return false;
+		return true;
+	}
+
+	static adjustExtraForVer3(extra, newId)
 	{
 		let hasVer3 = extra.hasFlag(MiiExtraFlag.VER3_PERSONAL);
 		if (!hasVer3) {
@@ -1571,12 +1608,21 @@ export class DataConversionUtilityTodoMoveThis
 		else {
 			extra.createId[0] &= ~32;
 		}
-		if (!hasVer3 || extra.createId[0] == 0) {
-			extra.createId.set(DataConversionUtilityTodoMoveThis.#ADJUST_EXTRA_VER3_TEMP_CREATE_ID_PLEASE_REPLACE);
+		if (extra.hasFlag(MiiExtraFlag.SPECIAL) && !extra.hasFlag(MiiExtraFlag.FAVORITE_LOCAL_BIRTH)) {
+			extra.setFlag(MiiExtraFlag.FAVORITE_LOCAL_BIRTH);
+			extra.birthMonth = extra.birthDay = 0;
+			extra.favorite = false;
+			extra.localOnly = extra.isSpecial;
+		}
+		if (!hasVer3 || DataConversionUtilityTodoMoveThis.#isAllZeroes(extra.createId, 10)) {
+			extra.createId.set(newId.subarray(0, 10));
+			extra.createId[0] = (extra.createId[0] & 15) | 144;
+			extra.createId[4] = 2;
+			extra.createId[5] = extra.createId[6] = 0;
 		}
 	}
 
-	static #adjustExtraNx(extra)
+	static adjustExtraForNx(extra, newId)
 	{
 		let end = 1;
 		for (; end < 10; end++)
@@ -1584,7 +1630,8 @@ export class DataConversionUtilityTodoMoveThis
 				break;
 		for (; end < 10; end++)
 			extra.nickname[end] = 0;
-		if (!extra.hasFlag(MiiExtraFlag.NX_CREATE_ID) || extra.createId[0] == 0) {
+		if (!extra.hasFlag(MiiExtraFlag.NX_CREATE_ID) || DataConversionUtilityTodoMoveThis.#isAllZeroes(extra.createId, 16)) {
+			extra.createId.set(newId.subarray(0, 16));
 			extra.createId[8] &= 63;
 			extra.createId[8] |= 128;
 		}
@@ -1603,6 +1650,54 @@ export class DataConversionUtilityTodoMoveThis
 	}
 
 	static #ADJUST_EXTRA_DEFAULT_NICKNAME_FOR_NX = new Uint16Array([ 77, 105, 105, 0 ]);
+}
 
-	static #ADJUST_EXTRA_VER3_TEMP_CREATE_ID_PLEASE_REPLACE = new Uint8Array([ 208, 0, 0, 74, 109, 183, 106, 67, 0, 9 ]);
+export class Fnv128
+{
+
+	static calculate(hash, data, size)
+	{
+		const tmp = new BigInt64Array(4);
+		const tmp2 = new BigInt64Array(4);
+		tmp[0] = 1818371886n;
+		tmp[1] = 129696066n;
+		tmp[2] = 1656234357n;
+		tmp[3] = 1653982605n;
+		let offset = 0;
+		for (let i = 0; i < size; i++) {
+			tmp2[3] = tmp[3] * 315n;
+			tmp2[2] = tmp[2] * 315n + (tmp2[3] >> 32n);
+			tmp2[1] = tmp[1] * 315n + (tmp2[2] >> 32n);
+			tmp2[0] = tmp[0] * 315n + (tmp2[1] >> 32n);
+			tmp2[3] &= 4294967295n;
+			tmp2[2] &= 4294967295n;
+			tmp2[1] &= 4294967295n;
+			tmp2[0] &= 4294967295n;
+			tmp2[1] += tmp[3] * 16777216n;
+			tmp2[0] += tmp[2] * 16777216n + (tmp2[1] >> 32n);
+			tmp2[1] &= 4294967295n;
+			tmp2[0] &= 4294967295n;
+			tmp[3] = tmp2[3] ^ BigInt(data[offset]);
+			tmp[2] = tmp2[2];
+			tmp[1] = tmp2[1];
+			tmp[0] = tmp2[0];
+			offset += 1;
+		}
+		hash[0] = Number(tmp[0] >> 24n & 255n);
+		hash[1] = Number(tmp[0] >> 16n & 255n);
+		hash[2] = Number(tmp[0] >> 8n & 255n);
+		hash[3] = Number(tmp[0] >> 0n & 255n);
+		hash[4] = Number(tmp[1] >> 24n & 255n);
+		hash[5] = Number(tmp[1] >> 16n & 255n);
+		hash[6] = Number(tmp[1] >> 8n & 255n);
+		hash[7] = Number(tmp[1] >> 0n & 255n);
+		hash[8] = Number(tmp[2] >> 24n & 255n);
+		hash[9] = Number(tmp[2] >> 16n & 255n);
+		hash[10] = Number(tmp[2] >> 8n & 255n);
+		hash[11] = Number(tmp[2] >> 0n & 255n);
+		hash[12] = Number(tmp[3] >> 24n & 255n);
+		hash[13] = Number(tmp[3] >> 16n & 255n);
+		hash[14] = Number(tmp[3] >> 8n & 255n);
+		hash[15] = Number(tmp[3] >> 0n & 255n);
+	}
 }
