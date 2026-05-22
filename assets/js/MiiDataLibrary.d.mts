@@ -233,6 +233,16 @@ export const MiiExtraFlag = {
 
 export class MiiExtraInfo
 {
+
+	public static readonly COMMON_NAME_LENGTH: number;
+
+	public static readonly NX_CREATE_ID_LENGTH: number;
+
+	public static readonly VER3_CREATE_ID_LENGTH: number;
+
+	public static readonly VER3_AUTHOR_ID_LENGTH: number;
+
+	public static readonly RFL_CREATE_ID_LENGTH: number;
 	public flag: number;
 	/**
 	 * 10-character nickname.
@@ -292,6 +302,8 @@ export class Ver3CreateId
 	public static isWiiu(idByte0: number): boolean;
 
 	public static isNormal(idByte0: number): boolean;
+
+	public static setNormal(idByte0: number, value: boolean): number;
 
 	public static isTemporary(idByte0: number): boolean;
 }
@@ -433,13 +445,15 @@ export class DataConversionUtilityTodoMoveThis
 {
 	private constructor();
 
-	public static convertDataTypeBuffers(src: Readonly<Uint8Array>, dst: Uint8Array, srcType: MiiDataType, dstType: MiiDataType): boolean;
-
-	public static convertDataType(src: Readonly<Uint8Array>, srcType: MiiDataType, dstType: MiiDataType): Uint8Array | null;
+	public static convertDataTypeTo(src: Readonly<Uint8Array>, dst: Uint8Array, srcType: MiiDataType, dstType: MiiDataType): boolean;
 
 	public static decodeDataType(src: Readonly<Uint8Array>, type: MiiDataType, info: MiiVisualInfo, ex: MiiExtraInfo): boolean;
 
-	public static encodeDataType(dst: Uint8Array, type: MiiDataType, info: MiiVisualInfo, ex: MiiExtraInfo): void;
+	public static encodeDataTypeTo(dst: Uint8Array, type: MiiDataType, info: MiiVisualInfo, ex: MiiExtraInfo): void;
+
+	public static convertDataType(src: Readonly<Uint8Array>, srcType: MiiDataType, dstType: MiiDataType): Uint8Array | null;
+
+	public static encodeDataType(type: MiiDataType, info: MiiVisualInfo, ex: MiiExtraInfo): Uint8Array;
 
 	public static isDataTypeNx(t: MiiDataType): boolean;
 
@@ -447,11 +461,20 @@ export class DataConversionUtilityTodoMoveThis
 
 	static #convertRflCreateIdToVer3(idData: Uint8Array, authorId: Uint8Array): void;
 
-	public static adjustExtra(extra: MiiExtraInfo, type: MiiDataType): void;
+	public static adjustExtra(extra: MiiExtraInfo, type: MiiDataType, newId: Readonly<Uint8Array>): void;
 
-	static #adjustExtraVer3(extra: MiiExtraInfo): void;
+	static #isAllZeroes(bytes: Readonly<Uint8Array>, size: number): boolean;
 
-	static #adjustExtraNx(extra: MiiExtraInfo): void;
+	public static adjustExtraForVer3(extra: MiiExtraInfo, newId: Readonly<Uint8Array>): void;
+
+	public static adjustExtraForNx(extra: MiiExtraInfo, newId: Readonly<Uint8Array>): void;
 
 	public static applyNfpExtension(info: MiiVisualInfo, src: Readonly<Uint8Array>, offset?: number): void;
+}
+
+export class Fnv128
+{
+	private constructor();
+
+	public static calculate(hash: Uint8Array, data: Readonly<Uint8Array>, size: number): void;
 }

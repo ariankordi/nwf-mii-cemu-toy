@@ -3,10 +3,12 @@ import { base64ToBytes, bytesToBase64, bytesToHex, parseHexOrB64ToBytes } from '
 import {
   DataConversionUtilityTodoMoveThis as ConvUtility,
   Crc16Ccitt,
+  Fnv128,
   MiiDataSize,
   MiiDataType,
   MiiDecoder,
   MiiEncoder,
+  MiiExtraFlag,
   MiiExtraInfo,
   MiiFormat,
   MiiVisualInfo,
@@ -71,6 +73,9 @@ const convertMiiData = (rawInput) => {
 
   const TOMO3DS_SIZE = MiiDataSize.VER3_STORE_DATA + 240;
 
+  const newId = new Uint8Array(16);
+  Fnv128.calculate(newId, rawInput, rawInput.length);
+
   const postVer3Extension = (/** @type {MiiVisualInfo} */ info,
     /** @type {MiiExtraInfo} */ extra, /** @type {Uint8Array} */ ver3Raw,
     /** @type {number} */ inputType) => {
@@ -78,7 +83,7 @@ const convertMiiData = (rawInput) => {
     MiiEncoder.toStudioData(studioData, info);
 
     const charInfoData = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
-    ConvUtility.adjustExtra(extra, MiiDataType.NX_CHAR_INFO);
+    ConvUtility.adjustExtraForNx(extra, newId);
     MiiEncoder.toNxCharInfo(charInfoData, info, extra);
 
     return /** @type {MiiConversionResult} */ ({
@@ -127,15 +132,20 @@ const convertMiiData = (rawInput) => {
   const extraForVer3 = new MiiExtraInfo(), extraForNx = new MiiExtraInfo();
   ConvUtility.decodeDataType(rawInput, inputType, info, extraForVer3);
   ConvUtility.decodeDataType(rawInput, inputType, info, extraForNx);
-  ConvUtility.adjustExtra(extraForVer3, MiiDataType.VER3_STORE_DATA);
-  ConvUtility.adjustExtra(extraForNx, MiiDataType.NX_CHAR_INFO);
+
+  // set to convert to special!
+  // extraForVer3.setFlag(MiiExtraFlag.SPECIAL); extraForVer3.isSpecial = true;
+
+  ConvUtility.adjustExtra(extraForVer3, MiiDataType.VER3_STORE_DATA, newId);
+  ConvUtility.adjustExtra(extraForNx, MiiDataType.NX_CHAR_INFO, newId);
 
   const ver3StoreData = new Uint8Array(MiiDataSize.VER3_STORE_DATA),
         studioData = new Uint8Array(MiiDataSize.STUDIO_DATA),
         charInfoData = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
-  MiiEncoder.toVer3StoreData(ver3StoreData, info, extra);
+  // extraForVer3.authorId[0] = 1;
+  MiiEncoder.toVer3StoreData(ver3StoreData, info, extraForVer3);
   MiiEncoder.toStudioData(studioData, info);
-  MiiEncoder.toNxCharInfo(charInfoData, info, extra);
+  MiiEncoder.toNxCharInfo(charInfoData, info, extraForNx);
 
   // Build QR from the already-converted ver3 to avoid an extra full decode cycle.
   const ver3ForQR = buildVer3ForQR(ver3StoreData);
@@ -164,10 +174,11 @@ const buildVer3ForQR = (ver3StoreData) => {
   // fail verification if birthPlatform > 3.
 
   // Set birthPlatform bitfield to 3 (CFLi_BIRTH_PLATFORM_CTR)
-  dst[3] = dst[3] & 143 | (/* birthPlatform */ 3 & 7);
+  const birthPlatform = 3;
+  dst[3] = dst[3] & 143 | (birthPlatform & 7) << 4;
   // Allow the Mii to be copied, for convenience.
   dst[1] |= 1; // copyable = 1
-  Crc16Ccitt.updateBigEndian(ver3StoreData, MiiDataSize.VER3_STORE_DATA);
+  Crc16Ccitt.updateBigEndian(dst, MiiDataSize.VER3_STORE_DATA);
   return dst;
 };
 
