@@ -318,7 +318,7 @@ export class StudioObfuscation
 	 * Obfuscates Studio data to be used in the URL.
 	 * @param seed The random value to use for the obfuscation. Best left as 0.
 	 */
-	public static encode(dst: Uint8Array, src: Uint8Array, seed?: number): void;
+	public static encode(dst: Uint8Array, src: Readonly<Uint8Array>, seed?: number): void;
 
 	/**
 	 * Deobfuscates Studio URL data to raw decodable data.
@@ -459,7 +459,7 @@ export class DataConversionUtilityTodoMoveThis
 
 	public static convertRflExtraForVer3(extra: MiiExtraInfo): void;
 
-	static #convertRflCreateIdToVer3(idData: Uint8Array, authorId: Uint8Array): void;
+	static #convertRflCreateIdToVer3(idData: Uint8Array, authorId: Readonly<Uint8Array>): void;
 
 	public static adjustExtra(extra: MiiExtraInfo, type: MiiDataType, newId: Readonly<Uint8Array>): void;
 

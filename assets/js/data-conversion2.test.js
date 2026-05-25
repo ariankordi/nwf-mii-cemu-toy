@@ -208,8 +208,7 @@ const testConversionEntry = (entry, fromNX = false) => () => {
       extra.authorId.set(srcVer3.subarray(0x04, 0x0C));
       ConvUtility.convertRflExtraForVer3(extra);
 
-      const roundTrip = new Uint8Array(MiiDataSize.VER3_STORE_DATA);
-      ConvUtility.encodeDataType(roundTrip, MiiDataType.VER3_STORE_DATA, info, extra);
+      const roundTrip = ConvUtility.encodeDataType(MiiDataType.VER3_STORE_DATA, info, extra);
       // const roundTrip = ConvUtility.convertDataType(rawRfl, MiiDataType.RFL_DATA, MiiDataType.VER3_STORE_DATA);
       // if (!roundTrip) throw new Error('data conversion failure.');
 
@@ -348,10 +347,9 @@ const testConversionEntry = (entry, fromNX = false) => () => {
 
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
       ConvUtility.decodeDataType(charInfoBytes, MiiDataType.NX_CHAR_INFO, info, extra);
-      ConvUtility.adjustExtra(extra, MiiDataType.NX_CORE);
+      ConvUtility.adjustExtraForNx(extra, new Uint8Array(16));
 
-      const actual = new Uint8Array(MiiDataSize.NX_CORE);
-      ConvUtility.encodeDataType(actual, MiiDataType.NX_CORE, info, extra);
+      const actual = ConvUtility.encodeDataType(MiiDataType.NX_CORE, info, extra);
 
       /** clear name from coredata */
       const normalizeCoreName = (/** @type {Uint8Array} */ data) =>
@@ -375,8 +373,7 @@ const testConversionEntry = (entry, fromNX = false) => () => {
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
       ConvUtility.decodeDataType(nfpBytes, MiiDataType.VER3_STORE_DATA, info, extra);
       ConvUtility.applyNfpExtension(info, nfpBytes, MiiDataSize.VER3_STORE_DATA);
-      const actualCharInfo = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
-      ConvUtility.encodeDataType(actualCharInfo, MiiDataType.NX_CHAR_INFO, info, extra);
+      const actualCharInfo = ConvUtility.encodeDataType(MiiDataType.NX_CHAR_INFO, info, extra);
 
       Normalize.nnmiiCharInfoNormalize(expectedCharInfo);
       Normalize.nnmiiCharInfoNormalize(actualCharInfo);
@@ -424,7 +421,7 @@ describe('Mii data cross-conversion tests', () => {
 
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
       ConvUtility.decodeDataType(src, MiiDataType.VER3_STORE_DATA, info, extra);
-      ConvUtility.adjustExtra(extra, MiiDataType.VER3_STORE_DATA);
+      ConvUtility.adjustExtraForVer3(extra, new Uint8Array(16));
 
       expect(extra.createId[0] & 0b00100000).toBe(0);
     });
@@ -434,12 +431,12 @@ describe('Mii data cross-conversion tests', () => {
       // so isArrayNull fires and a fresh normal/Wii U createId is generated.
       const src = base64ExToBytes(normalVer3);
       src[0x0C] = 0b00100000;
-      // Zero out the rest of the createId (avatarId bytes 1-3 + clientId).
+      // Zero out the rest of the createId
       TestUtility.zeroRange(src, 0x0D, 0x16);
 
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
       ConvUtility.decodeDataType(src, MiiDataType.VER3_STORE_DATA, info, extra);
-      ConvUtility.adjustExtra(extra, MiiDataType.VER3_STORE_DATA);
+      ConvUtility.adjustExtraForVer3(extra, new Uint8Array(16));
 
       // Normal/Wii U: bits 7, 6, 4 set (0b11010000 = 0xD0).
       expect(extra.createId[0] & 0b11010000).toBe(0b11010000);
@@ -448,12 +445,12 @@ describe('Mii data cross-conversion tests', () => {
 
     it('assigns normal/Wii U createId when createId is fully null', () => {
       const src = base64ExToBytes(normalVer3);
-      // Zero out avatarId (0x0C-0x0F) and clientId (0x10-0x15).
+      // Zero out CreateID (0x0C-0x15).
       TestUtility.zeroRange(src, 0x0C, 0x16);
 
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
       ConvUtility.decodeDataType(src, MiiDataType.VER3_STORE_DATA, info, extra);
-      ConvUtility.adjustExtra(extra, MiiDataType.VER3_STORE_DATA);
+      ConvUtility.adjustExtraForVer3(extra, new Uint8Array(16));
 
       expect(extra.createId[0] & 0b11010000).toBe(0b11010000);
     });
@@ -470,9 +467,8 @@ describe('Mii data cross-conversion tests', () => {
 
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
       ConvUtility.decodeDataType(studioUrl, MiiDataType.STUDIO_URL_DATA, info, extra);
-      ConvUtility.adjustExtra(extra, MiiDataType.NX_CHAR_INFO);
-      const out = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
-      ConvUtility.encodeDataType(out, MiiDataType.NX_CHAR_INFO, info, extra);
+      ConvUtility.adjustExtra(extra, MiiDataType.NX_CHAR_INFO, new Uint8Array(16));
+      const out = ConvUtility.encodeDataType(MiiDataType.NX_CHAR_INFO, info, extra);
 
       const name = Char16.toString(extra.nickname, extra.nickname.length);
       expect(name.slice(0, 3)).toBe('Mii');
@@ -485,7 +481,7 @@ describe('Mii data cross-conversion tests', () => {
 
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
       ConvUtility.decodeDataType(emptyCore, MiiDataType.NX_CORE, info, extra);
-      ConvUtility.adjustExtra(extra, MiiDataType.NX_CHAR_INFO);
+      ConvUtility.adjustExtraForNx(extra, new Uint8Array(16));
 
       // CreateID should be 16 random bytes with proper UUID v4 bits
       // Version 4 UUID: bits 12-15 of first octet should be 0100
@@ -511,7 +507,7 @@ describe('Mii data cross-conversion tests', () => {
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
       ConvUtility.decodeDataType(emptyNameVer3, MiiDataType.VER3_STORE_DATA, info, extra);
       expect(decoder.decode(extra.nickname)).toBe(input);
-      ConvUtility.adjustExtra(extra, MiiDataType.NX_CHAR_INFO);
+      ConvUtility.adjustExtraForNx(extra, new Uint8Array(16));
 
       // Every character from the null onward must be replaced with null.
       expect(decoder.decode(extra.nickname))

@@ -219,7 +219,12 @@ const handleConvertDetailsToggle = (/** @type {ToggleEvent} */ event) => {
   const rawInput = parseHexOrB64ToBytes(dataValue);
   const name = target.dataset.name || 'Mii';
 
+  const t0 = performance.now();
+
   const result = convertMiiData(rawInput);
+
+  const t1 = performance.now();
+  console.log(`convertMiiData: ${t1 - t0} ms`);
 
   applyConversionToDetails(target, result, name);
   target.dataset.revealed = '1';
