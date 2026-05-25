@@ -540,7 +540,7 @@ async function handleNNIDDataFetch(apiUrl, nnidInput, nnidLoaded, nnidDataInput,
 
       const type = findSupportedTypeBySize(decodedData.length);
 
-      const checkResult = checkSupportedTypeBySize(decodedData, type, globalThis.globalVerifyCRC16);
+      const checkResult = checkSupportedTypeBySize(decodedData, type, globalVerifyCRC16);
       if (checkResult) {
         nnidInput.setCustomValidity('');
 
@@ -649,11 +649,11 @@ nnidRandomButton.addEventListener('click', function () {
 });
 
 
-globalThis.globalVerifyCRC16 = true;
+let globalVerifyCRC16 = true;
 
 const verifyCRC16Checkbox = document.getElementById('verifyCRC16');
 verifyCRC16Checkbox.addEventListener('change', function () {
-  globalThis.globalVerifyCRC16 = !this.checked;
+  globalVerifyCRC16 = !this.checked;
 });
 
 const crc16ChecksumFailedText = document.getElementById('crc16-checksum-failed-text');
@@ -744,7 +744,7 @@ fileInput.addEventListener('input', function () {
 
     // this function will handle errors, showing and returning false
     // if there are no errors it should pass tho
-    const checkResult = checkSupportedTypeBySize(data, type, globalThis.globalVerifyCRC16);
+    const checkResult = checkSupportedTypeBySize(data, type, globalVerifyCRC16);
     if (!checkResult) {
       // remove file to invalidate the form
       // fileInput.value = '';
@@ -817,7 +817,7 @@ dataInput.addEventListener('input', function () {
 
   // this function will handle errors, showing and returning false
   // if there are no errors it should pass tho
-  const checkResult = checkSupportedTypeBySize(data, type, globalThis.globalVerifyCRC16);
+  const checkResult = checkSupportedTypeBySize(data, type, globalVerifyCRC16);
   if (!checkResult) {
     // remove file to invalidate the form
     const errorText = document.querySelector(errorTextQuery).textContent;
@@ -1135,8 +1135,13 @@ pantsColor.addEventListener('change', function () {
     : 'none';
 });
 
+/**
+ * @param {Uint8Array} storeData
+ * @param {HTMLInputElement} input
+ * @param {HTMLInputElement} inputReal
+ * @param {HTMLElement} loadedElement
+ */
 globalThis.nfpDidLoadCallback = (storeData, input, inputReal, loadedElement) => {
-  // TODO: stub
   const type = findSupportedTypeBySize(storeData.length);
   // NOTE: all of the below just serves to check storedata crc16
   // as well as display name. that is fiiinee for that but
@@ -1144,7 +1149,7 @@ globalThis.nfpDidLoadCallback = (storeData, input, inputReal, loadedElement) => 
 
   // this function will handle errors, showing and returning false
   // if there are no errors it should pass tho
-  const checkResult = checkSupportedTypeBySize(storeData, type, globalThis.globalVerifyCRC16);
+  const checkResult = checkSupportedTypeBySize(storeData, type, globalVerifyCRC16);
   if (!checkResult) {
     // remove file to invalidate the form
     const errorText = document.querySelector(errorTextQuery).textContent;

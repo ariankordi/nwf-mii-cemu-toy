@@ -1221,7 +1221,7 @@ export class StudioObfuscation
 	 * Obfuscates Studio data to be used in the URL.
 	 * @param seed The random value to use for the obfuscation. Best left as 0.
 	 */
-	static encode(dst, src = new Uint8Array(46), seed = 0)
+	static encode(dst, src, seed = 0)
 	{
 		dst[0] = seed;
 		for (let i = 0; i < 46; i++) {
@@ -1558,7 +1558,7 @@ export class DataConversionUtilityTodoMoveThis
 		DataConversionUtilityTodoMoveThis.#convertRflCreateIdToVer3(extra.createId, extra.authorId);
 	}
 
-	static #convertRflCreateIdToVer3(idData, authorId = new Uint8Array(8))
+	static #convertRflCreateIdToVer3(idData, authorId)
 	{
 		let offset = 8;
 		idData[offset] = 127;
@@ -1606,7 +1606,7 @@ export class DataConversionUtilityTodoMoveThis
 				extra.authorId[i] = 0;
 		}
 		else {
-			extra.createId[0] &= ~32;
+			extra.createId[0] &= 223;
 		}
 		if (extra.hasFlag(MiiExtraFlag.SPECIAL) && !extra.hasFlag(MiiExtraFlag.FAVORITE_LOCAL_BIRTH)) {
 			extra.setFlag(MiiExtraFlag.FAVORITE_LOCAL_BIRTH);
@@ -1616,7 +1616,7 @@ export class DataConversionUtilityTodoMoveThis
 		}
 		if (!hasVer3 || DataConversionUtilityTodoMoveThis.#isAllZeroes(extra.createId, 10)) {
 			extra.createId.set(newId.subarray(0, 10));
-			extra.createId[0] = (extra.createId[0] & 15) | 144;
+			extra.createId[0] = (extra.createId[0] & 15) | 208;
 			extra.createId[4] = 2;
 			extra.createId[5] = extra.createId[6] = 0;
 		}
