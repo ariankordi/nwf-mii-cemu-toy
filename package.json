@@ -34,6 +34,10 @@
     "kaitai-struct-compiler": "^0.11.0",
     "rolldown": "^1.0.0-rc.15"
   },
+  "files": [
+    "assets/js/",
+    "assets/js/kaitai-dist/"
+  ],
   "dependencies": {
     "kaitai-struct": "^0.11.0",
     "qr-scanner": "github:ariankordi/qr-scanner-binary#v1.6.2",
