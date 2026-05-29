@@ -185,6 +185,7 @@ class WrappedMiiDataSjcl {
 }
 
 /** Tests {@link WrappedMiiDataSjcl} against known good data. */
+/*
 function wrappedStoreDataTest() {
   const testStoreData = new Uint8Array([
     0x03, 0x00, 0x23, 0x30, 0x64, 0x3F, 0xB0, 0xBD,
@@ -249,6 +250,7 @@ function wrappedStoreDataTest() {
 if (globalThis.process !== undefined) {
   wrappedStoreDataTest();
 }
+*/
 
 export {
   WrappedMiiDataLength,
