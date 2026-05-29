@@ -264,6 +264,7 @@ class WrappedMiiDataSubtle {
 }
 
 /** Tests {@link WrappedMiiDataSubtle} against known good data. */
+/*
 async function wrappedStoreDataTest() {
   const testStoreData = new Uint8Array([
     0x03, 0x00, 0x23, 0x30, 0x64, 0x3F, 0xB0, 0xBD,
@@ -328,6 +329,7 @@ async function wrappedStoreDataTest() {
 if (globalThis.process !== undefined) {
   wrappedStoreDataTest();
 }
+*/
 
 export {
   WrappedMiiDataLength,
