@@ -191,8 +191,8 @@ const buildFileBaseName = (/** @type {string} */ name,
   if (name) {
     return name;
   }
-  /** @param {number} n */
-  const pad2 = n => (n < 10 ? '0' : '') + n;
+
+  const pad2 = (/** @type {number} */ n) => (n < 10 ? '0' : '') + n;
   const now = new Date();
   return now.getFullYear() + '-' +
     pad2(now.getMonth() + 1) + '-' +
@@ -291,7 +291,9 @@ const applyConversionToDetails = (target, result, name) => {
   const qrData = new Uint8Array(WrappedMiiDataLength);
   wrappedMiiData.encrypt(qrData, ver3ForQR)
     .then(() => MiiLogoQrCode.generatePng(qrData, name))
-    .then((src) => { qrCodeImage.src = src; });
+    .then((src) => {
+      qrCodeImage.src = src;
+    });
 };
 
 const handleDownloadDataFileButton = (/** @type {MouseEvent} */ event) => {
@@ -326,7 +328,7 @@ const handleDownloadDataFileButton = (/** @type {MouseEvent} */ event) => {
 const bindResultTemplateHandlers = (cloneEl, copyHandler) => {
   const topCopyButton = cloneEl.querySelector('.copy-image-url-top');
   if (topCopyButton) {
-    topCopyButton.addEventListener('click', (e) => copyHandler(/** @type {MouseEvent} */ (e), undefined, 'erri'));
+    topCopyButton.addEventListener('click', e => copyHandler(/** @type {MouseEvent} */ (e), undefined, 'erri'));
   }
 
   const details = cloneEl.querySelector('details');
@@ -340,7 +342,7 @@ const bindResultTemplateHandlers = (cloneEl, copyHandler) => {
   }
 
   for (const btn of /** @type {NodeListOf<HTMLButtonElement>} */
-      (cloneEl.querySelectorAll('.download-studio-data, .download-switch-charinfo, .download-ffsd'))) {
+    (cloneEl.querySelectorAll('.download-studio-data, .download-switch-charinfo, .download-ffsd'))) {
     btn.addEventListener('click', handleDownloadDataFileButton);
   }
 };

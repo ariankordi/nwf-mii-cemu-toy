@@ -1,6 +1,5 @@
 /**
  * @file Primary script that handles website form functionality.
- * Only directly calls into data-conversion.js in {@link setDataConvertInline} and iframe handler.
  * Sets up event listeners and error handler for the site.
  * The other modules are intended to be loaded asynchronously and not used immediately.
  * @author Arian Kordi <ariankordi@ariankordi.net>
@@ -17,12 +16,22 @@ import {
 import { Char16, Crc16Ccitt, DataConversionUtilityTodoMoveThis as ConvUtility, MiiDecoder, MiiVisualInfo, MiiEncoder, MiiDataSize } from './MiiDataLibrary.mjs';
 import Tomo3dsExtraAccessor from './Tomo3dsExtraAccessor.js';
 
+const elementById = (/** @type {string} */ id) => {
+  const element = document.getElementById(id);
+  if (!element) {
+    throw new Error(`Missing element: #${id}`);
+  }
+  return element;
+};
+const inputById = (/** @type {string} */ id) =>
+  /** @type {HTMLInputElement} */ (elementById(id));
+
 // handle unhandled promise rejections as well as errors
 window.addEventListener('unhandledrejection', function (event) {
-  const errorContainer = document.getElementById('error-container');
-  const errorMessage = document.getElementById('error-message');
-  const errorStacktrace = document.getElementById('error-stacktrace');
-  const errorAt = document.getElementById('error-at');
+  const errorContainer = elementById('error-container');
+  const errorMessage = elementById('error-message');
+  const errorStacktrace = elementById('error-stacktrace');
+  const errorAt = elementById('error-at');
   errorMessage.textContent = event.reason && event.reason.message
     ? event.reason.message
     : 'Unhandled Promise Rejection';
@@ -44,9 +53,9 @@ window.addEventListener('unhandledrejection', function (event) {
 
 // Select elements based on their names and ids
 const resolutionNumber = document.getElementsByName('width')[0];
-const widthSlider = document.getElementById('resolution-slider');
+const widthSlider = inputById('resolution-slider');
 const bgColor = document.getElementsByName('bgColor')[0];
-const transparentCheckbox = document.getElementById('transparent-checkbox');
+const transparentCheckbox = inputById('transparent-checkbox');
 
 /** bgColor.value; */
 const bgDefault = '#ffffff';
@@ -68,13 +77,13 @@ function synchronizeInputs(input1, input2) {
 
 // Call the synchronize function for each pair of elements
 synchronizeInputs(resolutionNumber, widthSlider);
-synchronizeInputs(document.getElementById('cameraXRotate'), document.getElementById('cameraXRotate-slider'));
-synchronizeInputs(document.getElementById('cameraYRotate'), document.getElementById('cameraYRotate-slider'));
-synchronizeInputs(document.getElementById('cameraZRotate'), document.getElementById('cameraZRotate-slider'));
+synchronizeInputs(inputById('cameraXRotate'), inputById('cameraXRotate-slider'));
+synchronizeInputs(inputById('cameraYRotate'), inputById('cameraYRotate-slider'));
+synchronizeInputs(inputById('cameraZRotate'), inputById('cameraZRotate-slider'));
 
-synchronizeInputs(document.getElementById('characterXRotate'), document.getElementById('characterXRotate-slider'));
-synchronizeInputs(document.getElementById('characterYRotate'), document.getElementById('characterYRotate-slider'));
-synchronizeInputs(document.getElementById('characterZRotate'), document.getElementById('characterZRotate-slider'));
+synchronizeInputs(inputById('characterXRotate'), inputById('characterXRotate-slider'));
+synchronizeInputs(inputById('characterYRotate'), inputById('characterYRotate-slider'));
+synchronizeInputs(inputById('characterZRotate'), inputById('characterZRotate-slider'));
 
 // When the transparent-checkbox is checked, change the background color to #00ff00
 transparentCheckbox.addEventListener('change', function () {
@@ -89,8 +98,8 @@ transparentCheckbox.addEventListener('change', function () {
   } */
 });
 
-const texResolutionEnable = document.getElementById('texResolutionEnable');
-const texResolution = document.getElementById('texResolution');
+const texResolutionEnable = inputById('texResolutionEnable');
+const texResolution = inputById('texResolution');
 texResolutionEnable.addEventListener('change', function () {
   texResolution.disabled = !this.checked;
 });
@@ -129,7 +138,7 @@ function updateMaxResolution() {
 }
 
 /** Set a unique request ID each time a request is sent */
-const sessReqIDInput = document.getElementById('errorSessionAndRequestID');
+const sessReqIDInput = inputById('errorSessionAndRequestID');
 
 /**
  * NOTE: maximum length is 12
@@ -264,17 +273,17 @@ function loadSpecifiedFieldsFromLocalStorage() {
   }
 }
 
-const shaderType = document.getElementById('shaderType');
+const shaderType = inputById('shaderType');
 
 // iframe mode - do not submit to server but submit to outer frame
 const iframeMode = Object.prototype.hasOwnProperty.call(document.body.dataset, 'iframeMode');
 // assumes there is only ONE form on the page or at least the one we want is the first one
 const form = document.forms[0];
-const resultList = document.getElementById('results');
+const resultList = elementById('results');
 
-const resultTemplate = document.getElementById('result-template');
+const resultTemplate = elementById('result-template');
 
-const submitButton = document.getElementById('submit');
+const submitButton = inputById('submit');
 
 let formSubmitting = false;
 
@@ -469,16 +478,16 @@ const CheckTypeReturn = {
 
 const ACCEPT_OCTET_STREAM = false;
 
-const nnidInput = /** @type {HTMLInputElement} */ (document.getElementById('nnid'));
-const nnidDataInput = /** @type {HTMLInputElement} */ (document.getElementById('nnid-data'));
-const nnidRandomButton = document.getElementById('random-nnid');
-const nnidLoaded = document.getElementById('nnid-loaded');
-const nnidLastModified = document.getElementById('nnid-last-modified');
+const nnidInput = inputById('nnid');
+const nnidDataInput = inputById('nnid-data');
+const nnidRandomButton = inputById('random-nnid');
+const nnidLoaded = elementById('nnid-loaded');
+const nnidLastModified = elementById('nnid-last-modified');
 let nnidDebounceTimeout;
 
-const pnidInput = /** @type {HTMLInputElement} */ (document.getElementById('pnid'));
-const pnidDataInput = /** @type {HTMLInputElement} */ (document.getElementById('pnid-data'));
-const pnidLoaded = document.getElementById('pnid-loaded');
+const pnidInput = inputById('pnid');
+const pnidDataInput = inputById('pnid-data');
+const pnidLoaded = elementById('pnid-loaded');
 let pnidDebounceTimeout;
 
 // disable last modified display for google bc it shows that as the page
@@ -648,15 +657,14 @@ nnidRandomButton.addEventListener('click', function () {
     });
 });
 
-
 let globalVerifyCRC16 = true;
 
-const verifyCRC16Checkbox = document.getElementById('verifyCRC16');
+const verifyCRC16Checkbox = inputById('verifyCRC16');
 verifyCRC16Checkbox.addEventListener('change', function () {
   globalVerifyCRC16 = !this.checked;
 });
 
-const crc16ChecksumFailedText = document.getElementById('crc16-checksum-failed-text');
+const crc16ChecksumFailedText = elementById('crc16-checksum-failed-text');
 
 /**
  * @param {Uint8Array} data
@@ -711,10 +719,10 @@ function displayNameFromSupportedType(data, nameElement, type, crc16NotPassed) {
 }
 
 // file type input
-const fileInput = document.getElementById('file');
-const fileDataInput = document.getElementById('file-data');
-const fileDataReal = document.getElementById('file-data-real');
-const fileLoaded = document.getElementById('file-loaded');
+const fileInput = inputById('file');
+const fileDataInput = inputById('file-data');
+const fileDataReal = inputById('file-data-real');
+const fileLoaded = elementById('file-loaded');
 
 // select an error element that is visible
 // visible = does not have (display: )none
@@ -767,9 +775,9 @@ fileInput.addEventListener('input', function () {
   return;
 });
 
-const dataInput = /** @type {HTMLInputElement} */ (document.getElementById('data'));
-const dataInputReal = /** @type {HTMLInputElement} */ (document.getElementById('data-real'));
-const dataLoaded = /** @type {HTMLElement} */ (document.getElementById('data-loaded'));
+const dataInput = inputById('data');
+const dataInputReal = inputById('data-real');
+const dataLoaded = elementById('data-loaded');
 
 // same but for base64 mii data
 dataInput.addEventListener('input', function () {
@@ -940,7 +948,7 @@ document.querySelector('label[for="data"]').addEventListener('click', function (
   }
 });
 
-const inputTypeSelect = document.getElementById('input-type');
+const inputTypeSelect = inputById('input-type');
 
 /** Updates visibility of data type categories. */
 function updateVisibility() {
@@ -1007,7 +1015,7 @@ function setCookie(name, value, days) {
 }
 
 // when this script is loaded...
-// const selectElement = document.getElementById('input-type');
+// const selectElement = elementById('input-type');
 
 if (!iframeMode) {
   // Check if a value is already stored in localStorage
@@ -1048,8 +1056,8 @@ if (!iframeMode) {
 function checkSupportedTypeBySize(data, type, checkCRC16) {
   hideAllErrors();
 
-  const fileErrorSizeMismatchElement = document.getElementById('data-error-size-mismatch');
-  const fileErrorInvalidChecksum = document.getElementById('data-error-invalid-checksum');
+  const fileErrorSizeMismatchElement = elementById('data-error-size-mismatch');
+  const fileErrorInvalidChecksum = elementById('data-error-invalid-checksum');
 
   if (!type) {
     const errorElementId = 'data-error-size-' + data.length;
@@ -1063,16 +1071,14 @@ function checkSupportedTypeBySize(data, type, checkCRC16) {
     return CheckTypeReturn.ERROR;
   }
 
-  if (type.offsetCRC16) {
-    if (Crc16Ccitt.calculate(
-      new Uint8Array(data), type.offsetCRC16 + 2) !== 0) {
-      if (checkCRC16) {
-        fileErrorInvalidChecksum.style.display = '';
-        return CheckTypeReturn.ERROR;
-      } else {
-        // TODO returns a third type
-        return CheckTypeReturn.WHAT;
-      }
+  if (type.offsetCRC16 && Crc16Ccitt.calculate(
+    new Uint8Array(data), type.offsetCRC16 + 2) !== 0) {
+    if (checkCRC16) {
+      fileErrorInvalidChecksum.style.display = '';
+      return CheckTypeReturn.ERROR;
+    } else {
+      // TODO returns a third type
+      return CheckTypeReturn.WHAT;
     }
   }
 
@@ -1102,13 +1108,14 @@ function setDataConvertInline(data, type, dataField, dataRealField) {
       ConvUtility.applyNfpExtension(info, extraData);
       MiiEncoder.toStudioData(studioBuffer, info);
       break;
-    case 336:
+    case 336: {
       MiiDecoder.visualFromVer3Core(data, info);
       const accessor = new Tomo3dsExtraAccessor(extraData);
       Tomo3dsExtraAccessor.applyHairDye(info,
         accessor.getHairDyeMode(), accessor.getHairDye());
       MiiEncoder.toStudioData(studioBuffer, info);
       break;
+    }
     default:
       throw new Error('im confused');
   }
@@ -1125,8 +1132,8 @@ function setDataConvertInline(data, type, dataField, dataRealField) {
 
 globalThis.setDataConvertInline = setDataConvertInline;
 
-const pantsColor = document.getElementById('pantsColor');
-const pantsColorsWithSwitchShaderInaccurate = document.getElementById('pants-colors-with-switch-shader-inaccurate');
+const pantsColor = inputById('pantsColor');
+const pantsColorsWithSwitchShaderInaccurate = elementById('pants-colors-with-switch-shader-inaccurate');
 
 pantsColor.addEventListener('change', function () {
   pantsColorsWithSwitchShaderInaccurate.style.display = shaderType.value === 'switch' &&
@@ -1163,7 +1170,7 @@ globalThis.nfpDidLoadCallback = (storeData, input, inputReal, loadedElement) => 
   displayNameFromSupportedType(storeData, loadedElement, type, (checkResult === 2));
 
   setDataConvertInline(storeData, type, input, inputReal);
-}
+};
 
 /**
  * @param {MouseEvent} event
