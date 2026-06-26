@@ -64,7 +64,7 @@ class TestUtility {
  * - Switch (StoreData) -> Ver3StoreData: From amiibo (NfpStoreData)
  * - RFLCharData -> Ver3StoreData: Wii U vWii to Mii Maker import
  * Unofficial methods:
- * - Switch (StoreData) -> Studio: data-conversion.js
+ * - Switch (StoreData) -> Studio: This JS
  * - nn::mii::CharInfo -> CoreData: In C with mii_ext.h headers
  * -  (SHOULD USE nn::mii::detail::StoreDataRaw::BuildWithCharInfo)
  * - Ver3StoreData -> CharInfo: In C with mii_ext.h headers
