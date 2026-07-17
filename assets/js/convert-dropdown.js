@@ -3,7 +3,7 @@ import { base64ToBytes, bytesToBase64, bytesToHex, parseHexOrB64ToBytes } from '
 import {
   DataConversionUtilityTodoMoveThis as ConvUtility,
   Crc16Ccitt,
-  Fnv128,
+  Fnv1a,
   MiiDataSize,
   MiiDataType,
   MiiDecoder,
@@ -73,8 +73,7 @@ const convertMiiData = (rawInput) => {
 
   const TOMO3DS_SIZE = MiiDataSize.VER3_STORE_DATA + 240;
 
-  const newId = new Uint8Array(16);
-  Fnv128.calculate(newId, rawInput, rawInput.length);
+  const newId = Fnv1a.create128(rawInput, rawInput.length);
 
   const postVer3Extension = (/** @type {MiiVisualInfo} */ info,
     /** @type {MiiExtraInfo} */ extra, /** @type {Uint8Array} */ ver3Raw,

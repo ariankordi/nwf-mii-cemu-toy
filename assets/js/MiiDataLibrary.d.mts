@@ -157,79 +157,79 @@ export class MiiEncoder
  */
 export class MiiVisualInfo
 {
-	public favoriteColor: number;
-	public gender: number;
-	public height: number;
-	public build: number;
-	public facelineType: number;
-	public facelineColor: number;
-	public facelineWrinkle: number;
-	public facelineMake: number;
-	public hairType: number;
-	public hairColor: number;
-	public hairFlip: number;
-	public eyeType: number;
-	public eyeColor: number;
-	public eyeScale: number;
-	public eyeAspect: number;
-	public eyeRotate: number;
-	public eyeX: number;
-	public eyeY: number;
-	public eyebrowType: number;
-	public eyebrowColor: number;
-	public eyebrowScale: number;
-	public eyebrowAspect: number;
-	public eyebrowRotate: number;
-	public eyebrowX: number;
-	public eyebrowY: number;
-	public noseType: number;
-	public noseScale: number;
-	public noseY: number;
-	public mouthType: number;
-	public mouthColor: number;
-	public mouthScale: number;
-	public mouthAspect: number;
-	public mouthY: number;
-	public beardColor: number;
-	public beardType: number;
-	public mustacheType: number;
-	public mustacheScale: number;
-	public mustacheY: number;
-	public glassType: number;
-	public glassColor: number;
-	public glassScale: number;
-	public glassY: number;
-	public moleType: number;
-	public moleScale: number;
-	public moleX: number;
-	public moleY: number;
+	public favoriteColor!: number;
+	public gender!: number;
+	public height!: number;
+	public build!: number;
+	public facelineType!: number;
+	public facelineColor!: number;
+	public facelineWrinkle!: number;
+	public facelineMake!: number;
+	public hairType!: number;
+	public hairColor!: number;
+	public hairFlip!: number;
+	public eyeType!: number;
+	public eyeColor!: number;
+	public eyeScale!: number;
+	public eyeAspect!: number;
+	public eyeRotate!: number;
+	public eyeX!: number;
+	public eyeY!: number;
+	public eyebrowType!: number;
+	public eyebrowColor!: number;
+	public eyebrowScale!: number;
+	public eyebrowAspect!: number;
+	public eyebrowRotate!: number;
+	public eyebrowX!: number;
+	public eyebrowY!: number;
+	public noseType!: number;
+	public noseScale!: number;
+	public noseY!: number;
+	public mouthType!: number;
+	public mouthColor!: number;
+	public mouthScale!: number;
+	public mouthAspect!: number;
+	public mouthY!: number;
+	public beardColor!: number;
+	public beardType!: number;
+	public mustacheType!: number;
+	public mustacheScale!: number;
+	public mustacheY!: number;
+	public glassType!: number;
+	public glassColor!: number;
+	public glassScale!: number;
+	public glassY!: number;
+	public moleType!: number;
+	public moleScale!: number;
+	public moleX!: number;
+	public moleY!: number;
 }
 
 /**
  * Enum describing which extra information is
  * available within the MiiExtraInfo container.
  */
-export const MiiExtraFlag = {
+export enum MiiExtraFlag {
 	/**
 	 * No extra information is available.
 	 */
-	NONE : 0,
+	NONE,
 	/**
 	 * 10-character nickname (Wii, Ver3, NX Core)
 	 */
-	NICKNAME : 1,
+	NICKNAME,
 	/**
 	 * Special flag (Wii/Ver3: in Ver3CreateId, NX: "type" field)
 	 */
-	SPECIAL : 2,
-	FAVORITE_LOCAL_BIRTH : 3,
-	CREATOR_NAME : 4,
-	REGION_FONT_MOVE : 5,
-	RFL_CREATE_ID : 6,
-	VER3_PERSONAL : 7,
-	NX_CREATE_ID : 8,
-	NX_DEVICE_CRC : 9
-} as const;
+	SPECIAL,
+	FAVORITE_LOCAL_BIRTH,
+	CREATOR_NAME,
+	REGION_FONT_MOVE,
+	RFL_CREATE_ID,
+	VER3_PERSONAL,
+	NX_CREATE_ID,
+	NX_DEVICE_CRC,
+}
 
 export class MiiExtraInfo
 {
@@ -243,7 +243,7 @@ export class MiiExtraInfo
 	public static readonly VER3_AUTHOR_ID_LENGTH: number;
 
 	public static readonly RFL_CREATE_ID_LENGTH: number;
-	public flag: number;
+	public flag!: number;
 	/**
 	 * 10-character nickname.
 	 */
@@ -252,27 +252,27 @@ export class MiiExtraInfo
 	 * Whether or not the Mii is considered special.
 	 * WARNING: LocalOnly must be true for the data to be valid.
 	 */
-	public isSpecial: boolean;
+	public isSpecial!: boolean;
 	/**
 	 * Determines which regions to show non-ASCII characters.
 	 */
-	public fontRegion: number;
+	public fontRegion!: number;
 	/**
 	 * Unique identifier for the character.
 	 */
 	public readonly createId: Uint8Array;
 	public readonly creatorName: Uint16Array;
-	public favorite: boolean;
-	public localOnly: boolean;
-	public birthMonth: number;
-	public birthDay: number;
+	public favorite!: boolean;
+	public localOnly!: boolean;
+	public birthMonth!: number;
+	public birthDay!: number;
 	public readonly authorId: Uint8Array;
-	public birthPlatform: number;
-	public regionMove: number;
-	public copyable: boolean;
-	public ngWord: boolean;
-	public roomIndex: number;
-	public positionInRoom: number;
+	public birthPlatform!: number;
+	public regionMove!: number;
+	public copyable!: boolean;
+	public ngWord!: boolean;
+	public roomIndex!: number;
+	public positionInRoom!: number;
 
 	clearFlag(): void;
 
@@ -326,111 +326,111 @@ export class StudioObfuscation
 	public static decode(dst: Uint8Array, src: Readonly<Uint8Array>): void;
 }
 
-export const MiiDataType = {
+export enum MiiDataType {
 	/**
 	 * Placeholder value.
 	 */
-	UNKNOWN : 0,
+	UNKNOWN,
 	/**
 	 * 64/0x40 bytes. Used in Wii hidden/"parade" DB, no creator name.
 	 * RFLiHiddenCharData
 	 */
-	RFL_CORE : 1,
+	RFL_CORE,
 	/**
 	 * 74/0x4A bytes. Data format used on Wii.
 	 * RFLCharData, FFLiMiiDataOfficialRFL
 	 * Extension: rcd, unofficial: mii, mae, miigx
 	 */
-	RFL_DATA : 2,
+	RFL_DATA,
 	/**
 	 * 76/0x4C bytes. Wii data format with CRC-16.
 	 * Extension: rsd, used in some titles e.g. MKW ghosts
 	 */
-	RFL_STORE_DATA : 3,
+	RFL_STORE_DATA,
 	/**
 	 * 74/0x4A bytes. Data format used in DS titles with Mii characters.
 	 * Byte order is little-endian, while bit order is same.
 	 */
-	RFL_DATA_LITTLE_ENDIAN : 4,
+	RFL_DATA_LITTLE_ENDIAN,
 	/**
 	 * 72/0x48 bytes. Used in 3DS/Wii U hidden DB, no creator name.
 	 * CFLiPackedMiiDataCore, FFLiMiiDataCore
 	 */
-	VER3_CORE : 5,
+	VER3_CORE,
 	/**
 	 * 92/0x5C bytes. Used in 3DS/Wii U database, no CRC.
 	 * CFLiPackedMiiDataOfficial, FFLiMiiDataOfficial
 	 * Unofficial extensions: 3dsmii, cfcd, ffcdgam
 	 */
-	VER3_DATA : 6,
+	VER3_DATA,
 	/**
 	 * 96/0x60 bytes. Data format used on 3DS/Wii U.
 	 * CFLiMiiDataPacket/CFLStoreData, FFLStoreData, nn::mii::Ver3StoreData
 	 * Extensions: cfsd, ffsd
 	 */
-	VER3_STORE_DATA : 7,
+	VER3_STORE_DATA,
 	/**
 	 * 92/0x5C bytes. Used in the Wii U database.
 	 * Byte order is big-endian, while bit order is same.
 	 */
-	VER3_DATA_BIG_ENDIAN : 8,
+	VER3_DATA_BIG_ENDIAN,
 	/**
 	 * 88/0x58 bytes. Used in Switch titles. Each field is a byte.
 	 * nn::mii::CharInfo/nn::mii::detail::CharInfoRaw
 	 * Unofficial extension: charinfo (SDK uses .dat)
 	 */
-	NX_CHAR_INFO : 9,
+	NX_CHAR_INFO,
 	/**
 	 * 48/0x30 bytes. Used in Switch databases and NFIF format. Bitfield-packed, no CreateID.
 	 * nn::mii::CoreData/nn::mii::detail::CoreDataRaw
 	 * Unofficial extension: nfcd
 	 */
-	NX_CORE : 10,
+	NX_CORE,
 	/**
 	 * 68/0x44 bytes. Used in Switch MiiDatabase.dat (editor DB).
 	 * Contains core, CreateID, CRC-16 of data, and CRC-16 of system AuthorID.
 	 * nn::mii::StoreData/nn::mii::detail::StoreDataRaw
 	 * Unofficial extension: nfsd
 	 */
-	NX_STORE_DATA : 11,
+	NX_STORE_DATA,
 	/**
 	 * 28/0x1C bytes. Trimmed version of Switch CoreData excluding name.
 	 */
-	NX_CORE_PARAM : 12,
+	NX_CORE_PARAM,
 	/**
 	 * 46/0x2E bytes. Used in NA/"Mii Studio" web editor.
 	 * This is the format before obfuscation and in LocalStorage.
 	 * Contains only visual information with Switch colors/glass types.
 	 * Unofficial extension: mnms
 	 */
-	STUDIO_DATA : 13,
+	STUDIO_DATA,
 	/**
 	 * 47/0x2F bytes. NA/"Mii Studio" web editor format with obfuscation.
 	 * This obfuscated form is used in the "data=" URL param for the /miis/image.png endpoint.
 	 */
-	STUDIO_URL_DATA : 14
-} as const;
+	STUDIO_URL_DATA,
+}
 
-export const MiiDataSize = {
-	UNKNOWN : 0,
-	RFL_CORE : 64,
-	RFL_DATA : 74,
-	RFL_STORE_DATA : 76,
-	VER3_CORE : 72,
-	VER3_DATA : 92,
-	VER3_STORE_DATA : 96,
-	NX_CORE : 48,
-	NX_CHAR_INFO : 88,
-	NX_STORE_DATA : 68,
-	NX_CORE_PARAM : 28,
-	STUDIO_DATA : 46,
-	STUDIO_URL_DATA : 47,
+export enum MiiDataSize {
+	UNKNOWN,
+	RFL_CORE,
+	RFL_DATA,
+	RFL_STORE_DATA,
+	VER3_CORE,
+	VER3_DATA,
+	VER3_STORE_DATA,
+	NX_CORE,
+	NX_CHAR_INFO,
+	NX_STORE_DATA,
+	NX_CORE_PARAM,
+	STUDIO_DATA,
+	STUDIO_URL_DATA,
 	/**
 	 * Represents the biggest Mii data format,
 	 * in order to provide a maximum buffer size.
 	 */
-	MAX_SIZE : 96
-} as const;
+	MAX_SIZE,
+}
 
 export class MiiFormat
 {
@@ -472,9 +472,28 @@ export class DataConversionUtilityTodoMoveThis
 	public static applyNfpExtension(info: MiiVisualInfo, src: Readonly<Uint8Array>, offset?: number): void;
 }
 
-export class Fnv128
+export class CharDataSwapUtility
 {
 	private constructor();
 
-	public static calculate(hash: Uint8Array, data: Readonly<Uint8Array>, size: number): void;
+	static #swap16All(data: Uint8Array, offset: number, count?: number): void;
+
+	static #swap32(data: Uint8Array, offset: number): void;
+
+	public static swapVer3Data(data: Uint8Array, hasCreator: boolean): void;
+
+	public static swapRflData(data: Uint8Array, hasCreator: boolean): void;
+}
+
+/**
+ * Ported from the following (LGPLv3 license): https://github.com/sdroege/snippets/blob/b760be3ef9c57e7a8a03fd73bb90666169cc3f39/snippets/fnv.c#L119-L183
+ * See above for more simple snippets to port from.
+ */
+export class Fnv1a
+{
+	private constructor();
+
+	public static calculate128(hash: Uint8Array, data: Readonly<Uint8Array>, size: number): void;
+
+	public static create128(data: Readonly<Uint8Array>, size: number): Uint8Array;
 }

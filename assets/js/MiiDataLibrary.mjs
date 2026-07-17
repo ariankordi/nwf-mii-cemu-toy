@@ -238,7 +238,7 @@ export class MiiDecoder
 	static fromVer3StoreData(src, info, ex)
 	{
 		MiiDecoder.fromVer3Data(src, info, ex);
-		return Crc16Ccitt.calculate(src, MiiDataSize.VER3_STORE_DATA) == 0;
+		return Crc16Ccitt.calculate(src, 96) == 0;
 	}
 
 	static visualFromNxCore(src, info)
@@ -520,7 +520,7 @@ export class MiiDecoder
 	static fromRflStoreData(src, info, ex)
 	{
 		MiiDecoder.fromRflData(src, info, ex);
-		return Crc16Ccitt.calculate(src, MiiDataSize.RFL_STORE_DATA) == 0;
+		return Crc16Ccitt.calculate(src, 76) == 0;
 	}
 
 	static #VISUAL_FROM_RFL_CORE_FACE_TEX_TABLE = new Uint8Array([ 0, 0, 0, 1, 0, 6, 0, 9, 5, 0, 2, 0, 3, 0, 7, 0,
@@ -717,7 +717,7 @@ export class MiiEncoder
 	static toVer3StoreData(dst, info, ex)
 	{
 		MiiEncoder.toVer3Data(dst, info, ex);
-		Crc16Ccitt.updateBigEndian(dst, MiiDataSize.VER3_STORE_DATA);
+		Crc16Ccitt.updateBigEndian(dst, 96);
 	}
 
 	static toStudioData(dst, info)
@@ -857,7 +857,7 @@ export class MiiEncoder
 		if (ex.hasFlag(MiiExtraFlag.NX_DEVICE_CRC)) {
 			dst.set(ex.authorId.subarray(0, 2), 66);
 		}
-		let crcOffset = MiiDataSize.NX_STORE_DATA - 2;
+		let crcOffset = 66;
 		Crc16Ccitt.updateBigEndian(dst, crcOffset);
 	}
 
@@ -1029,7 +1029,7 @@ export class MiiEncoder
 	static toRflStoreData(dst, info, ex)
 	{
 		MiiEncoder.toRflData(dst, info, ex);
-		Crc16Ccitt.updateBigEndian(dst, MiiDataSize.RFL_STORE_DATA);
+		Crc16Ccitt.updateBigEndian(dst, 76);
 	}
 }
 
@@ -1208,7 +1208,7 @@ export class Ver3CreateId
 
 	static isTemporary(idByte0)
 	{
-		return (idByte0 & 32) == 1;
+		return (idByte0 & 32) == 32;
 	}
 }
 
@@ -1387,33 +1387,33 @@ export class MiiFormat
 	{
 		switch (type) {
 		case MiiDataType.UNKNOWN:
-			return MiiDataSize.UNKNOWN;
+			return 0;
 		case MiiDataType.RFL_CORE:
-			return MiiDataSize.RFL_CORE;
+			return 64;
 		case MiiDataType.RFL_STORE_DATA:
-			return MiiDataSize.RFL_STORE_DATA;
+			return 76;
 		case MiiDataType.RFL_DATA:
 		case MiiDataType.RFL_DATA_LITTLE_ENDIAN:
-			return MiiDataSize.RFL_DATA;
+			return 74;
 		case MiiDataType.VER3_CORE:
-			return MiiDataSize.VER3_CORE;
+			return 72;
 		case MiiDataType.VER3_STORE_DATA:
-			return MiiDataSize.VER3_STORE_DATA;
+			return 96;
 		case MiiDataType.VER3_DATA:
 		case MiiDataType.VER3_DATA_BIG_ENDIAN:
-			return MiiDataSize.VER3_DATA;
+			return 92;
 		case MiiDataType.NX_CHAR_INFO:
-			return MiiDataSize.NX_CHAR_INFO;
+			return 88;
 		case MiiDataType.NX_CORE:
-			return MiiDataSize.NX_CORE;
+			return 48;
 		case MiiDataType.NX_STORE_DATA:
-			return MiiDataSize.NX_STORE_DATA;
+			return 68;
 		case MiiDataType.NX_CORE_PARAM:
-			return MiiDataSize.NX_CORE_PARAM;
+			return 28;
 		case MiiDataType.STUDIO_DATA:
-			return MiiDataSize.STUDIO_DATA;
+			return 46;
 		case MiiDataType.STUDIO_URL_DATA:
-			return MiiDataSize.STUDIO_URL_DATA;
+			return 47;
 		default:
 			throw new Error("Unknown MiiDataType value.");
 		}
@@ -1445,6 +1445,14 @@ export class DataConversionUtilityTodoMoveThis
 			return true;
 		case MiiDataType.RFL_STORE_DATA:
 			return MiiDecoder.fromRflStoreData(src, info, ex);
+		case MiiDataType.RFL_DATA_LITTLE_ENDIAN:
+			{
+				const swapped = new Uint8Array(74);
+				swapped.set(src.subarray(0, 74));
+				CharDataSwapUtility.swapRflData(swapped, true);
+				MiiDecoder.fromRflData(swapped, info, ex);
+				return true;
+			}
 		case MiiDataType.VER3_CORE:
 			MiiDecoder.fromVer3Core(src, info, ex);
 			return true;
@@ -1487,6 +1495,12 @@ export class DataConversionUtilityTodoMoveThis
 		case MiiDataType.RFL_STORE_DATA:
 			MiiEncoder.toRflStoreData(dst, info, ex);
 			break;
+		case MiiDataType.RFL_DATA_LITTLE_ENDIAN:
+			{
+				MiiEncoder.toRflData(dst, info, ex);
+				CharDataSwapUtility.swapRflData(dst, true);
+				break;
+			}
 		case MiiDataType.VER3_CORE:
 			MiiEncoder.toVer3Core(dst, info, ex);
 			break;
@@ -1539,7 +1553,7 @@ export class DataConversionUtilityTodoMoveThis
 
 	static isDataTypeNx(t)
 	{
-		return t >= MiiDataType.NX_CHAR_INFO;
+		return t >= 9;
 	}
 
 	static convertRflExtraForVer3(extra)
@@ -1618,7 +1632,6 @@ export class DataConversionUtilityTodoMoveThis
 			extra.createId.set(newId.subarray(0, 10));
 			extra.createId[0] = (extra.createId[0] & 15) | 208;
 			extra.createId[4] = 2;
-			extra.createId[5] = extra.createId[6] = 0;
 		}
 	}
 
@@ -1652,10 +1665,58 @@ export class DataConversionUtilityTodoMoveThis
 	static #ADJUST_EXTRA_DEFAULT_NICKNAME_FOR_NX = new Uint16Array([ 77, 105, 105, 0 ]);
 }
 
-export class Fnv128
+export class CharDataSwapUtility
 {
 
-	static calculate(hash, data, size)
+	static #swap16All(data, offset, count = 1)
+	{
+		for (let i = 0; i < count; i++) {
+			let idx = i * 2;
+			let b0 = data[offset + idx];
+			let b1 = data[offset + idx + 1];
+			data[offset + idx] = b1;
+			data[offset + idx + 1] = b0;
+		}
+	}
+
+	static #swap32(data, offset)
+	{
+		let b0 = data[offset];
+		let b1 = data[offset + 1];
+		let b2 = data[offset + 2];
+		let b3 = data[offset + 3];
+		data[offset] = b3;
+		data[offset + 1] = b2;
+		data[offset + 2] = b1;
+		data[offset + 3] = b0;
+	}
+
+	static swapVer3Data(data, hasCreator)
+	{
+		CharDataSwapUtility.#swap32(data, 0);
+		CharDataSwapUtility.#swap16All(data, 24, 11);
+		CharDataSwapUtility.#swap16All(data, 48, 12);
+		if (hasCreator)
+			CharDataSwapUtility.#swap16All(data, 72, 10);
+	}
+
+	static swapRflData(data, hasCreator)
+	{
+		CharDataSwapUtility.#swap16All(data, 0, 11);
+		CharDataSwapUtility.#swap16All(data, 32, 11);
+		if (hasCreator)
+			CharDataSwapUtility.#swap16All(data, 54, 10);
+	}
+}
+
+/**
+ * Ported from the following (LGPLv3 license): https://github.com/sdroege/snippets/blob/b760be3ef9c57e7a8a03fd73bb90666169cc3f39/snippets/fnv.c#L119-L183
+ * See above for more simple snippets to port from.
+ */
+export class Fnv1a
+{
+
+	static calculate128(hash, data, size)
 	{
 		const tmp = new BigInt64Array(4);
 		const tmp2 = new BigInt64Array(4);
@@ -1665,7 +1726,7 @@ export class Fnv128
 		tmp[3] = 1653982605n;
 		let offset = 0;
 		for (let i = 0; i < size; i++) {
-			tmp2[3] = tmp[3] * 315n;
+			tmp2[3] = (BigInt(data[offset]) ^ tmp[3]) * 315n;
 			tmp2[2] = tmp[2] * 315n + (tmp2[3] >> 32n);
 			tmp2[1] = tmp[1] * 315n + (tmp2[2] >> 32n);
 			tmp2[0] = tmp[0] * 315n + (tmp2[1] >> 32n);
@@ -1677,7 +1738,7 @@ export class Fnv128
 			tmp2[0] += tmp[2] * 16777216n + (tmp2[1] >> 32n);
 			tmp2[1] &= 4294967295n;
 			tmp2[0] &= 4294967295n;
-			tmp[3] = tmp2[3] ^ BigInt(data[offset]);
+			tmp[3] = tmp2[3];
 			tmp[2] = tmp2[2];
 			tmp[1] = tmp2[1];
 			tmp[0] = tmp2[0];
@@ -1699,5 +1760,12 @@ export class Fnv128
 		hash[13] = Number(tmp[3] >> 16n & 255n);
 		hash[14] = Number(tmp[3] >> 8n & 255n);
 		hash[15] = Number(tmp[3] >> 0n & 255n);
+	}
+
+	static create128(data, size)
+	{
+		let hash = new Uint8Array(16);
+		Fnv1a.calculate128(hash, data, size);
+		return hash;
 	}
 }
