@@ -220,20 +220,27 @@ var gtmContainerID, cloudflareAnalyticsToken, sentryDSN string
 var sentryInitialized, isDevelopment bool
 var lumberjackLogger *lumberjack.Logger
 
+// forceHTTPSNonAPI and httpsRedirectPort control the redirect-to-HTTPS
+// behavior in endpointsHandler for the index page and 404 fallback.
+var forceHTTPSNonAPI bool
+var httpsRedirectPort string
+
 // @title Mii Renderer (REAL) Frontend and API
 // @version 1.0
 // @description This API contains endpoints to fetch Mii data from NNID, CMOC, or Miitomo and an endpoint to render a Mii icon. As of writing, the repo for the renderer server is located here: https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype and for the frontend/APIs itself is located here: https://github.com/ariankordi/nwf-mii-cemu-toy/tree/ffl-renderer-proto-integrate If you are lurking and found this, my email address is ariankordi@ariankordi.net
 // @host mii-unsecure.ariankordi.net
 // @BasePath /
 func main() {
-	var host, unixSocket, certFile, keyFile, hostnamesSniAllowArg, assetsDir string
+	var host, unixSocket, certFile, keyFile, hostnamesSniAllowArg, assetsDir, httpHost string
 	var sentryEnableTracing bool
 	//var isDevelopment bool
 	flag.StringVar(&host, "host", ":8080", "hostname to listen to http on, OR https if you specify cert and key")
 	flag.StringVar(&unixSocket, "unix-socket", "", "unix socket to listen on, overrides host")
 	flag.StringVar(&certFile, "cert", "", "TLS certificate file")
 	flag.StringVar(&keyFile, "key", "", "TLS key file")
-	flag.StringVar(&hostnamesSniAllowArg, "hostnames", "", "Allowlist of hostnames for TLS SNI")
+	flag.StringVar(&hostnamesSniAllowArg, "hostnames", "", "Allowlist of hostnames for TLS SNI, and for the Host header on plain HTTP listeners")
+	flag.StringVar(&httpHost, "http-host", "", "If cert and key are set, additionally listen on this address for plain HTTP (in addition to HTTPS on -host)")
+	flag.BoolVar(&forceHTTPSNonAPI, "force-https-non-api", false, "On the -http-host listener, redirect the index page and 404 fallback to HTTPS on -host. Requires cert and key.")
 	flag.BoolVar(&isDevelopment, "live-reloading", false, "Live reload locales and HTML")
 	flag.StringVar(&assetsDir, "assets-dir", "assets", "Set directory for assets")
 
@@ -293,6 +300,20 @@ func main() {
 	flag.BoolVar(&removalNoLimit, "removal-no-limit", false, "Disable the hourly rate limit on the NNID removal endpoint")
 
 	flag.Parse()
+
+	if forceHTTPSNonAPI && (certFile == "" || keyFile == "") {
+		log.Fatalln("-force-https-non-api requires -cert and -key to be set")
+	}
+
+	// parsed once here so endpointsHandler can build https redirect targets
+	if forceHTTPSNonAPI {
+		if _, port, err := net.SplitHostPort(host); err == nil {
+			httpsRedirectPort = port
+		}
+	}
+
+	// shared between the TLS SNI allowlist and the HTTP Host allowlist
+	hostnamesSniAllow := strings.Split(hostnamesSniAllowArg, ",")
 
 	// // Configure logging
 	if enableLumberjack {
@@ -489,7 +510,6 @@ func main() {
 	}
 
 	if certFile != "" && keyFile != "" {
-		hostnamesSniAllow := strings.Split(hostnamesSniAllowArg, ",")
 		// Create a custom TLS configuration (default)
 		tlsConfig := &tls.Config{}
 
@@ -512,6 +532,16 @@ func main() {
 			TLSConfig: tlsConfig,
 			Handler:   handler,
 		}
+
+		// additionally listen on plain HTTP alongside HTTPS, if configured
+		if httpHost != "" {
+			httpHandler := hostnameAllowlistMiddleware(handler, hostnamesSniAllow)
+			go func() {
+				log.Println("also listening on plain http at", httpHost)
+				log.Fatalln(http.ListenAndServe(httpHost, httpHandler))
+			}()
+		}
+
 		if udsListener != nil {
 			// listen on unix socket
 			err = server.ServeTLS(*udsListener, certFile, keyFile)
@@ -519,6 +549,7 @@ func main() {
 			err = server.ListenAndServeTLS(certFile, keyFile)
 		}
 	} else {
+		handler = hostnameAllowlistMiddleware(handler, hostnamesSniAllow)
 		// no handler because we defined HandleFunc
 		if udsListener != nil {
 			// listen on unix socket
@@ -529,6 +560,50 @@ func main() {
 	}
 	// this will only be reached when either function returns
 	log.Fatalln(err)
+}
+
+// hostnameAllowlistMiddleware enforces hostnamesSniAllow for plain HTTP
+// traffic, mirroring the TLS SNI GetConfigForClient check above: if the
+// allowlist is configured and the request's Host header doesn't match, the
+// underlying connection is closed outright rather than returning a normal
+// HTTP error response.
+func hostnameAllowlistMiddleware(next http.Handler, allowlist []string) http.Handler {
+	if len(allowlist) == 0 || allowlist[0] == "" {
+		return next
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		host := r.Host
+		if h, _, err := net.SplitHostPort(host); err == nil {
+			host = h
+		}
+		if slices.Contains(allowlist, host) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		log.Println(r.RemoteAddr, "sent unrecognized Host header from client:", r.Host)
+		hj, ok := w.(http.Hijacker)
+		if !ok {
+			http.Error(w, "", http.StatusMisdirectedRequest)
+			return
+		}
+		conn, _, err := hj.Hijack()
+		if err == nil {
+			conn.Close()
+		}
+	})
+}
+
+// redirectToHTTPS redirects the given request to the same path on HTTPS,
+// using httpsPort (empty or "443" means no explicit port is added).
+func redirectToHTTPS(w http.ResponseWriter, r *http.Request, httpsPort string) {
+	host := r.Host
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	if httpsPort != "" && httpsPort != "443" {
+		host = net.JoinHostPort(host, httpsPort)
+	}
+	http.Redirect(w, r, "https://"+host+r.URL.RequestURI(), http.StatusPermanentRedirect)
 }
 
 func getSelectedInputTypeCookie(r *http.Request, defaultValue string) string {
@@ -551,6 +626,14 @@ func getSelectedInputTypeCookie(r *http.Request, defaultValue string) string {
 }
 
 func endpointsHandler(w http.ResponseWriter, r *http.Request) {
+	// on the plain-HTTP listener, push the index page and 404 fallback to
+	// HTTPS; /favicon.ico and /jobs are handled by this same catch-all but
+	// are exempted since they aren't "the index or a 404".
+	if forceHTTPSNonAPI && r.TLS == nil &&
+		r.URL.Path != "/favicon.ico" && r.URL.Path != "/jobs" {
+		redirectToHTTPS(w, r, httpsRedirectPort)
+		return
+	}
 	if r.URL.Path == "/favicon.ico" {
 		http.ServeFile(w, r, "assets/favicon.ico")
 		return
