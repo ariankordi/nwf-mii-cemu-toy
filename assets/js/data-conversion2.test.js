@@ -155,11 +155,8 @@ class Normalize {
   }
 }
 
-/**
- * @param {TestDataTableElement} entry
- * @param {boolean} [fromNX]
- */
-const testConversionEntry = (entry, fromNX = false) => () => {
+const testConversionEntry =
+(/** @type {TestDataTableElement} */ entry, fromNX = false) => () => {
   /** @type {Uint8Array} */ const srcVer3 = new Uint8Array(96);
   /** @type {Uint8Array} */ let expectedCore;
   /** @type {Uint8Array} */ let expectedStudio;

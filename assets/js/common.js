@@ -48,18 +48,13 @@ const bytesToHex = (/** @type {ArrayLike<number>} */ bytes) =>
 
 // #endregion
 
-const stripSpaces = (/** @type {string} */ str) => str.replace(/\s+/g, '');
-
-/**
- * Parses either hex or Base64 -> U8.
- * Additionally strips spaces from the input.
- */
+/** Parses either hex or Base64 -> U8, stripping spaces from the input. */
 const parseHexOrB64ToBytes = (/** @type {string} */ text) => {
-    text = text.replace(/\s+/g, ''); // Strip spaces.
-    // Check if it is hex, otherwise assume it is Base64.
-    return /^[0-9a-fA-F]+$/.test(text)
-      ? hexToBytes(text)
-      : base64ExToBytes(text);
+  text = text.replace(/\s+/g, ''); // Strip spaces.
+  // Check if it is hex, otherwise assume it is Base64.
+  return /^[0-9a-fA-F]+$/.test(text)
+    ? hexToBytes(text)
+    : base64ExToBytes(text);
 };
 
 // Uint16Array conversion.
@@ -150,12 +145,8 @@ const supportedTypes = [
   }
 ];
 
-/**
- * @param {number} size
- * @returns {SupportedTypeDefinition|undefined}
- */
-const findSupportedTypeBySize =
-  size => supportedTypes.find(type => type.sizes.includes(size));
+const findSupportedTypeBySize = (/** @type {number} */ size) =>
+  supportedTypes.find(type => type.sizes.includes(size));
 
 export {
   hexToBytes,

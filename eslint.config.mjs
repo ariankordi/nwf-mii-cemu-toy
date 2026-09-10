@@ -148,6 +148,10 @@ export default [
       // Lots of structs don't need detailed descriptions.
       'jsdoc/require-property-description': 'off',
 
+      // Relax requirements on function parameters.
+      'jsdoc/require-param': 'off',
+      'jsdoc/require-returns': 'off', // Can be inferred.
+
       // Rules not enabled in recommended:
       'jsdoc/sort-tags': 'warn',
       'jsdoc/require-throws': 'warn',
