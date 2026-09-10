@@ -162,7 +162,6 @@ const convertMiiData = (rawInput) => {
  * Takes existing Ver3StoreData bytes and returns a copy with QR-specific
  * overrides applied: birthPlatform=3 (CTR) and copyable=true.
  * @param {Uint8Array} ver3StoreData - 96-byte Ver3StoreData.
- * @returns {Uint8Array}
  */
 const buildVer3ForQR = (ver3StoreData) => {
   const dst = ver3StoreData.slice(); // Copy.
@@ -201,7 +200,7 @@ const buildFileBaseName = (/** @type {string} */ name,
     (typeName || 'Unknown');
 };
 
-const handleConvertDetailsToggle = (/** @type {ToggleEvent} */ event) => {
+const handleConvertDetailsToggle = (/** @type {Event} */ event) => {
   const target = /** @type {HTMLDetailsElement|null} */ (event.target);
   if (!target || !target.open || // not toggled open? ignore
     // or already revealed, we do not need to do anything

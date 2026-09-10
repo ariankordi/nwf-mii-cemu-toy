@@ -27,6 +27,7 @@ const inputById = (/** @type {string} */ id) =>
   /** @type {HTMLInputElement} */ (elementById(id));
 
 // handle unhandled promise rejections as well as errors
+// eslint-disable-next-line unicorn/prefer-global-this -- more compatible
 window.addEventListener('unhandledrejection', function (event) {
   const errorContainer = elementById('error-container');
   const errorMessage = elementById('error-message');
@@ -52,7 +53,7 @@ window.addEventListener('unhandledrejection', function (event) {
 });
 
 // Select elements based on their names and ids
-const resolutionNumber = document.getElementsByName('width')[0];
+const resolutionNumber = /** @type {HTMLInputElement} */ (document.getElementsByName('width')[0]);
 const widthSlider = inputById('resolution-slider');
 const bgColor = document.getElementsByName('bgColor')[0];
 const transparentCheckbox = inputById('transparent-checkbox');
@@ -118,7 +119,7 @@ bgColor.addEventListener('input', function () {
   } */
 });
 
-const scaleInput = document.getElementsByName('scale')[0];
+const scaleInput = /** @type {HTMLInputElement} */ (document.getElementsByName('scale')[0]);
 const realMax = 1200;
 
 /** Function to update max resolution based on scale */
@@ -127,8 +128,8 @@ function updateMaxResolution() {
   const maxResolution = realMax / scale;
 
   // Adjust current values if they exceed the new max
-  if (widthSlider.value > maxResolution) {
-    widthSlider.value = maxResolution;
+  if (Number(widthSlider.value) > maxResolution) {
+    widthSlider.value = String(maxResolution);
     // debugger;
     resolutionNumber.value = maxResolution;
   }

@@ -213,16 +213,12 @@ function scanFile(file) {
   }
 }
 
-const qrLoadedTL = document.getElementById('qr-status-loaded-tomodachilife');
-const qrLoadedTLHairDye = document.getElementById('qr-tomodachilife-hair-dye');
+const qrLoadedTL = document.getElementById('qr-status-loaded-tl');
+const qrLoadedTLHairDye = document.getElementById('qr-tl-hair-dye');
 
-/**
- * @param {Uint8Array} bytes
- * @param {Uint8Array} data
- * @returns {Promise<Uint8Array>}
- */
-async function handleTomodachiLife3DSData(bytes, data) {
-  let extra = await TomoExtraData.decryptFromWrappedData(bytes);
+/** Takes the input QR Code data and handles the extra data. */
+async function handleTomodachiLife3DSData(/** @type {Uint8Array} */ bytes) {
+  const extra = await TomoExtraData.decryptFromWrappedData(bytes);
   if (!extra) {
     return extra;
   }
@@ -232,7 +228,7 @@ async function handleTomodachiLife3DSData(bytes, data) {
   qrLoadedTL.children[1].textContent = accessor.getLastName();
   qrLoadedTL.children[2].textContent = accessor.getIslandName();
   qrLoadedTLHairDye.style.display =
-    accessor.getHairDyeMode() !== 0 ? '' : 'none';
+    accessor.getHairDyeMode() === 0 ? 'none' : '';
 
   return extra;
 }
@@ -281,7 +277,7 @@ async function handleDecryption(result) {
   const isTomodachi3ds = TomoExtraData.getDataName(bytes.length - WrappedMiiDataLength - 16 /* iv */ - 4 /* crc */) === 'tomodachi-life-data';
 
   if (isTomodachi3ds) {
-    const ret = await handleTomodachiLife3DSData(bytes, decryptedData);
+    const ret = await handleTomodachiLife3DSData(bytes);
     if (ret) {
       decryptedData = new Uint8Array([...decryptedData, ...ret]);
     }
