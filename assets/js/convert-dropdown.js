@@ -20,8 +20,9 @@ import { MiiLogoQrCode } from './MiiLogoQrCode.js';
 
 const wrappedMiiData = new WrappedMiiDataSubtle(KeySlot0x31Keys[KeyType.Production]);
 
-const DATA_TYPE_NFP = MiiDataType.VER3_STORE_DATA + 30;
-const DATA_TYPE_TOMO3DS = MiiDataType.VER3_STORE_DATA + 31;
+const CUSTOM_DATA_TYPE_NFP = MiiDataType.VER3_STORE_DATA + 30;
+const CUSTOM_DATA_TYPE_TOMO3DS = MiiDataType.VER3_STORE_DATA + 31;
+const CUSTOM_DATA_TYPE_OUNCE = MiiDataType.VER3_STORE_DATA + 32;
 
 /**
  * Maps MiiDataType values to display strings.
@@ -40,8 +41,9 @@ const MiiDataTypeNames = {
   [MiiDataType.NX_CORE_PARAM]: 'nn::mii::CoreData (Minimal, Switch)',
   [MiiDataType.STUDIO_DATA]: 'Mii Studio Data',
   [MiiDataType.STUDIO_URL_DATA]: 'Mii Studio URL Data',
-  [DATA_TYPE_NFP]: 'Ver3StoreData + NfpStoreDataExtention (amiibo Data)',
-  [DATA_TYPE_TOMO3DS]: 'CFLiMiiDataPacket + Tomodachi Life 3DS QR Data'
+  [CUSTOM_DATA_TYPE_NFP]: 'Ver3StoreData + NfpStoreDataExtention (amiibo Data)',
+  [CUSTOM_DATA_TYPE_TOMO3DS]: 'CFLiMiiDataPacket + Tomodachi Life 3DS QR Data',
+  [CUSTOM_DATA_TYPE_OUNCE]: 'Ver3StoreData + Switch 2 QR Code Extension'
 };
 
 /**
@@ -50,14 +52,14 @@ const MiiDataTypeNames = {
  * @property {string=} typeName - Display name for input format.
  * @property {Uint8Array} studioData - 46-byte Mii Studio raw data.
  * @property {Uint8Array} ver3StoreData - 96-byte Ver3StoreData.
- * @property {Uint8Array} ver3ForQR - 96-byte Ver3StoreData with QR overrides (birthPlatform=CTR, copyable=true).
+ * @property {Promise<Uint8Array<ArrayBuffer>>} qrData - Encrypted data to be encoded into a QR Code.
  * @property {Uint8Array} charInfoData - 88-byte nn::mii::CharInfo.
  */
 
 /**
  * Converts raw Mii bytes to all output formats at once.
  * For NfpStoreDataExtension (amiibo, 104 bytes) the extension fields
- * are applied manually so that studio/charinfo use the NX colors from
+ * are applied manually so that Studio/CharInfo use the NX colors from
  * the extension while ver3/QR use the original Ver3 bytes.
  * @param {Uint8Array} rawInput
  * @returns {MiiConversionResult}
@@ -69,10 +71,16 @@ const convertMiiData = (rawInput) => {
 
   /** sizeof(VER3_STORE_DATA) + sizeof(NfpStoreDataExtention) */
   const NFP_SIZE = MiiDataSize.VER3_STORE_DATA + 8;
-
   const TOMO3DS_SIZE = MiiDataSize.VER3_STORE_DATA + 240;
 
   const newId = Fnv1a.create128(rawInput, rawInput.length);
+
+  /** Makes a promise with an allocated QR Code buffer. */
+  async function makeQrDataPromise(/** @type {Uint8Array<ArrayBuffer>} */ src) {
+    const data = new Uint8Array(WrappedMiiDataLength);
+    await wrappedMiiData.encrypt(data, src);
+    return data;
+  }
 
   const postVer3Extension = (/** @type {MiiVisualInfo} */ info,
     /** @type {MiiExtraInfo} */ extra, /** @type {Uint8Array} */ ver3Raw,
@@ -90,7 +98,7 @@ const convertMiiData = (rawInput) => {
       studioData,
       // The embedded Ver3 bytes already have correct Ver3 colors; copy them.
       ver3StoreData: ver3Raw.slice(),
-      ver3ForQR: buildVer3ForQR(ver3Raw),
+      qrData: makeQrDataPromise(buildVer3ForQR(ver3Raw)),
       charInfoData
     });
   };
@@ -102,7 +110,7 @@ const convertMiiData = (rawInput) => {
     // Overwrite visual colors with the NX common colors from the extension.
     ConvUtility.applyNfpExtension(info, rawInput, MiiDataSize.VER3_STORE_DATA);
 
-    return postVer3Extension(info, extra, ver3Raw, DATA_TYPE_NFP);
+    return postVer3Extension(info, extra, ver3Raw, CUSTOM_DATA_TYPE_NFP);
   } else if (rawInput.length === TOMO3DS_SIZE) {
     const ver3Raw = rawInput.subarray(0, MiiDataSize.VER3_STORE_DATA);
     const extraRaw = rawInput.subarray(MiiDataSize.VER3_STORE_DATA);
@@ -113,7 +121,7 @@ const convertMiiData = (rawInput) => {
     Tomo3dsExtraAccessor.applyHairDye(info,
       accessor.getHairDyeMode(), accessor.getHairDye());
 
-    return postVer3Extension(info, extra, ver3Raw, DATA_TYPE_TOMO3DS);
+    return postVer3Extension(info, extra, ver3Raw, CUSTOM_DATA_TYPE_TOMO3DS);
   }
 
   if (inputType === MiiDataType.UNKNOWN) {
@@ -145,15 +153,12 @@ const convertMiiData = (rawInput) => {
   MiiEncoder.toStudioData(studioData, info);
   MiiEncoder.toNxCharInfo(charInfoData, info, extraForNx);
 
-  // Build QR from the already-converted ver3 to avoid an extra full decode cycle.
-  const ver3ForQR = buildVer3ForQR(ver3StoreData);
-
   return {
     inputType,
     typeName: MiiDataTypeNames[inputType],
     studioData,
     ver3StoreData,
-    ver3ForQR,
+    qrData: makeQrDataPromise(buildVer3ForQR(ver3StoreData)),
     charInfoData
   };
 };
@@ -235,7 +240,7 @@ const handleConvertDetailsToggle = (/** @type {Event} */ event) => {
  * @param {string} name - Mii name for the QR code and file base name.
  */
 const applyConversionToDetails = (target, result, name) => {
-  const { studioData, ver3StoreData, ver3ForQR, charInfoData, typeName } = result;
+  const { studioData, ver3StoreData, qrData, charInfoData, typeName } = result;
 
   if (typeName) {
     /** @type {HTMLElement} */ (target.querySelector('.input-type'))
@@ -285,12 +290,11 @@ const applyConversionToDetails = (target, result, name) => {
 
   // QR code is async (AES encryption + PNG generation).
   const qrCodeImage = /** @type {HTMLImageElement} */ (target.querySelector('.image-qr'));
-  const qrData = new Uint8Array(WrappedMiiDataLength);
-  wrappedMiiData.encrypt(qrData, ver3ForQR)
-    .then(() => MiiLogoQrCode.generatePng(qrData, name))
-    .then((src) => {
-      qrCodeImage.src = src;
-    });
+
+  /** Async task for QR Code creation created without awaiting. */
+  (async () => {
+    qrCodeImage.src = await MiiLogoQrCode.generatePng(await qrData, name);
+  })();
 };
 
 const handleDownloadDataFileButton = (/** @type {MouseEvent} */ event) => {

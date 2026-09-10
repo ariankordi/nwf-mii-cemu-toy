@@ -1117,8 +1117,13 @@ function setDataConvertInline(data, type, dataField, dataRealField) {
       MiiEncoder.toStudioData(studioBuffer, info);
       break;
     }
+    case 106: // ounce
+      MiiDecoder.visualFromVer3Core(data, info);
+      ConvUtility.applyNfpExtension(info, extraData.subarray(2));
+      MiiEncoder.toStudioData(studioBuffer, info);
+      break;
     default:
-      throw new Error('im confused');
+      throw new Error('setDataConvertInline: Unhandled case. You just found a design-time bug!');
   }
 
   const studioCode = bytesToBase64(studioBuffer);
