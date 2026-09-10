@@ -8,7 +8,6 @@ import {
   MiiDataType,
   MiiDecoder,
   MiiEncoder,
-  MiiExtraFlag,
   MiiExtraInfo,
   MiiFormat,
   MiiVisualInfo,
@@ -66,7 +65,7 @@ const MiiDataTypeNames = {
  */
 const convertMiiData = (rawInput) => {
   const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
-  let inputType = MiiFormat.getTypeFromSize(rawInput.length);
+  const inputType = MiiFormat.getTypeFromSize(rawInput.length);
 
   /** sizeof(VER3_STORE_DATA) + sizeof(NfpStoreDataExtention) */
   const NFP_SIZE = MiiDataSize.VER3_STORE_DATA + 8;
@@ -139,8 +138,8 @@ const convertMiiData = (rawInput) => {
   ConvUtility.adjustExtra(extraForNx, MiiDataType.NX_CHAR_INFO, newId);
 
   const ver3StoreData = new Uint8Array(MiiDataSize.VER3_STORE_DATA),
-        studioData = new Uint8Array(MiiDataSize.STUDIO_DATA),
-        charInfoData = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
+    studioData = new Uint8Array(MiiDataSize.STUDIO_DATA),
+    charInfoData = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
   // extraForVer3.authorId[0] = 1;
   MiiEncoder.toVer3StoreData(ver3StoreData, info, extraForVer3);
   MiiEncoder.toStudioData(studioData, info);

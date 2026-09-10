@@ -19,8 +19,8 @@ class Tomo3dsExtraAccessor {
   }
 
   getFirstName = () => Char16.toString(this._data16, 16, 0);
-  getLastName = () => Char16.toString(this._data16, 16, 32/2);
-  getIslandName = () => Char16.toString(this._data16, 9, 216/2);
+  getLastName = () => Char16.toString(this._data16, 16, 32 / 2);
+  getIslandName = () => Char16.toString(this._data16, 9, 216 / 2);
 
   /** @returns {number} Hair dye color index (0-31). */
   getHairDye = () => (this._data[67] >> 1) & 0x1F; // Bits 5-1
@@ -40,16 +40,17 @@ class Tomo3dsExtraAccessor {
     }
 
     const commonColor = Tomo3dsExtraAccessor.HairDyeToCommonColorTable[color];
-		switch (mode) {
-			case 2: // Apply to hair, eyebrow, and beard.
+    switch (mode) {
+      case 2: // Apply to hair, eyebrow, and beard.
         info.eyebrowColor = commonColor;
         info.beardColor = commonColor;
-			// Fall-through and also apply to hair.
-			case 1: // Apply to hair only.
+        // Fall-through and also apply to hair.
+      // eslint-disable-next-line no-fallthrough -- Explicit fall-through.
+      case 1: // Apply to hair only.
         info.hairColor = commonColor;
-				break;
-			// Default: do not apply hair dye.
-		}
+        break;
+      // Default: do not apply hair dye.
+    }
   }
 
   /**

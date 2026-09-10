@@ -3,13 +3,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
 import { parse } from 'csv-parse/sync';
 import { Char16, DataConversionUtilityTodoMoveThis as ConvUtility, MiiDataSize, MiiDataType, MiiExtraInfo, MiiVisualInfo } from './MiiDataLibrary.mjs';
 import { base64ExToBytes, bytesToHex, hexToBytes } from './common.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
 
 class TestUtility {
   /**
@@ -226,10 +225,12 @@ const testConversionEntry = (entry, fromNX = false) => () => {
   if (entry.studioCharInfo) {
     if (!fromNX) {
       it('converts Ver3StoreData -> Studio CharInfo', () => {
-
         const studio =
-          ConvUtility.convertDataType(srcVer3, MiiDataType.VER3_STORE_DATA, MiiDataType.STUDIO_DATA);
-        if (!studio) throw new Error('data conversion failure.');
+          ConvUtility.convertDataType(srcVer3,
+            MiiDataType.VER3_STORE_DATA, MiiDataType.STUDIO_DATA);
+        if (!studio) {
+          throw new Error('data conversion failure.');
+        }
 
         TestUtility.expectBuffersEqual(studio, expectedStudio);
       });
@@ -251,8 +252,11 @@ const testConversionEntry = (entry, fromNX = false) => () => {
       }
 
       const roundTrip =
-        ConvUtility.convertDataType(expectedStudio, MiiDataType.STUDIO_DATA, MiiDataType.VER3_STORE_DATA);
-      if (!roundTrip) throw new Error('data conversion failure.');
+        ConvUtility.convertDataType(expectedStudio,
+          MiiDataType.STUDIO_DATA, MiiDataType.VER3_STORE_DATA);
+      if (!roundTrip) {
+        throw new Error('data conversion failure.');
+      }
 
       // Set copyable to 1 for source - always gets set to 1 in destination
 
@@ -289,7 +293,9 @@ const testConversionEntry = (entry, fromNX = false) => () => {
 
       const roundTrip =
         ConvUtility.convertDataType(expectedCore, MiiDataType.NX_CORE, MiiDataType.VER3_STORE_DATA);
-      if (!roundTrip) throw new Error('data conversion failure.');
+      if (!roundTrip) {
+        throw new Error('data conversion failure.');
+      }
 
       // TODO: Continuity Termination
 
@@ -310,13 +316,19 @@ const testConversionEntry = (entry, fromNX = false) => () => {
       const obfuscatedBytes = hexToBytes(/** @type {string} */(entry.studioURLSeed0));
 
       const roundTrip =
-        ConvUtility.convertDataType(obfuscatedBytes, MiiDataType.STUDIO_URL_DATA, MiiDataType.STUDIO_DATA);
-      if (!roundTrip) throw new Error('data conversion failure.');
+        ConvUtility.convertDataType(obfuscatedBytes,
+          MiiDataType.STUDIO_URL_DATA, MiiDataType.STUDIO_DATA);
+      if (!roundTrip) {
+        throw new Error('data conversion failure.');
+      }
 
       // Then obfuscate to URL bytes, and compare
       const studioUrl =
-        ConvUtility.convertDataType(roundTrip, MiiDataType.STUDIO_DATA, MiiDataType.STUDIO_URL_DATA);
-      if (!studioUrl) throw new Error('data conversion failure.');
+        ConvUtility.convertDataType(roundTrip,
+          MiiDataType.STUDIO_DATA, MiiDataType.STUDIO_URL_DATA);
+      if (!studioUrl) {
+        throw new Error('data conversion failure.');
+      }
 
       const expectedURLHex = bytesToHex(studioUrl);
       expect(expectedURLHex).toBe(entry.studioURLSeed0);
@@ -330,7 +342,9 @@ const testConversionEntry = (entry, fromNX = false) => () => {
 
       const actualCharInfo =
         ConvUtility.convertDataType(expectedCore, MiiDataType.NX_CORE, MiiDataType.NX_CHAR_INFO);
-      if (!actualCharInfo) throw new Error('data conversion failure.');
+      if (!actualCharInfo) {
+        throw new Error('data conversion failure.');
+      }
 
       Normalize.nnmiiCharInfoNormalize(expectedCharInfo);
       Normalize.nnmiiCharInfoNormalize(actualCharInfo);
@@ -408,7 +422,6 @@ describe('Mii data cross-conversion tests', () => {
 
   // Individual cases.
 
-
   describe('Ver3 CreateID tests', () => {
     // Guest A / "no name" - a normal Wii U Mii.
     // avatarId[0] = 0x80: bit7 set (normal mii), bit5 clear (not temporary).
@@ -462,8 +475,11 @@ describe('Mii data cross-conversion tests', () => {
       const emptyNameVer3 = base64ExToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
 
       const studioUrl =
-        ConvUtility.convertDataType(emptyNameVer3, MiiDataType.VER3_DATA, MiiDataType.STUDIO_URL_DATA);
-      if (!studioUrl) throw new Error('data conversion failure.');
+        ConvUtility.convertDataType(emptyNameVer3,
+          MiiDataType.VER3_DATA, MiiDataType.STUDIO_URL_DATA);
+      if (!studioUrl) {
+        throw new Error('data conversion failure.');
+      }
 
       const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
       ConvUtility.decodeDataType(studioUrl, MiiDataType.STUDIO_URL_DATA, info, extra);

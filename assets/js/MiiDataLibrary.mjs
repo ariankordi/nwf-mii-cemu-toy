@@ -114,24 +114,27 @@ export class Crc16Ccitt
 export class MiiDecoder
 {
 
-	static #i2b(i)
+	static _i2b(i)
 	{
 		return i == 1;
 	}
 
-	static #loadArrayU16LittleEndian(src, srcOffset, dst, dstOffset, count)
+	static _loadArrayU16LittleEndian(src, srcOffset, dst, dstOffset, count)
 	{
 		for (let i = 0; i < count; i++)
 			dst[dstOffset + i] = (src[srcOffset + i * 2] & 255) | src[srcOffset + i * 2 + 1] << 8;
 	}
 
-	static #loadArrayU16BigEndian(src, srcOffset, dst, dstOffset, count)
+	static _loadArrayU16BigEndian(src, srcOffset, dst, dstOffset, count)
 	{
 		for (let i = 0; i < count; i++)
 			dst[dstOffset + i] = src[srcOffset + i * 2] << 8 | (src[srcOffset + i * 2 + 1] & 255);
 	}
 
-	static #convVer3ToNx(info)
+	/**
+	 * Convert color fields for previous formats to NX format.
+	 */
+	static convertVer3FieldsToNx(info)
 	{
 		if (info.hairColor == 0)
 			info.hairColor = 8;
@@ -199,7 +202,12 @@ export class MiiDecoder
 		info.noseScale = (src[61] & 1) << 3 | src[60] >> 5;
 		info.noseType = src[60] & 31;
 		info.noseY = src[61] >> 1 & 31;
-		MiiDecoder.#convVer3ToNx(info);
+		MiiDecoder.convertVer3FieldsToNx(info);
+	}
+
+	static _isCreateIdNormal(idByte0)
+	{
+		return (idByte0 & 128) == 128;
 	}
 
 	static fromVer3Core(src, info, ex)
@@ -211,8 +219,8 @@ export class MiiDecoder
 		ex.setFlag(MiiExtraFlag.FAVORITE_LOCAL_BIRTH);
 		ex.setFlag(MiiExtraFlag.REGION_FONT_MOVE);
 		ex.setFlag(MiiExtraFlag.VER3_PERSONAL);
-		ex.copyable = MiiDecoder.#i2b(src[1] & 1);
-		ex.ngWord = MiiDecoder.#i2b(src[1] >> 1 & 1);
+		ex.copyable = MiiDecoder._i2b(src[1] & 1);
+		ex.ngWord = MiiDecoder._i2b(src[1] >> 1 & 1);
 		ex.regionMove = src[1] >> 2 & 3;
 		ex.fontRegion = src[1] >> 4 & 3;
 		ex.roomIndex = src[2] & 15;
@@ -220,19 +228,19 @@ export class MiiDecoder
 		ex.birthPlatform = src[3] >> 4 & 7;
 		ex.birthMonth = src[24] >> 1 & 15;
 		ex.birthDay = (src[25] & 3) << 3 | src[24] >> 5;
-		ex.favorite = MiiDecoder.#i2b(src[25] >> 6 & 1);
-		ex.localOnly = MiiDecoder.#i2b(src[48] & 1);
+		ex.favorite = MiiDecoder._i2b(src[25] >> 6 & 1);
+		ex.localOnly = MiiDecoder._i2b(src[48] & 1);
 		ex.authorId.set(src.subarray(4, 12));
 		ex.createId.set(src.subarray(12, 22));
-		ex.isSpecial = !Ver3CreateId.isNormal(ex.createId[0]);
-		MiiDecoder.#loadArrayU16LittleEndian(src, 26, ex.nickname, 0, 10);
+		ex.isSpecial = !MiiDecoder._isCreateIdNormal(ex.createId[0]);
+		MiiDecoder._loadArrayU16LittleEndian(src, 26, ex.nickname, 0, 10);
 	}
 
 	static fromVer3Data(src, info, ex)
 	{
 		MiiDecoder.fromVer3Core(src, info, ex);
 		ex.setFlag(MiiExtraFlag.CREATOR_NAME);
-		MiiDecoder.#loadArrayU16LittleEndian(src, 72, ex.creatorName, 0, 10);
+		MiiDecoder._loadArrayU16LittleEndian(src, 72, ex.creatorName, 0, 10);
 	}
 
 	static fromVer3StoreData(src, info, ex)
@@ -297,7 +305,7 @@ export class MiiDecoder
 		ex.clearFlag();
 		ex.setFlag(MiiExtraFlag.SPECIAL);
 		ex.setFlag(MiiExtraFlag.REGION_FONT_MOVE);
-		ex.isSpecial = MiiDecoder.#i2b(src[3] >> 7);
+		ex.isSpecial = MiiDecoder._i2b(src[3] >> 7);
 		ex.fontRegion = src[10] >> 6;
 		ex.regionMove = src[9] >> 6;
 	}
@@ -306,7 +314,7 @@ export class MiiDecoder
 	{
 		MiiDecoder.fromNxCoreParam(src, info, ex);
 		ex.setFlag(MiiExtraFlag.NICKNAME);
-		MiiDecoder.#loadArrayU16LittleEndian(src, 28, ex.nickname, 0, 10);
+		MiiDecoder._loadArrayU16LittleEndian(src, 28, ex.nickname, 0, 10);
 	}
 
 	static fromNxStoreData(src, info, ex)
@@ -377,11 +385,11 @@ export class MiiDecoder
 		ex.setFlag(MiiExtraFlag.SPECIAL);
 		ex.setFlag(MiiExtraFlag.REGION_FONT_MOVE);
 		ex.setFlag(MiiExtraFlag.NX_CREATE_ID);
-		ex.isSpecial = MiiDecoder.#i2b(src[43]);
+		ex.isSpecial = MiiDecoder._i2b(src[43]);
 		ex.fontRegion = src[38];
 		ex.regionMove = src[44];
 		ex.createId.set(src.subarray(0, 16));
-		MiiDecoder.#loadArrayU16LittleEndian(src, 16, ex.nickname, 0, 10);
+		MiiDecoder._loadArrayU16LittleEndian(src, 16, ex.nickname, 0, 10);
 	}
 
 	static fromStudioData(src, info)
@@ -462,9 +470,9 @@ export class MiiDecoder
 		info.eyebrowY = src[39] >> 4 | (src[38] & 1) << 4;
 		info.facelineColor = src[32] >> 2 & 7;
 		let faceTex = src[33] >> 6 | (src[32] & 3) << 2;
-		info.facelineMake = MiiDecoder.#VISUAL_FROM_RFL_CORE_FACE_TEX_TABLE[faceTex * 2 + 1];
+		info.facelineMake = MiiDecoder._VISUAL_FROM_RFL_CORE_FACE_TEX_TABLE[faceTex * 2 + 1];
 		info.facelineType = src[32] >> 5;
-		info.facelineWrinkle = MiiDecoder.#VISUAL_FROM_RFL_CORE_FACE_TEX_TABLE[faceTex * 2];
+		info.facelineWrinkle = MiiDecoder._VISUAL_FROM_RFL_CORE_FACE_TEX_TABLE[faceTex * 2];
 		info.favoriteColor = src[1] >> 1 & 15;
 		info.gender = src[0] >> 6 & 1;
 		info.glassColor = src[48] >> 1 & 7;
@@ -490,7 +498,7 @@ export class MiiDecoder
 		info.noseScale = src[44] & 15;
 		info.noseType = src[44] >> 4;
 		info.noseY = src[45] >> 3;
-		MiiDecoder.#convVer3ToNx(info);
+		MiiDecoder.convertVer3FieldsToNx(info);
 	}
 
 	static fromRflCore(src, info, ex)
@@ -503,18 +511,18 @@ export class MiiDecoder
 		ex.setFlag(MiiExtraFlag.RFL_CREATE_ID);
 		ex.birthMonth = src[0] >> 2 & 15;
 		ex.birthDay = src[1] >> 5 | (src[0] & 3) << 3;
-		ex.favorite = MiiDecoder.#i2b(src[1] & 1);
-		ex.localOnly = MiiDecoder.#i2b(src[33] >> 2 & 1);
+		ex.favorite = MiiDecoder._i2b(src[1] & 1);
+		ex.localOnly = MiiDecoder._i2b(src[33] >> 2 & 1);
 		ex.createId.set(src.subarray(24, 32));
-		ex.isSpecial = !Ver3CreateId.isNormal(ex.createId[0]);
-		MiiDecoder.#loadArrayU16BigEndian(src, 2, ex.nickname, 0, 10);
+		ex.isSpecial = !MiiDecoder._isCreateIdNormal(ex.createId[0]);
+		MiiDecoder._loadArrayU16BigEndian(src, 2, ex.nickname, 0, 10);
 	}
 
 	static fromRflData(src, info, ex)
 	{
 		MiiDecoder.fromRflCore(src, info, ex);
 		ex.setFlag(MiiExtraFlag.CREATOR_NAME);
-		MiiDecoder.#loadArrayU16BigEndian(src, 54, ex.creatorName, 0, 10);
+		MiiDecoder._loadArrayU16BigEndian(src, 54, ex.creatorName, 0, 10);
 	}
 
 	static fromRflStoreData(src, info, ex)
@@ -523,7 +531,7 @@ export class MiiDecoder
 		return Crc16Ccitt.calculate(src, 76) == 0;
 	}
 
-	static #VISUAL_FROM_RFL_CORE_FACE_TEX_TABLE = new Uint8Array([ 0, 0, 0, 1, 0, 6, 0, 9, 5, 0, 2, 0, 3, 0, 7, 0,
+	static _VISUAL_FROM_RFL_CORE_FACE_TEX_TABLE = new Uint8Array([ 0, 0, 0, 1, 0, 6, 0, 9, 5, 0, 2, 0, 3, 0, 7, 0,
 		8, 0, 0, 10, 9, 0, 11, 0 ]);
 }
 
@@ -568,15 +576,43 @@ class NxToVer3
 		7, 8, 7, 7 ]);
 }
 
+class Ver3ToRfl
+{
+
+	/**
+	 * Reverse of faceTexTable [wrinkle, makeup] pairs in VisualFromRflCore:
+	 * given Ver3 wrinkle value as index, return the Wii faceTex index.
+	 * Zero for wrinkle values with no Wii equivalent, and for
+	 * combinations where both wrinkle and makeup are non-zero
+	 * (The Wii "faceTex" field can only represent one at a time).
+	 */
+	static _WRINKLE_TO_FACE_TEX = new Uint8Array([ 0, 0, 5, 6, 0, 4, 0, 7, 8, 10, 0, 11 ]);
+
+	static _MAKEUP_TO_FACE_TEX = new Uint8Array([ 0, 1, 0, 0, 0, 0, 2, 0, 0, 3, 9, 0 ]);
+
+	/**
+	 * Map the NX separate wrinkle/makeup fields to the Wii single faceTex
+	 * index. Returns 0 when both fields are set simultaneously (no Wii
+	 * faceTex covers both at once), or when the value has no Wii equivalent.
+	 */
+	static wrinkleMakeToFaceTex(wrinkle, makeup)
+	{
+		if (makeup != 0)
+			return wrinkle == 0 ? Ver3ToRfl._MAKEUP_TO_FACE_TEX[makeup] : 0;
+		else
+			return Ver3ToRfl._WRINKLE_TO_FACE_TEX[wrinkle];
+	}
+}
+
 export class MiiEncoder
 {
 
-	static #b2i(b)
+	static _b2i(b)
 	{
 		return b ? 1 : 0;
 	}
 
-	static #storeArrayU16LittleEndian(src, srcOffset, dst, dstOffset, count)
+	static _storeArrayU16LittleEndian(src, srcOffset, dst, dstOffset, count)
 	{
 		for (let i = 0; i < count; i++) {
 			dst[dstOffset + i * 2] = src[srcOffset + i] & 255;
@@ -584,7 +620,7 @@ export class MiiEncoder
 		}
 	}
 
-	static #storeArrayU16BigEndian(src, srcOffset, dst, dstOffset, count)
+	static _storeArrayU16BigEndian(src, srcOffset, dst, dstOffset, count)
 	{
 		for (let i = 0; i < count; i++) {
 			dst[dstOffset + i * 2] = src[srcOffset + i] >> 8;
@@ -674,27 +710,35 @@ export class MiiEncoder
 		dst[24] = (dst[24] & 254) | (info.gender & 1);
 	}
 
+	/**
+	 * Returns the first byte.
+	 */
+	static _setCreateIdNormal(idByte0, value)
+	{
+		return value ? idByte0 | 128 : idByte0 & ~128;
+	}
+
 	static toVer3Core(dst, info, ex)
 	{
 		MiiEncoder.visualToVer3Core(dst, info);
 		if (ex.hasFlag(MiiExtraFlag.NICKNAME)) {
-			MiiEncoder.#storeArrayU16LittleEndian(ex.nickname, 0, dst, 26, 10);
+			MiiEncoder._storeArrayU16LittleEndian(ex.nickname, 0, dst, 26, 10);
 		}
 		if (ex.hasFlag(MiiExtraFlag.FAVORITE_LOCAL_BIRTH)) {
 			dst[24] = (dst[24] & 225) | (ex.birthMonth & 15) * 2;
 			let tmp = ex.birthDay & 31;
 			dst[24] = ((dst[24] & 31) | tmp << 5) & 255;
 			dst[25] = (dst[25] & 252) | tmp >> 3;
-			dst[25] = (dst[25] & 191) | MiiEncoder.#b2i(ex.favorite) << 6;
-			dst[48] = (dst[48] & 254) | MiiEncoder.#b2i(ex.localOnly);
+			dst[25] = (dst[25] & 191) | MiiEncoder._b2i(ex.favorite) << 6;
+			dst[48] = (dst[48] & 254) | MiiEncoder._b2i(ex.localOnly);
 		}
 		if (ex.hasFlag(MiiExtraFlag.REGION_FONT_MOVE)) {
 			dst[1] = (dst[1] & 243) | (ex.regionMove & 3) * 4;
 			dst[1] = (dst[1] & 207) | (ex.fontRegion & 3) << 4;
 		}
 		if (ex.hasFlag(MiiExtraFlag.VER3_PERSONAL)) {
-			dst[1] = (dst[1] & 254) | MiiEncoder.#b2i(ex.copyable);
-			dst[1] = (dst[1] & 253) | MiiEncoder.#b2i(ex.ngWord) * 2;
+			dst[1] = (dst[1] & 254) | MiiEncoder._b2i(ex.copyable);
+			dst[1] = (dst[1] & 253) | MiiEncoder._b2i(ex.ngWord) * 2;
 			dst[2] = (dst[2] & 240) | (ex.roomIndex & 15);
 			dst[2] = (dst[2] & 15) | ex.positionInRoom << 4;
 			dst[3] = (dst[3] & 143) | (ex.birthPlatform & 7) << 4;
@@ -702,7 +746,7 @@ export class MiiEncoder
 			dst.set(ex.createId.subarray(0, 10), 12);
 		}
 		if (ex.hasFlag(MiiExtraFlag.SPECIAL)) {
-			dst[12] = Ver3CreateId.setNormal(dst[12], !ex.isSpecial);
+			dst[12] = MiiEncoder._setCreateIdNormal(dst[12], !ex.isSpecial);
 		}
 	}
 
@@ -710,7 +754,7 @@ export class MiiEncoder
 	{
 		MiiEncoder.toVer3Core(dst, info, ex);
 		if (ex.hasFlag(MiiExtraFlag.CREATOR_NAME)) {
-			MiiEncoder.#storeArrayU16LittleEndian(ex.creatorName, 0, dst, 72, 10);
+			MiiEncoder._storeArrayU16LittleEndian(ex.creatorName, 0, dst, 72, 10);
 		}
 	}
 
@@ -832,7 +876,7 @@ export class MiiEncoder
 	{
 		MiiEncoder.visualToNxCore(dst, info);
 		if (ex.hasFlag(MiiExtraFlag.SPECIAL)) {
-			dst[3] = (dst[3] & 127) | MiiEncoder.#b2i(ex.isSpecial) << 7;
+			dst[3] = (dst[3] & 127) | MiiEncoder._b2i(ex.isSpecial) << 7;
 		}
 		if (ex.hasFlag(MiiExtraFlag.REGION_FONT_MOVE)) {
 			dst[9] = (dst[9] & 63) | ex.regionMove << 6;
@@ -844,7 +888,7 @@ export class MiiEncoder
 	{
 		MiiEncoder.toNxCoreParam(dst, info, ex);
 		if (ex.hasFlag(MiiExtraFlag.NICKNAME)) {
-			MiiEncoder.#storeArrayU16LittleEndian(ex.nickname, 0, dst, 28, 10);
+			MiiEncoder._storeArrayU16LittleEndian(ex.nickname, 0, dst, 28, 10);
 		}
 	}
 
@@ -915,10 +959,10 @@ export class MiiEncoder
 	{
 		MiiEncoder.visualToNxCharInfo(dst, info);
 		if (ex.hasFlag(MiiExtraFlag.NICKNAME)) {
-			MiiEncoder.#storeArrayU16LittleEndian(ex.nickname, 0, dst, 16, 10);
+			MiiEncoder._storeArrayU16LittleEndian(ex.nickname, 0, dst, 16, 10);
 		}
 		if (ex.hasFlag(MiiExtraFlag.SPECIAL)) {
-			dst[43] = MiiEncoder.#b2i(ex.isSpecial);
+			dst[43] = MiiEncoder._b2i(ex.isSpecial);
 		}
 		if (ex.hasFlag(MiiExtraFlag.NX_CREATE_ID)) {
 			dst.set(ex.createId);
@@ -931,18 +975,25 @@ export class MiiEncoder
 
 	static visualToRflCore(dst, info)
 	{
+		let facelineColor = NxToVer3.TO_VER3_FACELINE_COLOR[info.facelineColor];
+		let hairColor = NxToVer3.TO_VER3_HAIR_COLOR[info.hairColor];
+		let eyeColor = NxToVer3.TO_VER3_EYE_COLOR[info.eyeColor];
+		let eyebrowColor = NxToVer3.TO_VER3_HAIR_COLOR[info.eyebrowColor];
+		let mouthColor = NxToVer3.TO_VER3_MOUTH_COLOR[info.mouthColor];
+		let beardColor = NxToVer3.TO_VER3_HAIR_COLOR[info.beardColor];
+		let glassColor = NxToVer3.TO_VER3_GLASS_COLOR[info.glassColor];
 		let tmp;
 		dst[0] = (dst[0] & 191) | (info.gender & 1) << 6;
 		dst[1] = (dst[1] & 225) | (info.favoriteColor & 15) * 2;
 		dst[22] = info.height;
 		dst[23] = info.build;
 		dst[32] = (dst[32] & 31) | info.facelineType << 5;
-		dst[32] = (dst[32] & 227) | (info.facelineColor & 7) * 4;
-		tmp = 0;
-		dst[32] = ((dst[32] & 252) | tmp >> 2) & 255;
-		dst[33] = ((dst[33] & 63) | tmp << 6) & 255;
+		dst[32] = (dst[32] & 227) | (facelineColor & 7) * 4;
+		let faceTex = Ver3ToRfl.wrinkleMakeToFaceTex(info.facelineWrinkle, info.facelineMake);
+		dst[32] = ((dst[32] & 252) | faceTex >> 2) & 255;
+		dst[33] = ((dst[33] & 63) | faceTex << 6) & 255;
 		dst[34] = (dst[34] & 1) | info.hairType * 2;
-		tmp = info.hairColor & 7;
+		tmp = hairColor & 7;
 		dst[34] = ((dst[34] & 254) | tmp >> 2) & 255;
 		dst[35] = ((dst[35] & 63) | tmp << 6) & 255;
 		dst[35] = (dst[35] & 223) | (info.hairFlip & 1) << 5;
@@ -950,7 +1001,7 @@ export class MiiEncoder
 		tmp = info.eyebrowRotate & 31;
 		dst[36] = ((dst[36] & 248) | tmp >> 2) & 255;
 		dst[37] = ((dst[37] & 63) | tmp << 6) & 255;
-		dst[38] = (dst[38] & 31) | info.eyebrowColor << 5;
+		dst[38] = (dst[38] & 31) | eyebrowColor << 5;
 		dst[38] = (dst[38] & 225) | (info.eyebrowScale & 15) * 2;
 		tmp = info.eyebrowY & 31;
 		dst[38] = ((dst[38] & 254) | tmp >> 4) & 255;
@@ -961,7 +1012,7 @@ export class MiiEncoder
 		dst[40] = ((dst[40] & 252) | tmp >> 3) & 255;
 		dst[41] = ((dst[41] & 31) | tmp << 5) & 255;
 		dst[41] = (dst[41] & 224) | (info.eyeY & 31);
-		dst[42] = (dst[42] & 31) | info.eyeColor << 5;
+		dst[42] = (dst[42] & 31) | eyeColor << 5;
 		dst[42] = (dst[42] & 225) | (info.eyeScale & 15) * 2;
 		tmp = info.eyeX & 15;
 		dst[42] = ((dst[42] & 254) | tmp >> 3) & 255;
@@ -970,20 +1021,20 @@ export class MiiEncoder
 		dst[44] = (dst[44] & 240) | (info.noseScale & 15);
 		dst[45] = (dst[45] & 7) | info.noseY * 8;
 		dst[46] = (dst[46] & 7) | info.mouthType * 8;
-		dst[46] = (dst[46] & 249) | (info.mouthColor & 3) * 2;
+		dst[46] = (dst[46] & 249) | (mouthColor & 3) * 2;
 		tmp = info.mouthScale & 15;
 		dst[46] = ((dst[46] & 254) | tmp >> 3) & 255;
 		dst[47] = ((dst[47] & 31) | tmp << 5) & 255;
 		dst[47] = (dst[47] & 224) | (info.mouthY & 31);
 		dst[48] = (dst[48] & 15) | info.glassType << 4;
-		dst[48] = (dst[48] & 241) | (info.glassColor & 7) * 2;
+		dst[48] = (dst[48] & 241) | (glassColor & 7) * 2;
 		tmp = info.glassScale & 15;
 		dst[48] = ((dst[48] & 254) | tmp >> 3) & 255;
 		dst[49] = ((dst[49] & 31) | tmp << 5) & 255;
 		dst[49] = (dst[49] & 224) | (info.glassY & 31);
 		dst[50] = (dst[50] & 63) | info.mustacheType << 6;
 		dst[50] = (dst[50] & 207) | (info.beardType & 3) << 4;
-		dst[50] = (dst[50] & 241) | (info.beardColor & 7) * 2;
+		dst[50] = (dst[50] & 241) | (beardColor & 7) * 2;
 		tmp = info.mustacheScale & 15;
 		dst[50] = ((dst[50] & 254) | tmp >> 3) & 255;
 		dst[51] = ((dst[51] & 31) | tmp << 5) & 255;
@@ -1000,21 +1051,21 @@ export class MiiEncoder
 	{
 		MiiEncoder.visualToRflCore(dst, info);
 		if (ex.hasFlag(MiiExtraFlag.NICKNAME)) {
-			MiiEncoder.#storeArrayU16BigEndian(ex.nickname, 0, dst, 2, 10);
+			MiiEncoder._storeArrayU16BigEndian(ex.nickname, 0, dst, 2, 10);
 		}
 		if (ex.hasFlag(MiiExtraFlag.FAVORITE_LOCAL_BIRTH)) {
 			dst[0] = (dst[0] & 195) | (ex.birthMonth & 15) * 4;
 			let tmp = ex.birthDay & 31;
 			dst[0] = ((dst[0] & 252) | tmp >> 3) & 255;
 			dst[1] = (dst[1] & 31) | tmp << 5;
-			dst[1] = (dst[1] & 254) | (MiiEncoder.#b2i(ex.favorite) & 1);
-			dst[33] = (dst[33] & 251) | (MiiEncoder.#b2i(ex.localOnly) & 1) * 4;
+			dst[1] = (dst[1] & 254) | (MiiEncoder._b2i(ex.favorite) & 1);
+			dst[33] = (dst[33] & 251) | (MiiEncoder._b2i(ex.localOnly) & 1) * 4;
 		}
 		if (ex.hasFlag(MiiExtraFlag.RFL_CREATE_ID)) {
 			dst.set(ex.createId.subarray(0, 8), 24);
 		}
 		if (ex.hasFlag(MiiExtraFlag.SPECIAL)) {
-			dst[24] = Ver3CreateId.setNormal(dst[24], !ex.isSpecial);
+			dst[24] = MiiEncoder._setCreateIdNormal(dst[24], !ex.isSpecial);
 		}
 	}
 
@@ -1022,7 +1073,7 @@ export class MiiEncoder
 	{
 		MiiEncoder.toRflCore(dst, info, ex);
 		if (ex.hasFlag(MiiExtraFlag.CREATOR_NAME)) {
-			MiiEncoder.#storeArrayU16BigEndian(ex.creatorName, 0, dst, 54, 10);
+			MiiEncoder._storeArrayU16BigEndian(ex.creatorName, 0, dst, 54, 10);
 		}
 	}
 
@@ -1128,6 +1179,10 @@ export class MiiExtraInfo
 	static RFL_CREATE_ID_LENGTH = 8;
 	flag;
 	/**
+	 * Determines which regions to show non-ASCII characters.
+	 */
+	fontRegion;
+	/**
 	 * 10-character nickname.
 	 */
 	nickname = new Uint16Array(10);
@@ -1136,10 +1191,6 @@ export class MiiExtraInfo
 	 * WARNING: LocalOnly must be true for the data to be valid.
 	 */
 	isSpecial;
-	/**
-	 * Determines which regions to show non-ASCII characters.
-	 */
-	fontRegion;
 	/**
 	 * Unique identifier for the character.
 	 */
@@ -1152,10 +1203,10 @@ export class MiiExtraInfo
 	authorId = new Uint8Array(8);
 	birthPlatform;
 	regionMove;
-	copyable;
-	ngWord;
 	roomIndex;
 	positionInRoom;
+	copyable;
+	ngWord;
 
 	clearFlag()
 	{
@@ -1170,45 +1221,6 @@ export class MiiExtraInfo
 	hasFlag(f)
 	{
 		return (this.flag & 1 << f) != 0;
-	}
-}
-
-export class Ver3CreateId
-{
-
-	static isCtr(idByte0)
-	{
-		return (idByte0 & 16) == 1 && (idByte0 & 64) == 0;
-	}
-
-	static isNtr(idByte0)
-	{
-		return (idByte0 & 16) == 0 && (idByte0 & 64) == 1;
-	}
-
-	static isWii(idByte0)
-	{
-		return (idByte0 & 16) == 0 && (idByte0 & 64) == 0;
-	}
-
-	static isWiiu(idByte0)
-	{
-		return (idByte0 & 16) == 1 && (idByte0 & 64) == 1;
-	}
-
-	static isNormal(idByte0)
-	{
-		return (idByte0 & 128) == 128;
-	}
-
-	static setNormal(idByte0, value)
-	{
-		return value ? idByte0 | 128 : idByte0 & ~128;
-	}
-
-	static isTemporary(idByte0)
-	{
-		return (idByte0 & 32) == 32;
 	}
 }
 
@@ -1569,10 +1581,10 @@ export class DataConversionUtilityTodoMoveThis
 		extra.ngWord = false;
 		extra.birthPlatform = 1;
 		extra.copyable = true;
-		DataConversionUtilityTodoMoveThis.#convertRflCreateIdToVer3(extra.createId, extra.authorId);
+		DataConversionUtilityTodoMoveThis._convertRflCreateIdToVer3(extra.createId, extra.authorId);
 	}
 
-	static #convertRflCreateIdToVer3(idData, authorId)
+	static _convertRflCreateIdToVer3(idData, authorId)
 	{
 		let offset = 8;
 		idData[offset] = 127;
@@ -1589,7 +1601,7 @@ export class DataConversionUtilityTodoMoveThis
 	{
 		if (!extra.hasFlag(MiiExtraFlag.NICKNAME) || extra.nickname[0] == 0) {
 			extra.setFlag(MiiExtraFlag.NICKNAME);
-			extra.nickname.set(DataConversionUtilityTodoMoveThis.#ADJUST_EXTRA_DEFAULT_NICKNAME_FOR_NX);
+			extra.nickname.set(DataConversionUtilityTodoMoveThis._ADJUST_EXTRA_DEFAULT_NICKNAME_FOR_NX);
 		}
 		if (DataConversionUtilityTodoMoveThis.isDataTypeNx(type)) {
 			DataConversionUtilityTodoMoveThis.adjustExtraForNx(extra, newId);
@@ -1599,7 +1611,7 @@ export class DataConversionUtilityTodoMoveThis
 		}
 	}
 
-	static #isAllZeroes(bytes, size)
+	static _isAllZeroes(bytes, size)
 	{
 		for (let i = 0; i < size; i++)
 			if (bytes[i] != 0)
@@ -1628,7 +1640,7 @@ export class DataConversionUtilityTodoMoveThis
 			extra.favorite = false;
 			extra.localOnly = extra.isSpecial;
 		}
-		if (!hasVer3 || DataConversionUtilityTodoMoveThis.#isAllZeroes(extra.createId, 10)) {
+		if (!hasVer3 || DataConversionUtilityTodoMoveThis._isAllZeroes(extra.createId, 10)) {
 			extra.createId.set(newId.subarray(0, 10));
 			extra.createId[0] = (extra.createId[0] & 15) | 208;
 			extra.createId[4] = 2;
@@ -1643,7 +1655,7 @@ export class DataConversionUtilityTodoMoveThis
 				break;
 		for (; end < 10; end++)
 			extra.nickname[end] = 0;
-		if (!extra.hasFlag(MiiExtraFlag.NX_CREATE_ID) || DataConversionUtilityTodoMoveThis.#isAllZeroes(extra.createId, 16)) {
+		if (!extra.hasFlag(MiiExtraFlag.NX_CREATE_ID) || DataConversionUtilityTodoMoveThis._isAllZeroes(extra.createId, 16)) {
 			extra.createId.set(newId.subarray(0, 16));
 			extra.createId[8] &= 63;
 			extra.createId[8] |= 128;
@@ -1662,13 +1674,13 @@ export class DataConversionUtilityTodoMoveThis
 		info.glassType = src[offset + 7];
 	}
 
-	static #ADJUST_EXTRA_DEFAULT_NICKNAME_FOR_NX = new Uint16Array([ 77, 105, 105, 0 ]);
+	static _ADJUST_EXTRA_DEFAULT_NICKNAME_FOR_NX = new Uint16Array([ 77, 105, 105, 0 ]);
 }
 
 export class CharDataSwapUtility
 {
 
-	static #swap16All(data, offset, count = 1)
+	static _swap16All(data, offset, count = 1)
 	{
 		for (let i = 0; i < count; i++) {
 			let idx = i * 2;
@@ -1679,7 +1691,7 @@ export class CharDataSwapUtility
 		}
 	}
 
-	static #swap32(data, offset)
+	static _swap32(data, offset)
 	{
 		let b0 = data[offset];
 		let b1 = data[offset + 1];
@@ -1693,24 +1705,24 @@ export class CharDataSwapUtility
 
 	static swapVer3Data(data, hasCreator)
 	{
-		CharDataSwapUtility.#swap32(data, 0);
-		CharDataSwapUtility.#swap16All(data, 24, 11);
-		CharDataSwapUtility.#swap16All(data, 48, 12);
+		CharDataSwapUtility._swap32(data, 0);
+		CharDataSwapUtility._swap16All(data, 24, 11);
+		CharDataSwapUtility._swap16All(data, 48, 12);
 		if (hasCreator)
-			CharDataSwapUtility.#swap16All(data, 72, 10);
+			CharDataSwapUtility._swap16All(data, 72, 10);
 	}
 
 	static swapRflData(data, hasCreator)
 	{
-		CharDataSwapUtility.#swap16All(data, 0, 11);
-		CharDataSwapUtility.#swap16All(data, 32, 11);
+		CharDataSwapUtility._swap16All(data, 0, 11);
+		CharDataSwapUtility._swap16All(data, 32, 11);
 		if (hasCreator)
-			CharDataSwapUtility.#swap16All(data, 54, 10);
+			CharDataSwapUtility._swap16All(data, 54, 10);
 	}
 }
 
 /**
- * Ported from the following (LGPLv3 license): https://github.com/sdroege/snippets/blob/b760be3ef9c57e7a8a03fd73bb90666169cc3f39/snippets/fnv.c#L119-L183
+ * Ported from the following (LGPLv3 license): https://github.com/sdroege/snippets/blob/b760be3ef9c57e7a8a03fd73bb90666169cc3f39/snippets/fnv.c_L119-L183
  * See above for more simple snippets to port from.
  */
 export class Fnv1a
