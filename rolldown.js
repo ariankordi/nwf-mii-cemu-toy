@@ -45,10 +45,6 @@ const outMapFile = outFile + '.map';
 const bundle = await rolldown({
   input: 'assets/js/bundle.js',
   platform: 'browser',
-
-  // zlib/iconv-lite are kaitai deps unused in browser
-  external: ['zlib', 'iconv-lite'],
-
   plugins: [babelPlugin, babelPluginVendor]
 });
 

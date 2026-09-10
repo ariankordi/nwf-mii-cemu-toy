@@ -5,9 +5,6 @@
   "description": "NOTE: This package is purely for the frontend JS.",
   "scripts": {
     "build:rolldown": "node rolldown.js",
-    "build:kaitai-compile": "kaitai-struct-compiler -t javascript --outdir assets/kaitai-dist/ kaitai-structs/*.ksy",
-    "build:kaitai-post": "node kaitai-structs/kaitai-post-build.js assets/kaitai-dist",
-    "build:kaitai": "npm run-script build:kaitai-compile && npm run-script build:kaitai-post",
     "build": "npm run-script build:rolldown"
   },
   "main": "assets/js/bundle.js",
@@ -31,11 +28,9 @@
     "globals": "^16.0.0",
     "jest": "^29.7.0",
     "jest-html-reporter": "^4.3.0",
-    "kaitai-struct-compiler": "^0.11.0",
     "rolldown": "^1.0.0-rc.15"
   },
   "dependencies": {
-    "kaitai-struct": "^0.11.0",
     "qr-scanner": "github:ariankordi/qr-scanner-binary#v1.6.2",
     "qrjs": "github:ariankordi/qr.js#v0.4.0",
     "sjcl": "npm:sjcl-with-all-without-require-crypto@^1.0.8"
