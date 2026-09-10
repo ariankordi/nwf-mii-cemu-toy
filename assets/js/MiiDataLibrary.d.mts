@@ -47,15 +47,20 @@ export class MiiDecoder
 {
 	private constructor();
 
-	static #i2b(i: number): boolean;
+	static _i2b(i: number): boolean;
 
-	static #loadArrayU16LittleEndian(src: Readonly<Uint8Array>, srcOffset: number, dst: Uint16Array, dstOffset: number, count: number): void;
+	static _loadArrayU16LittleEndian(src: Readonly<Uint8Array>, srcOffset: number, dst: Uint16Array, dstOffset: number, count: number): void;
 
-	static #loadArrayU16BigEndian(src: Readonly<Uint8Array>, srcOffset: number, dst: Uint16Array, dstOffset: number, count: number): void;
+	static _loadArrayU16BigEndian(src: Readonly<Uint8Array>, srcOffset: number, dst: Uint16Array, dstOffset: number, count: number): void;
 
-	static #convVer3ToNx(info: MiiVisualInfo): void;
+	/**
+	 * Convert color fields for previous formats to NX format.
+	 */
+	public static convertVer3FieldsToNx(info: MiiVisualInfo): void;
 
 	public static visualFromVer3Core(src: Readonly<Uint8Array>, info: MiiVisualInfo): void;
+
+	static _isCreateIdNormal(idByte0: number): boolean;
 
 	public static fromVer3Core(src: Readonly<Uint8Array>, info: MiiVisualInfo, ex: MiiExtraInfo): void;
 
@@ -88,36 +93,24 @@ export class MiiDecoder
 	public static fromRflStoreData(src: Readonly<Uint8Array>, info: MiiVisualInfo, ex: MiiExtraInfo): boolean;
 }
 
-class NxToVer3
-{
-	private constructor();
-
-	public static readonly TO_VER3_HAIR_COLOR: Readonly<Uint8Array>;
-
-	public static readonly TO_VER3_EYE_COLOR: Readonly<Uint8Array>;
-
-	public static readonly TO_VER3_MOUTH_COLOR: Readonly<Uint8Array>;
-
-	public static readonly TO_VER3_GLASS_COLOR: Readonly<Uint8Array>;
-
-	public static readonly TO_VER3_FACELINE_COLOR: Readonly<Uint8Array>;
-
-	public static readonly TO_VER3_GLASS_TYPE: Readonly<Uint8Array>;
-}
-
 export class MiiEncoder
 {
 	private constructor();
 
-	static #b2i(b: boolean): number;
+	static _b2i(b: boolean): number;
 
-	static #storeArrayU16LittleEndian(src: Readonly<Uint16Array>, srcOffset: number, dst: Uint8Array, dstOffset: number, count: number): void;
+	static _storeArrayU16LittleEndian(src: Readonly<Uint16Array>, srcOffset: number, dst: Uint8Array, dstOffset: number, count: number): void;
 
-	static #storeArrayU16BigEndian(src: Readonly<Uint16Array>, srcOffset: number, dst: Uint8Array, dstOffset: number, count: number): void;
+	static _storeArrayU16BigEndian(src: Readonly<Uint16Array>, srcOffset: number, dst: Uint8Array, dstOffset: number, count: number): void;
 
 	public static storeU16BigEndian(value: number, dst: Uint8Array, dstOffset: number): void;
 
 	public static visualToVer3Core(dst: Uint8Array, info: MiiVisualInfo): void;
+
+	/**
+	 * Returns the first byte.
+	 */
+	static _setCreateIdNormal(idByte0: number, value: boolean): number;
 
 	public static toVer3Core(dst: Uint8Array, info: MiiVisualInfo, ex: MiiExtraInfo): void;
 
@@ -157,52 +150,52 @@ export class MiiEncoder
  */
 export class MiiVisualInfo
 {
-	public favoriteColor!: number;
-	public gender!: number;
-	public height!: number;
-	public build!: number;
-	public facelineType!: number;
-	public facelineColor!: number;
-	public facelineWrinkle!: number;
-	public facelineMake!: number;
-	public hairType!: number;
-	public hairColor!: number;
-	public hairFlip!: number;
-	public eyeType!: number;
-	public eyeColor!: number;
-	public eyeScale!: number;
-	public eyeAspect!: number;
-	public eyeRotate!: number;
-	public eyeX!: number;
-	public eyeY!: number;
-	public eyebrowType!: number;
-	public eyebrowColor!: number;
-	public eyebrowScale!: number;
-	public eyebrowAspect!: number;
-	public eyebrowRotate!: number;
-	public eyebrowX!: number;
-	public eyebrowY!: number;
-	public noseType!: number;
-	public noseScale!: number;
-	public noseY!: number;
-	public mouthType!: number;
-	public mouthColor!: number;
-	public mouthScale!: number;
-	public mouthAspect!: number;
-	public mouthY!: number;
-	public beardColor!: number;
-	public beardType!: number;
-	public mustacheType!: number;
-	public mustacheScale!: number;
-	public mustacheY!: number;
-	public glassType!: number;
-	public glassColor!: number;
-	public glassScale!: number;
-	public glassY!: number;
-	public moleType!: number;
-	public moleScale!: number;
-	public moleX!: number;
-	public moleY!: number;
+	public favoriteColor: number;
+	public gender: number;
+	public height: number;
+	public build: number;
+	public facelineType: number;
+	public facelineColor: number;
+	public facelineWrinkle: number;
+	public facelineMake: number;
+	public hairType: number;
+	public hairColor: number;
+	public hairFlip: number;
+	public eyeType: number;
+	public eyeColor: number;
+	public eyeScale: number;
+	public eyeAspect: number;
+	public eyeRotate: number;
+	public eyeX: number;
+	public eyeY: number;
+	public eyebrowType: number;
+	public eyebrowColor: number;
+	public eyebrowScale: number;
+	public eyebrowAspect: number;
+	public eyebrowRotate: number;
+	public eyebrowX: number;
+	public eyebrowY: number;
+	public noseType: number;
+	public noseScale: number;
+	public noseY: number;
+	public mouthType: number;
+	public mouthColor: number;
+	public mouthScale: number;
+	public mouthAspect: number;
+	public mouthY: number;
+	public beardColor: number;
+	public beardType: number;
+	public mustacheType: number;
+	public mustacheScale: number;
+	public mustacheY: number;
+	public glassType: number;
+	public glassColor: number;
+	public glassScale: number;
+	public glassY: number;
+	public moleType: number;
+	public moleScale: number;
+	public moleX: number;
+	public moleY: number;
 }
 
 /**
@@ -243,7 +236,11 @@ export class MiiExtraInfo
 	public static readonly VER3_AUTHOR_ID_LENGTH: number;
 
 	public static readonly RFL_CREATE_ID_LENGTH: number;
-	public flag!: number;
+	public flag: number;
+	/**
+	 * Determines which regions to show non-ASCII characters.
+	 */
+	public fontRegion: number;
 	/**
 	 * 10-character nickname.
 	 */
@@ -252,60 +249,29 @@ export class MiiExtraInfo
 	 * Whether or not the Mii is considered special.
 	 * WARNING: LocalOnly must be true for the data to be valid.
 	 */
-	public isSpecial!: boolean;
-	/**
-	 * Determines which regions to show non-ASCII characters.
-	 */
-	public fontRegion!: number;
+	public isSpecial: boolean;
 	/**
 	 * Unique identifier for the character.
 	 */
 	public readonly createId: Uint8Array;
 	public readonly creatorName: Uint16Array;
-	public favorite!: boolean;
-	public localOnly!: boolean;
-	public birthMonth!: number;
-	public birthDay!: number;
+	public favorite: boolean;
+	public localOnly: boolean;
+	public birthMonth: number;
+	public birthDay: number;
 	public readonly authorId: Uint8Array;
-	public birthPlatform!: number;
-	public regionMove!: number;
-	public copyable!: boolean;
-	public ngWord!: boolean;
-	public roomIndex!: number;
-	public positionInRoom!: number;
+	public birthPlatform: number;
+	public regionMove: number;
+	public roomIndex: number;
+	public positionInRoom: number;
+	public copyable: boolean;
+	public ngWord: boolean;
 
 	clearFlag(): void;
 
 	setFlag(f: MiiExtraFlag): void;
 
 	hasFlag(f: MiiExtraFlag): boolean;
-}
-
-export class Ver3CreateId
-{
-	private constructor();
-
-	static readonly #BIT_NORMAL: number;
-
-	static readonly #BIT_NTR: number;
-
-	static readonly #BIT_TEMPORARY: number;
-
-	static readonly #BIT_CTR: number;
-
-	public static isCtr(idByte0: number): boolean;
-
-	public static isNtr(idByte0: number): boolean;
-
-	public static isWii(idByte0: number): boolean;
-
-	public static isWiiu(idByte0: number): boolean;
-
-	public static isNormal(idByte0: number): boolean;
-
-	public static setNormal(idByte0: number, value: boolean): number;
-
-	public static isTemporary(idByte0: number): boolean;
 }
 
 export class StudioObfuscation
@@ -459,11 +425,11 @@ export class DataConversionUtilityTodoMoveThis
 
 	public static convertRflExtraForVer3(extra: MiiExtraInfo): void;
 
-	static #convertRflCreateIdToVer3(idData: Uint8Array, authorId: Readonly<Uint8Array>): void;
+	static _convertRflCreateIdToVer3(idData: Uint8Array, authorId: Readonly<Uint8Array>): void;
 
 	public static adjustExtra(extra: MiiExtraInfo, type: MiiDataType, newId: Readonly<Uint8Array>): void;
 
-	static #isAllZeroes(bytes: Readonly<Uint8Array>, size: number): boolean;
+	static _isAllZeroes(bytes: Readonly<Uint8Array>, size: number): boolean;
 
 	public static adjustExtraForVer3(extra: MiiExtraInfo, newId: Readonly<Uint8Array>): void;
 
@@ -476,9 +442,9 @@ export class CharDataSwapUtility
 {
 	private constructor();
 
-	static #swap16All(data: Uint8Array, offset: number, count?: number): void;
+	static _swap16All(data: Uint8Array, offset: number, count?: number): void;
 
-	static #swap32(data: Uint8Array, offset: number): void;
+	static _swap32(data: Uint8Array, offset: number): void;
 
 	public static swapVer3Data(data: Uint8Array, hasCreator: boolean): void;
 
@@ -486,7 +452,7 @@ export class CharDataSwapUtility
 }
 
 /**
- * Ported from the following (LGPLv3 license): https://github.com/sdroege/snippets/blob/b760be3ef9c57e7a8a03fd73bb90666169cc3f39/snippets/fnv.c#L119-L183
+ * Ported from the following (LGPLv3 license): https://github.com/sdroege/snippets/blob/b760be3ef9c57e7a8a03fd73bb90666169cc3f39/snippets/fnv.c_L119-L183
  * See above for more simple snippets to port from.
  */
 export class Fnv1a

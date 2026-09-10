@@ -14,7 +14,7 @@ const stylisticConfig = stylisticPlugin.configs.customize({
   braceStyle: '1tbs'
 });
 
-const ecmaVersion = 2018;
+const ecmaVersion = 2022;
 
 export default [
   // https://eslint.org/docs/rules/
@@ -37,7 +37,7 @@ export default [
       }],
       'no-var': 'error',
       // TODO: 'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^ignore' }],
-      'one-var': ['error', 'never'],
+      // 'one-var': ['error', 'never'],
       'curly': ['error', 'all'], // Always require curly braces
       // https://evanhahn.com/using-eslint-to-help-avoid-non-deterministic-randomness/
       'no-restricted-properties': [
@@ -124,7 +124,8 @@ export default [
       'unicorn/numeric-separators-style': 'off',
       // The below enforces that hex is always uppercase.
       'unicorn/number-literal-case': 'off',
-      // 'unicorn/no-static-only-class': 'off',
+      // This style is sometimes desired.
+      'unicorn/no-static-only-class': 'off',
       'unicorn/prefer-string-replace-all': 'off', // ES2021 only
       'unicorn/no-array-sort': 'off', // ES2023 only
       'unicorn/prefer-code-point': 'off', // Nullability does not match
