@@ -15,7 +15,7 @@ function loadMaboiiKeys() {
 }
 
 // using hardcoded offsets here rather
-// than parsing the structure properly (kaitai struct?)
+// than parsing the structure properly (struct?)
 // NOTE: i think what we need is actually defined in yuzu here:
 // nfp_types.h, EncryptedAmiiboFile and NTAG215File (decrypted)
 

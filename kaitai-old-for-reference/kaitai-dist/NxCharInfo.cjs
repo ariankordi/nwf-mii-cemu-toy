@@ -1,0 +1,255 @@
+// This is a generated file! Please edit source .ksy file and use kaitai-struct-compiler to rebuild
+
+(function (root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define(['exports', 'kaitai-struct/KaitaiStream'], factory);
+  } else if (typeof exports === 'object' && exports !== null && typeof exports.nodeType !== 'number') {
+    factory(exports, require('kaitai-struct/KaitaiStream'));
+  } else {
+    factory(root.NxCharInfo || (root.NxCharInfo = {}), root.KaitaiStream);
+  }
+})(typeof self !== 'undefined' ? self : this, function (NxCharInfo_, KaitaiStream) {
+var NxCharInfo = (function() {
+  NxCharInfo.FavoriteColor = Object.freeze({
+    RED: 0,
+    ORANGE: 1,
+    YELLOW: 2,
+    YELLOWGREEN: 3,
+    GREEN: 4,
+    BLUE: 5,
+    SKYBLUE: 6,
+    PINK: 7,
+    PURPLE: 8,
+    BROWN: 9,
+    WHITE: 10,
+    BLACK: 11,
+
+    0: "RED",
+    1: "ORANGE",
+    2: "YELLOW",
+    3: "YELLOWGREEN",
+    4: "GREEN",
+    5: "BLUE",
+    6: "SKYBLUE",
+    7: "PINK",
+    8: "PURPLE",
+    9: "BROWN",
+    10: "WHITE",
+    11: "BLACK",
+  });
+
+  NxCharInfo.FontRegion = Object.freeze({
+    JP_US_EU: 0,
+    CHINA: 1,
+    KOREA: 2,
+    TAIWAN: 3,
+
+    0: "JP_US_EU",
+    1: "CHINA",
+    2: "KOREA",
+    3: "TAIWAN",
+  });
+
+  NxCharInfo.Gender = Object.freeze({
+    MALE: 0,
+    FEMALE: 1,
+    ALL: 2,
+
+    0: "MALE",
+    1: "FEMALE",
+    2: "ALL",
+  });
+
+  NxCharInfo.RegionMove = Object.freeze({
+    ALL: 0,
+    JP_ONLY: 1,
+    US_ONLY: 2,
+    EU_ONLY: 3,
+
+    0: "ALL",
+    1: "JP_ONLY",
+    2: "US_ONLY",
+    3: "EU_ONLY",
+  });
+
+  NxCharInfo.Type = Object.freeze({
+    NORMAL: 0,
+    SPECIAL: 1,
+
+    0: "NORMAL",
+    1: "SPECIAL",
+  });
+
+  function NxCharInfo(_io, _parent, _root) {
+    this._io = _io;
+    this._parent = _parent;
+    this._root = _root || this;
+
+    this._read();
+  }
+  NxCharInfo.prototype._read = function() {
+    this.createId = new CreateId(this._io, this, this._root);
+    this.nickname = globalThis['KaitaiStream']['bytesToStr'](this._io.readBytes(22), "UTF-16LE");
+    this.fontRegion = this._io.readU1();
+    this.favoriteColor = this._io.readU1();
+    this.gender = this._io.readU1();
+    this.height = this._io.readU1();
+    this.build = this._io.readU1();
+    this.type = this._io.readU1();
+    this.regionMove = this._io.readU1();
+    this.facelineType = this._io.readU1();
+    this.facelineColor = this._io.readU1();
+    this.facelineWrinkle = this._io.readU1();
+    this.facelineMake = this._io.readU1();
+    this.hairType = this._io.readU1();
+    this.hairColor = this._io.readU1();
+    this.hairFlip = this._io.readU1();
+    this.eyeType = this._io.readU1();
+    this.eyeColor = this._io.readU1();
+    this.eyeScale = this._io.readU1();
+    this.eyeAspect = this._io.readU1();
+    this.eyeRotate = this._io.readU1();
+    this.eyeX = this._io.readU1();
+    this.eyeY = this._io.readU1();
+    this.eyebrowType = this._io.readU1();
+    this.eyebrowColor = this._io.readU1();
+    this.eyebrowScale = this._io.readU1();
+    this.eyebrowAspect = this._io.readU1();
+    this.eyebrowRotate = this._io.readU1();
+    this.eyebrowX = this._io.readU1();
+    this.eyebrowY = this._io.readU1();
+    this.noseType = this._io.readU1();
+    this.noseScale = this._io.readU1();
+    this.noseY = this._io.readU1();
+    this.mouthType = this._io.readU1();
+    this.mouthColor = this._io.readU1();
+    this.mouthScale = this._io.readU1();
+    this.mouthAspect = this._io.readU1();
+    this.mouthY = this._io.readU1();
+    this.beardColor = this._io.readU1();
+    this.beardType = this._io.readU1();
+    this.mustacheType = this._io.readU1();
+    this.mustacheScale = this._io.readU1();
+    this.mustacheY = this._io.readU1();
+    this.glassType = this._io.readU1();
+    this.glassColor = this._io.readU1();
+    this.glassScale = this._io.readU1();
+    this.glassY = this._io.readU1();
+    this.moleType = this._io.readU1();
+    this.moleScale = this._io.readU1();
+    this.moleX = this._io.readU1();
+    this.moleY = this._io.readU1();
+    this.reserved0 = this._io.readU1();
+  }
+
+  var CreateId = NxCharInfo.CreateId = (function() {
+    function CreateId(_io, _parent, _root) {
+      this._io = _io;
+      this._parent = _parent;
+      this._root = _root;
+
+      this._read();
+    }
+    CreateId.prototype._read = function() {
+      this.data = [];
+      for (var i = 0; i < 16; i++) {
+        this.data.push(this._io.readU1());
+      }
+    }
+
+    /**
+     * Checks the two leftmost bits of byte 8 ("clock_seq_hi_and_reserved" field in RFC 4122)
+     * that are verified by nn::mii::CreateId::IsValid().
+     * If this is false, this Mii will not be valid on a real Switch.
+     */
+    Object.defineProperty(CreateId.prototype, 'isValid', {
+      get: function() {
+        if (this._m_isValid !== undefined)
+          return this._m_isValid;
+        this._m_isValid = (this.data[8] & 192) == 128;
+        return this._m_isValid;
+      }
+    });
+
+    /**
+     * This is struct nn::mii::CreateId, which contains nn::util::Uuid (UUIDv4)
+     * generated by: struct nn::util::Uuid __cdecl nn::util::`anonymous namespace'::GenerateUuidVersion4(void)
+     * NOTE that this cannot just be completely random in order to be valid (see is_valid)
+     * To make a valid CreateID, set the following: `data[8] &= 0x3f; data[8] |= 0x80;`
+     * Optionally to be a valid UUIDv4 as well: `data[6] &= & 0x0f; data[6] |= 0x40;`
+     */
+
+    return CreateId;
+  })();
+  Object.defineProperty(NxCharInfo.prototype, 'beardScale', {
+    get: function() {
+      if (this._m_beardScale !== undefined)
+        return this._m_beardScale;
+      this._m_beardScale = this.mustacheScale;
+      return this._m_beardScale;
+    }
+  });
+  Object.defineProperty(NxCharInfo.prototype, 'beardY', {
+    get: function() {
+      if (this._m_beardY !== undefined)
+        return this._m_beardY;
+      this._m_beardY = this.mustacheY;
+      return this._m_beardY;
+    }
+  });
+  Object.defineProperty(NxCharInfo.prototype, 'faceColor', {
+    get: function() {
+      if (this._m_faceColor !== undefined)
+        return this._m_faceColor;
+      this._m_faceColor = this.facelineColor;
+      return this._m_faceColor;
+    }
+  });
+  Object.defineProperty(NxCharInfo.prototype, 'faceTex', {
+    get: function() {
+      if (this._m_faceTex !== undefined)
+        return this._m_faceTex;
+      this._m_faceTex = this.facelineWrinkle;
+      return this._m_faceTex;
+    }
+  });
+  Object.defineProperty(NxCharInfo.prototype, 'faceType', {
+    get: function() {
+      if (this._m_faceType !== undefined)
+        return this._m_faceType;
+      this._m_faceType = this.facelineType;
+      return this._m_faceType;
+    }
+  });
+  Object.defineProperty(NxCharInfo.prototype, 'name', {
+    get: function() {
+      if (this._m_name !== undefined)
+        return this._m_name;
+      this._m_name = this.nickname;
+      return this._m_name;
+    }
+  });
+
+  /**
+   * Contains a null terminator at the end.
+   * NOTE that in order for this to be valid,
+   * it CANNOT contain any characters after the first
+   * null terminator character. (nn::mii::Nickname::IsValid() -> IsContinuityTermination(unsigned short const *, int))
+   */
+
+  /**
+   * Whether the Mii is special or not.
+   */
+
+  /**
+   * Unlike most other minimum values, eyebrowY begins at 3.
+   */
+
+  /**
+   * Always set to 0.
+   */
+
+  return NxCharInfo;
+})();
+NxCharInfo_.NxCharInfo = NxCharInfo;
+});
