@@ -215,6 +215,7 @@ function scanFile(file) {
 
 const qrLoadedTL = document.getElementById('qr-status-loaded-tl');
 const qrLoadedTLHairDye = document.getElementById('qr-tl-hair-dye');
+const qrLoadedOunce = document.getElementById('qr-status-loaded-ounce');
 
 /** Takes the input QR Code data and handles the extra data. */
 async function handleTomodachiLife3DSData(/** @type {Uint8Array} */ bytes) {
@@ -231,6 +232,14 @@ async function handleTomodachiLife3DSData(/** @type {Uint8Array} */ bytes) {
     accessor.getHairDyeMode() === 0 ? 'none' : '';
 
   return extra;
+}
+
+async function handleOunceData(/** @type {Uint8Array} */ bytes) {
+  // length of structure used in FUN_71000682d0 is 10 bytes
+  return new Uint8Array([
+    0x11, 0x01, // identifier and version
+    0x00, 0x37, 0x23, 0x01, 0x13, 0x08, 0x08, 0x00 // shared with nfp
+  ]);
 }
 
 /**
@@ -283,6 +292,14 @@ async function handleDecryption(result) {
     }
   }
 
+  const isOunce = true;
+  if (isOunce) {
+    const ret = await handleOunceData(bytes);
+    if (ret) {
+      decryptedData = new Uint8Array([...decryptedData, ...ret]);
+    }
+  }
+
   const name16 = getArray16From8(decryptedData.subarray(0x1A), true);
   const miiName = Char16.toString(name16, 10);
   if (Crc16Ccitt.calculate(decryptedData.subarray(0, 96), 96) !== 0) {
@@ -294,6 +311,9 @@ async function handleDecryption(result) {
   showStatus('loaded', miiName);
   if (isTomodachi3ds) {
     qrLoadedTL.style.display = '';
+  }
+  if (isOunce) {
+    qrLoadedOunce.style.display = '';
   }
 
   // finished, stop camera if it is open

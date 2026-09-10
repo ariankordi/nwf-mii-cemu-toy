@@ -1288,7 +1288,7 @@ export const MiiDataType = {
 	/**
 	 * 92/0x5C bytes. Used in 3DS/Wii U database, no CRC.
 	 * CFLiPackedMiiDataOfficial, FFLiMiiDataOfficial
-	 * Unofficial extensions: 3dsmii, cfcd, ffcdgam
+	 * Unofficial extensions: 3dsmii, cfcd, ffcd
 	 */
 	VER3_DATA : 6,
 	/**

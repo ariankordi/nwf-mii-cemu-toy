@@ -104,7 +104,8 @@ const supportedTypes = [
   {
     name: 'FFLStoreData',
     sizes: [104, // 104 = 96 + nfpstoredataextention length
-      336 // plus tomodachi life qr code extension
+      336, // plus tomodachi life qr code extension
+      106 // plus ounce/switch 2 qr code extension
     ],
     offsetCRC16: 94,
     offsetName: 0x1A,

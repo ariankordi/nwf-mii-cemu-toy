@@ -12,46 +12,51 @@ import { WrappedMiiDataLength } from './WrappedMiiDataSubtle.js';
 // //  CRC-32
 // // ---------------------------------------------------------------------
 
-/** Polynomial for CRC-32/POSIX/CKSUM. */
-const Crc32CksumPoly = 0x04C11DB7;
+class Crc32Posix {
+  /** Polynomial for CRC-32/POSIX. @private */
+  static _poly = 0x04C11DB7;
 
-/**
- * Function to generate a CRC-32/POSIX/CKSUM table.
- * @param {Uint32Array} table - The Uint32Array to populate with the table.
- * @param {number} [poly] - The polynomial to generate the CRC-32 table with.
- */
-function generateCrc32Table(table, poly = Crc32CksumPoly) {
-  for (let i = 0; i < 256; i++) {
-    let crc = i << 24;
-    for (let j = 0; j < 8; j++) {
-      crc = crc & 0x80000000
-        ? (crc << 1) ^ poly
-        : crc << 1;
+  constructor() {
+    /**
+     * @param {Uint32Array} table - The Uint32Array to populate with the table.
+     * @param {number} [poly] - The polynomial to generate the CRC-32 table with.
+     */
+    function generateTable(table, poly = Crc32Posix._poly) {
+      for (let i = 0; i < 256; i++) {
+        let crc = i << 24;
+        for (let j = 0; j < 8; j++) {
+          crc = crc & 0x80000000
+            ? (crc << 1) ^ poly
+            : crc << 1;
+        }
+        table[i] = crc >>> 0; // Ensure the value is an unsigned 32-bit integer
+      }
     }
-    table[i] = crc >>> 0; // Ensure the value is an unsigned 32-bit integer
+
+    /** @private */ this._table = new Uint32Array(256);
+    generateTable(this._table);
+  }
+
+  /** @private */ _table;
+
+  /**
+   * Calculates a checksum of `data` using CRC-32/POSIX/CKSUM.
+   * @param {ArrayLike<number>} input - The data to create a checksum of.
+   * @param {number} length - The amount of bytes in `input` to calculate.
+   * @returns {number} The CRC-32 checksum.
+   */
+  calculate(input, length = input.length) {
+    let crc = 0x00000000;
+    for (let i = 0; i < length; i++) {
+      const byte = (input[i] ^ (crc >>> 24)) & 0xFF;
+      crc = (this._table[byte] ^ (crc << 8)) >>> 0;
+    }
+    // XOR with 0xFFFFFFFF at the end and ensure it's unsigned
+    return (crc ^ 0xFFFFFFFF) >>> 0;
   }
 }
 
-/** Table for CRC-32 lookup. */
-const crc32CksumTable = /* @__PURE__ */ new Uint32Array(256);
-generateCrc32Table(crc32CksumTable); // Generate the table.
-
-/**
- * Calculates a checksum of `data` using CRC-32/POSIX/CKSUM.
- * @param {ArrayLike<number>} input - The data to create a checksum of.
- * @param {number} length - The amount of bytes in `input` to calculate.
- * @param {Uint32Array} [table] - The CRC-32 table to use.
- * @returns {number} The CRC-32 checksum.
- */
-function crc32(input, length = input.length, table = crc32CksumTable) {
-  let crc = 0x00000000;
-  for (let i = 0; i < length; i++) {
-    const byte = (input[i] ^ (crc >>> 24)) & 0xFF;
-    crc = (table[byte] ^ (crc << 8)) >>> 0;
-  }
-  // XOR with 0xFFFFFFFF at the end and ensure it's unsigned
-  return (crc ^ 0xFFFFFFFF) >>> 0;
-}
+const crc32 = new Crc32Posix();
 
 // // ---------------------------------------------------------------------
 // //  AES-CTR
@@ -96,7 +101,7 @@ class TomoExtraData {
     // Calculate CRC-32 from ENCRYPTED/wrapped data + DECRYPTED extra data.
     const lenForCrc = WrappedMiiDataLength + extraData.length;
     // console.debug('data into crc32:', bytesToHexSpaced(dataForCrc));
-    const crc = crc32(encryptedBytes, lenForCrc);
+    const crc = crc32.calculate(encryptedBytes, lenForCrc);
     // const crcBytes = [crc & 0xff, (crc >> 8) & 0xff, (crc >> 16) & 0xff, (crc >> 24) & 0xff];
     // console.debug('crc32: ', bytesToHexSpaced(crcBytes));
 
@@ -150,7 +155,7 @@ class TomoExtraData {
     const offsetForCrc = WrappedMiiDataLength + decryptedExtraData.length;
     const dataForCrc = encryptedForCrc.subarray(0, offsetForCrc);
     /** Calculated CRC-32 from the real data. */
-    const crcExpected = crc32(dataForCrc);
+    const crcExpected = crc32.calculate(dataForCrc);
     if (crcExpected !== crcActual) {
       return null;
     }
