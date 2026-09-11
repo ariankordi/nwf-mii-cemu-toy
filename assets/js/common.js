@@ -1,5 +1,7 @@
 // @ts-check
 
+import { ExtendedVer3 } from './ExtendedVer3Formats.js';
+
 // #region Utility: Base64 -> U8, Hex -> U8, U8 -> Hex
 // // ---------------------------------------------------------------------
 // //  Utility: Base64 -> U8, Hex -> U8, U8 -> Hex
@@ -78,9 +80,14 @@ const getArray16From8 = (/** @type {Uint8Array} */ u8, littleEndian = true) =>
  * Empty means no CRC16.
  * @property {number} [offsetName] - Offset for the name, if any.
  * @property {boolean} [isNameU16BE] - Whether the name's format is big-endian.
- * @property {boolean} [specialCaseConvertTo] - Whether the format should be
- * converted to studio format in certain cases.
  */
+
+/** @type {SupportedTypeDefinition} */ const ver3StoreData = {
+  name: 'FFLStoreData',
+  sizes: [96],
+  offsetCRC16: 94,
+  offsetName: 0x1A
+};
 
 /** @type {Array<SupportedTypeDefinition>} */
 const supportedTypes = [
@@ -96,22 +103,6 @@ const supportedTypes = [
     offsetName: 0x1A
   },
   {
-    name: 'FFLStoreData',
-    sizes: [96],
-    offsetCRC16: 94,
-    offsetName: 0x1A
-  },
-  {
-    name: 'FFLStoreData',
-    sizes: [104, // 104 = 96 + nfpstoredataextention length
-      336, // plus tomodachi life qr code extension
-      106 // plus ounce/switch 2 qr code extension
-    ],
-    offsetCRC16: 94,
-    offsetName: 0x1A,
-    specialCaseConvertTo: true
-  },
-  {
     name: 'RFLCharData',
     sizes: [74],
     offsetName: 0x2,
@@ -124,6 +115,7 @@ const supportedTypes = [
     offsetName: 0x2,
     isNameU16BE: true
   },
+  ver3StoreData,
   {
     name: 'nn::mii::CharInfo',
     sizes: [88],
@@ -131,23 +123,25 @@ const supportedTypes = [
   },
   {
     name: 'nn::mii::CoreData',
-    sizes: [48, 68],
+    sizes: [48],
     offsetName: 0x1C
   },
-  // TODO: crc is at 0x44? checksums all before that?
-  /* {
+  {
     name: 'nn::mii::StoreData',
     sizes: [68],
-    offsetName: 0x1C,
-  }, */
+    offsetCRC16: 0x44,
+    offsetName: 0x1C
+  },
   {
     name: 'Mii Studio Data',
-    sizes: [46, 47] // ignoring the encoded format for now
+    sizes: [46, 47] // last covers the obfuscated/encoded format
   }
 ];
 
-const findSupportedTypeBySize = (/** @type {number} */ size) =>
-  supportedTypes.find(type => type.sizes.includes(size));
+const findSupportedTypeBySize = (/** @type {number} */ size) => {
+  const r = supportedTypes.find(type => type.sizes.includes(size));
+  return (!r && ExtendedVer3.has(size)) ? ver3StoreData : r;
+};
 
 export {
   hexToBytes,
