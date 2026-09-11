@@ -120,7 +120,8 @@ const getQrCodePng = async (/** @type {ArrayLike<number>} */ data,
   /** @type {string} */ name, enableLogo = true) =>
   data.length === 112 && enableLogo
     ? await MiiLogoQrCode.generatePng(data, name)
-    : QRCode.generatePNG(data, { ecclevel: 'H' });
+    // TODO: empty margin not supported, must fix
+    : QRCode.generatePNG(data, { ecclevel: 'H', margin: null });
 
 export {
   MiiLogoQrCode,
