@@ -1129,7 +1129,7 @@ const pantsColorsWithSwitchShaderInaccurate = elementById('pants-colors-with-swi
 
 pantsColor.addEventListener('change', function () {
   pantsColorsWithSwitchShaderInaccurate.style.display = shaderType.value === 'switch' &&
-    pantsColor.value === 'red' && pantsColor.value == 'blue'
+    pantsColor.value !== 'red' && pantsColor.value !== 'blue'
     ? ''
     : 'none';
 });

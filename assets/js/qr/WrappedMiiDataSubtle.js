@@ -1,6 +1,7 @@
 /**
  * @file WrappedMiiDataSubtle.js
  * @author Arian Kordi <https://github.com/ariankordi>
+ * @license Zlib
  * Implementation for "WrappedStoreData", aka the encryption used
  * in Mii QR codes (among other uses on the 3DS), in JavaScript.
  * Uses SubtleCrypto Web API (async-only :/)

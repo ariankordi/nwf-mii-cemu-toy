@@ -1,6 +1,7 @@
 /**
  * @file TomoExtraData.js
  * @author Arian Kordi <https://github.com/ariankordi>
+ * @license Zlib
  * Decrypts/encrypts extra data present in QR codes made
  * in Tomodachi Life 3DS, Miitomo, and Miitopia 3DS.
  */

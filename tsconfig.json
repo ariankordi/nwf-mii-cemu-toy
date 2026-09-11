@@ -20,6 +20,6 @@
     "emitDeclarationOnly": true
   },
   // Only include main sources.
-  "include": ["assets/js/*.js"],
+  "include": ["assets/js/**/*.js"],
   "exclude": ["assets/vendor-js/*"]
 }

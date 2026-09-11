@@ -76,6 +76,10 @@ const transformed = transformSync(code, {
 const result = await minify(transformed.code, {
   ecma: 2017,
   format: { comments: false },
+  mangle: {
+    // mangle properties starting with an underscore
+    properties: { regex: /^_/ }
+  },
   sourceMap: {
     content: JSON.stringify(transformed.map),
     url: 'js-bundle.min.js.map'

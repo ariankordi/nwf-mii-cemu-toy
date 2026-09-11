@@ -168,6 +168,9 @@ export default [
         noMultilineBlocks: true,
         minimumLengthForMultiline: 80,
         multilineTags: []
+      }],
+      'jsdoc/no-undefined-types': ['warn', {
+        definedTypes: ['ArrayLike', 'CanvasImageSource']
       }]
 
     }
