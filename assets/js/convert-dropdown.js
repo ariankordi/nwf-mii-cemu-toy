@@ -15,8 +15,8 @@ import {
 } from './MiiDataLibrary.mjs';
 import { KeySlot0x31Keys, KeyType } from './qr/WrapAesKeys.js';
 import { WrappedMiiDataLength, WrappedMiiData } from './qr/WrappedMiiData.js';
-import { getQrCodePng, MiiLogoQrCode } from './qr/MiiLogoQrCode.js';
-import { ExtendedVer3, ExtendedVer3DataType } from './ExtendedVer3Formats.js';
+import { getQrCodePng } from './qr/MiiLogoQrCode.js';
+import { ExtendedVer3, ExtendedVer3DataType, setNfpDataFromInfo } from './ExtendedVer3Formats.js';
 import AesCcmSubtle from './qr/AesCcmSubtle.js';
 import { OunceMiiExtraData } from './qr/ExtraData.js';
 import { OunceMiiExtraDataKey } from './qr/ExtraAesKeys.js';
@@ -53,26 +53,72 @@ const MiiDataTypeNames = {
  * @property {Uint8Array} ver3StoreData - 96-byte Ver3StoreData.
  * @property {Promise<Uint8Array<ArrayBuffer>>} qrData - Encrypted data to be encoded into a QR Code.
  * @property {Uint8Array} charInfoData - 88-byte nn::mii::CharInfo.
+ * @property {boolean} isQrCodeExtended - Whether the generated QR Code is the extended Switch 2 version.
  */
 
 /**
  * Converts raw Mii bytes to all output formats at once.
- * For NfpStoreDataExtension (amiibo, 104 bytes) the extension fields
- * are applied manually so that Studio/CharInfo use the NX colors from
- * the extension while ver3/QR use the original Ver3 bytes.
- * @param {Uint8Array} rawInput
- * @returns {MiiConversionResult}
+ * This also accounts for extended formats defined in {@link ExtendedVer3}.
+ * @param {Uint8Array} rawInput - Mii data input.
+ * @returns {MiiConversionResult} The formats returned by the conversion.
  * @throws {Error} If the input size is not recognized or conversion fails.
  */
 const convertMiiData = (rawInput) => {
   const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
+  /** Deterministically random Create ID. */
   const newId = Fnv1a.create128(rawInput, rawInput.length);
+
+  // Define outputs.
+  let typeName, qrData;
+  const ver3StoreData = new Uint8Array(MiiDataSize.VER3_STORE_DATA),
+    studioData = new Uint8Array(MiiDataSize.STUDIO_DATA),
+    charInfoData = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
 
   // Always decode Ver3StoreData and ignore CRC (assumed correct).
   const extendedType = ExtendedVer3.getTypeFromSize(rawInput.length);
-  if (extendedType !== ExtendedVer3DataType.None) {
-    const ver3Raw = rawInput.subarray(0, MiiDataSize.VER3_STORE_DATA);
-    MiiDecoder.fromVer3Data(ver3Raw, info, extra);
+  const noExtend = (extendedType === ExtendedVer3DataType.None);
+  let isQrCodeExtended = !noExtend; // If there is an extension, this is true.
+  if (noExtend) {
+    const inputType = MiiFormat.getTypeFromSize(rawInput.length);
+    typeName = MiiDataTypeNames[inputType];
+    if (inputType === MiiDataType.UNKNOWN) {
+      throw new Error(`Input format is an unknown size of: ${rawInput.length}`);
+    }
+
+    if (!ConvUtility.decodeDataType(rawInput, inputType, info, extra)) {
+      throw new Error('data conversion failure (CRC mismatch)');
+    }
+
+    if (inputType > MiiDataType.VER3_STORE_DATA) {
+      // The input type is Switch Mii data with extra colors.
+      // Emit the extended Switch 2 format QR code.
+      isQrCodeExtended = true;
+    }
+
+    {
+      // we need separate extra info instances for ver3 and for nx
+      // NOTE: we can totally use ConvUtility.convertDataType,
+      // but that method pulls in all encode/decode methods which is undesired
+      const extraForVer3 = new MiiExtraInfo(), extraForNx = new MiiExtraInfo();
+      ConvUtility.decodeDataType(rawInput, inputType, info, extraForVer3);
+      ConvUtility.decodeDataType(rawInput, inputType, info, extraForNx);
+
+      // set to convert to special!
+      // extraForVer3.setFlag(MiiExtraFlag.SPECIAL); extraForVer3.isSpecial = true;
+      ConvUtility.adjustExtra(extraForVer3, MiiDataType.VER3_STORE_DATA, newId);
+      ConvUtility.adjustExtra(extraForNx, MiiDataType.NX_CHAR_INFO, newId);
+
+      // extraForVer3.authorId[0] = 1;
+      MiiEncoder.toVer3StoreData(ver3StoreData, info, extraForVer3);
+      MiiEncoder.toStudioData(studioData, info);
+      MiiEncoder.toNxCharInfo(charInfoData, info, extraForNx);
+    }
+  } else {
+    // branch for ver3 input with extension
+
+    // Copy ver3StoreData input through.
+    ver3StoreData.set(rawInput.subarray(0, MiiDataSize.VER3_STORE_DATA));
+    MiiDecoder.fromVer3Data(ver3StoreData, info, extra);
 
     // Overwrite visual colors with the NX common colors from the
     // format-specific extension, normalized to a common Nfp-style layout
@@ -80,70 +126,44 @@ const convertMiiData = (rawInput) => {
     const nfpExtension = ExtendedVer3.getNfpExtensionFromType(extendedType, rawInput);
     ConvUtility.applyNfpExtension(info, nfpExtension);
 
-    const studioData = new Uint8Array(MiiDataSize.STUDIO_DATA);
-    MiiEncoder.toStudioData(studioData, info);
-
-    const charInfoData = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
+    // Encode NX CharInfo / Studio CharInfo.
     ConvUtility.adjustExtraForNx(extra, newId);
     MiiEncoder.toNxCharInfo(charInfoData, info, extra);
+    MiiEncoder.toStudioData(studioData, info);
 
-    // Make extended QR code data compatible with Switch 2 consoles.
+    typeName = MiiDataTypeNames[100 + extendedType];
+  }
+
+  // Emit Switch 2 extended QR code.
+  if (isQrCodeExtended) {
+    // Create the Ounce version extra data.
+    const extraData = new Uint8Array(OunceMiiExtraData.StructLength);
+    extraData[0] = 0x11; // This shows up as plaintext in the final data.
+    extraData[1] = 0x01; // Could possibly mean "version".
+    // Set the extension data at offset 2.
+    setNfpDataFromInfo(extraData.subarray(2), info);
+
+    // Make extended QR code data.
     const data = new Uint8Array(WrappedMiiDataLength + OunceMiiExtraData.EncodedLength);
-
-    const qrData = (async () => {
-      await wrappedMiiData.encrypt(data, buildVer3ForQR(ver3Raw));
-      await ounceExtra.encryptToWrappedData(data,
-        new Uint8Array([0x11, 0x01, ...nfpExtension]));
+    qrData = (async () => {
+      await wrappedMiiData.encrypt(data, buildVer3ForQR(ver3StoreData));
+      await ounceExtra.encryptToWrappedData(data, extraData);
       return data;
     })();
-
-    return /** @type {MiiConversionResult} */ ({
-      typeName: MiiDataTypeNames[100 + extendedType],
-      studioData,
-      ver3StoreData: ver3Raw, // Use the original Ver3StoreData.
-      qrData,
-      charInfoData
-    });
+  } else {
+    // Path to emit normal 3DS/Wii U compatible QR code.
+    const data = new Uint8Array(WrappedMiiDataLength);
+    qrData = wrappedMiiData.encrypt(data, buildVer3ForQR(ver3StoreData))
+      .then(() => data);
   }
 
-  const inputType = MiiFormat.getTypeFromSize(rawInput.length);
-  if (inputType === MiiDataType.UNKNOWN) {
-    throw new Error(`Input format is an unknown size of: ${rawInput.length}`);
-  }
-
-  if (!ConvUtility.decodeDataType(rawInput, inputType, info, extra)) {
-    throw new Error('data conversion failure (CRC mismatch)');
-  }
-
-  // we need separate extra info instances for ver3 and for nx
-  // NOTE: we can totally use ConvUtility.convertDataType,
-  // but that method pulls in all encode/decode methods which is undesired
-  const extraForVer3 = new MiiExtraInfo(), extraForNx = new MiiExtraInfo();
-  ConvUtility.decodeDataType(rawInput, inputType, info, extraForVer3);
-  ConvUtility.decodeDataType(rawInput, inputType, info, extraForNx);
-
-  // set to convert to special!
-  // extraForVer3.setFlag(MiiExtraFlag.SPECIAL); extraForVer3.isSpecial = true;
-
-  ConvUtility.adjustExtra(extraForVer3, MiiDataType.VER3_STORE_DATA, newId);
-  ConvUtility.adjustExtra(extraForNx, MiiDataType.NX_CHAR_INFO, newId);
-
-  const ver3StoreData = new Uint8Array(MiiDataSize.VER3_STORE_DATA),
-    studioData = new Uint8Array(MiiDataSize.STUDIO_DATA),
-    charInfoData = new Uint8Array(MiiDataSize.NX_CHAR_INFO);
-  // extraForVer3.authorId[0] = 1;
-  MiiEncoder.toVer3StoreData(ver3StoreData, info, extraForVer3);
-  MiiEncoder.toStudioData(studioData, info);
-  MiiEncoder.toNxCharInfo(charInfoData, info, extraForNx);
-
-  const data = new Uint8Array(WrappedMiiDataLength);
-  const qrData = wrappedMiiData.encrypt(data, buildVer3ForQR(ver3StoreData)).then(() => data);
   return {
-    typeName: MiiDataTypeNames[inputType],
+    typeName,
     studioData,
     ver3StoreData,
     qrData,
-    charInfoData
+    charInfoData,
+    isQrCodeExtended
   };
 };
 
@@ -220,12 +240,18 @@ const handleConvertDetailsToggle = (/** @type {Event} */ event) => {
  * @param {string} name - Mii name for the QR code and file base name.
  */
 const applyConversionToDetails = (target, result, name) => {
-  const { studioData, ver3StoreData, qrData, charInfoData, typeName } = result;
+  const { studioData, ver3StoreData, qrData, charInfoData, typeName, isQrCodeExtended } = result;
 
   if (typeName) {
     /** @type {HTMLElement} */ (target.querySelector('.input-type'))
       .textContent = typeName;
   }
+
+  // Show/hide QR code labels based on whether it's Switch 2 enhanced.
+  const qrLabel = target.querySelector('.image-qr-label');
+  const qrLabelOunce = target.querySelector('.image-qr-label-ounce');
+  if (qrLabel) qrLabel.style.display = isQrCodeExtended ? 'none' : '';
+  if (qrLabelOunce) qrLabelOunce.style.display = isQrCodeExtended ? '' : 'none';
 
   const studioCode = bytesToHex(studioData);
   /** @type {HTMLElement} */ (target.querySelector('.studio-code'))

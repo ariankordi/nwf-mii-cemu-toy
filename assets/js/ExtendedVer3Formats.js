@@ -24,7 +24,8 @@ const ExtendedVer3DataSize = {
 };
 */
 
-function infoToNfpData(/** @type {Uint8Array} */ dst,
+/** Populates the output 8-byte NfpStoreDataExtention with properties from MiiVisualInfo. */
+function setNfpDataFromInfo(/** @type {Uint8Array} */ dst,
   /** @type {MiiVisualInfo} */ info) {
   // TODO: move to MiiDataLibrary
   dst[0] = info.facelineColor;
@@ -74,7 +75,7 @@ class ExtendedVer3 {
             accessor.getHairDyeMode(), accessor.getHairDye());
         }
         // Convert MiiVisualInfo to the extension.
-        infoToNfpData(extension, info);
+        setNfpDataFromInfo(extension, info);
         return extension;
       }
       case ExtendedVer3DataType.Nfp:
@@ -89,5 +90,6 @@ class ExtendedVer3 {
 
 export {
   ExtendedVer3DataType,
-  ExtendedVer3
+  ExtendedVer3,
+  setNfpDataFromInfo
 };
