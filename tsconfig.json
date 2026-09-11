@@ -11,7 +11,7 @@
 
     "strict": true,
     "noImplicitAny": true,
-    "noUnusedLocals": false, // TODO enable when exports are added
+    "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": false,

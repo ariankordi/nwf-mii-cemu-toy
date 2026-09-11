@@ -313,7 +313,8 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
 
             <div id="qr-status-loaded-tl" style="color: deepskyblue; display: none;">Tomodachi Life Info: <span style="font-weight: bold;">First</span> <span style="font-weight: bold;">Last</span> from <span style="font-weight: bold;"></span> Island <span id="qr-tl-hair-dye" style="font-weight: bold; display: none;">(Has Hair Spray)</span></div>
 
-            <div id="qr-status-loaded-ounce" style="color: #63e8ff; display: none;">Picked up Switch 2 Mii data.</div>
+            <!-- switch 2 hex colors taken from this google image result: https://preview.redd.it/switch-2-red-or-orange-v0-xr5z047ykkfe1.jpeg?width=1382&format=pjpg&auto=webp&s=afef52ec1f4919d39c889658b97f5ab1cf326cfd -->
+            <div id="qr-status-loaded-ounce" style="display: none;">Picked up <span style="color: #63e8ff">Switch 2</span> <span style="color: #ff7a63">Mii data</span>.</div>
 
             <div id="qr-notice-size" style="color: indianred; display: none;">{{T("qr_status_loaded")}}<span></span></div>
 
@@ -866,7 +867,13 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
                     <a class="mii-instructions-link" target="_blank" href="https://miiinstructions.sticksweb.site/?data=">{{T("see_instructions")}}</a>
                 </li>
                 <li>{{T("post_convert_fflstoredata_label")}}<code class="ver3storedata code-block"></code></li>
-                <li style="margin: 5px;" class="image-qr-container">{{T("post_convert_qr_code_label")}}<div style="text-align: center;"><img class="image-qr" alt="{{T("post_convert_qr_code_label")}}"></div>
+                <li style="margin: 5px;" class="image-qr-container">
+                    <span class="image-qr-label">{{T("post_convert_qr_code_label")}}</span>
+                    <span class="image-qr-label-ounce" style="display: none;"><span style="color: #63e8ff">Switch 2 </span><span style="color: #ff7a63">Enhanced</span>
+                        Mii QR Code (hover to enlarge):</span>
+                    <div style="text-align: center;">
+                        <img class="image-qr" alt="{{T("post_convert_qr_code_label")}}">
+                    </div>
                 </li>
                 </ul>
             </div>
@@ -1001,8 +1008,7 @@ This isn't just any 🤓 'Mii Renderer' 🤓, that actually just uses the Mii St
         <ul>
             <li class="small">
                 <a href="https://github.com/Entrivax/maboii.js"><b>maboii.js</b> (amiibo decryption)</a>,
-                <a href="https://github.com/kaitai-io/kaitai_struct_javascript_runtime">Kaitai JS Runtime</a>,
-                <a href="https://github.com/getify-as-is/qr-scanner">qr-scanner (getify-as-is fork)</a>,
+                <a href="https://github.com/nimiq/qr-scanner">qr-scanner</a>,
                 <a href="https://github.com/educastellano/qr.js">qr.js (encoder)</a>
             </li>
         </ul></li>
