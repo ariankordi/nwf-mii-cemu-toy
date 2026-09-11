@@ -3,15 +3,17 @@
  * Sets up event listeners for QR Code scanning.
  * @author Arian Kordi <ariankordi@ariankordi.net>
  */
+// @ts-check
 
 import QrScanner from 'qr-scanner';
 import { findSupportedTypeBySize, getArray16From8 } from './common.js';
-import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './qr/WrappedMiiDataSubtle.js';
-import TomoExtraData from './qr/TomoExtraData.js';
+import { TomoExtraData, OunceMiiExtraData } from './qr/ExtraData.js';
+import { TomoExtraDataKey, OunceMiiExtraDataKey } from './qr/ExtraAesKeys.js';
 import { KeySlot0x31Keys, KeyType } from './qr/WrapAesKeys.js';
 import { Char16, Crc16Ccitt } from './MiiDataLibrary.mjs';
 import Tomo3dsExtraAccessor from './Tomo3dsExtraAccessor.js';
-import { ExtendedVer3, ExtendedVer3DataType } from './ExtendedVer3Formats.js';
+import AesCcmSubtle from './qr/AesCcmSubtle.js';
+import { WrappedMiiData, WrappedMiiDataLength } from './qr/WrappedMiiData.js';
 
 // disable BarcodeDetector api as it does not support binary data
 QrScanner.setBarcodeDetectorDisabled !== undefined && QrScanner.setBarcodeDetectorDisabled();
@@ -25,7 +27,9 @@ const startCameraLabel = document.getElementById('start-camera-label');
 const stopCameraButton = document.getElementById('stop-camera');
 const stopCameraLabel = document.getElementById('stop-camera-label');
 
-const wrapCipher = new WrappedMiiDataSubtle(KeySlot0x31Keys[KeyType.Production]);
+const wrappedMiiData = new WrappedMiiData(new AesCcmSubtle(KeySlot0x31Keys[KeyType.Production]));
+const tomoExtra = new TomoExtraData(TomoExtraDataKey);
+const ounceExtra = new OunceMiiExtraData(new AesCcmSubtle(OunceMiiExtraDataKey));
 
 /**
  * show a status by selectively picking specific id on the dom
@@ -56,7 +60,8 @@ const qrCodeDataReal = document.getElementById('qrcode-data-real');
 // QrScanner.WORKER_PATH = 'https://debian.local:8443/assets/qr-scanner-worker.min.js';
 // const qrScanner = new QrScanner(video, result => handleDecryption(result));
 // only defined when actually needed
-let scanner;
+
+/** @type {QrScanner|undefined} */ let scanner;
 
 startCameraButton.addEventListener('click', () => {
   // initialize scanner only if it is not already initialized
@@ -218,9 +223,9 @@ const qrLoadedTL = document.getElementById('qr-status-loaded-tl');
 const qrLoadedTLHairDye = document.getElementById('qr-tl-hair-dye');
 const qrLoadedOunce = document.getElementById('qr-status-loaded-ounce');
 
-/** Takes the input QR Code data and handles the extra data. */
+/** Takes the input QR Code data and handles the extra data for Tomodachi Life 3DS. */
 async function handleTomodachiLife3DSData(/** @type {Uint8Array} */ bytes) {
-  const extra = await TomoExtraData.decryptFromWrappedData(bytes);
+  const extra = await tomoExtra.decryptFromWrappedData(bytes);
   if (!extra) {
     return extra;
   }
@@ -235,13 +240,9 @@ async function handleTomodachiLife3DSData(/** @type {Uint8Array} */ bytes) {
   return extra;
 }
 
-async function handleOunceData(/** @type {Uint8Array} */ bytes) {
-  // length of structure used in FUN_71000682d0 is 10 bytes
-  return new Uint8Array([
-    0x11, 0x01, // identifier and version
-    0x00, 0x37, 0x23, 0x01, 0x13, 0x08, 0x08, 0x00 // shared with nfp
-  ]);
-}
+/** Takes the input QR Code data and handles the extra data for the Switch 2. */
+const handleOunceData = (/** @type {Uint8Array} */ bytes) =>
+  ounceExtra.decryptFromWrappedData(bytes);
 
 /**
  * TODO: if you want to streamline stuff
@@ -249,7 +250,7 @@ async function handleOunceData(/** @type {Uint8Array} */ bytes) {
  * an error of a "no mii" type and handle showing status separately
  * also the function name is not very accurate
  * it's more like, handle scanning
- * @param {{binaryData: Uint8Array<ArrayBufer>}} result - The result object received from QrScanner.
+ * @param {{binaryData: Uint8Array<ArrayBuffer>}} result - The result object received from QrScanner.
  */
 async function handleDecryption(result) {
   // ^^ only async because of decryptAesCtr/SubtleCr*pto
@@ -270,7 +271,7 @@ async function handleDecryption(result) {
   // const inputData = new Uint8Array(result.bytes);
   let decryptedData = new Uint8Array(96);
   try {
-    const result = await wrapCipher.decrypt(decryptedData, bytes);
+    const result = await wrappedMiiData.decrypt(decryptedData, bytes);
     if (!result) {
       showStatus('no-mii', 'CBC-MAC of encrypted data is invalid.');
       return;
@@ -296,15 +297,17 @@ async function handleDecryption(result) {
   {
     // NOTE: oops, ExtendedVer3 doesn't account for "qr code extra data" length uh
     // const extraType = ExtendedVer3.getTypeFromSize(bytes.length);
-    /** @type {Uint8Array<ArrayBuffer>} */ let ex;
-    const appendExtra = () => decryptedData = new Uint8Array([...decryptedData, ...ex]);
+    const appendExtra = (/** @type {Uint8Array} */ b) =>
+      decryptedData = new Uint8Array([...decryptedData, ...b]);
+
+    let ex;
     if (bytes.length === 372 &&
       (ex = await handleTomodachiLife3DSData(bytes))) {
-      appendExtra();
+      appendExtra(ex);
       qrLoadedTL.style.display = '';
     } else if (bytes.length === 144 &&
       bytes[0x70] == 0x11 && (ex = await handleOunceData(bytes))) {
-      appendExtra();
+      appendExtra(ex);
       qrLoadedOunce.style.display = '';
     }
   }

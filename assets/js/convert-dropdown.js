@@ -14,11 +14,15 @@ import {
   StudioObfuscation
 } from './MiiDataLibrary.mjs';
 import { KeySlot0x31Keys, KeyType } from './qr/WrapAesKeys.js';
-import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './qr/WrappedMiiDataSubtle.js';
-import { MiiLogoQrCode } from './qr/MiiLogoQrCode.js';
+import { WrappedMiiDataLength, WrappedMiiData } from './qr/WrappedMiiData.js';
+import { getQrCodePng, MiiLogoQrCode } from './qr/MiiLogoQrCode.js';
 import { ExtendedVer3, ExtendedVer3DataType } from './ExtendedVer3Formats.js';
+import AesCcmSubtle from './qr/AesCcmSubtle.js';
+import { OunceMiiExtraData } from './qr/ExtraData.js';
+import { OunceMiiExtraDataKey } from './qr/ExtraAesKeys.js';
 
-const wrappedMiiData = new WrappedMiiDataSubtle(KeySlot0x31Keys[KeyType.Production]);
+const wrappedMiiData = new WrappedMiiData(new AesCcmSubtle(KeySlot0x31Keys[KeyType.Production]));
+const ounceExtra = new OunceMiiExtraData(new AesCcmSubtle(OunceMiiExtraDataKey));
 
 /**
  * Maps MiiDataType values to display strings.
@@ -83,18 +87,20 @@ const convertMiiData = (rawInput) => {
     ConvUtility.adjustExtraForNx(extra, newId);
     MiiEncoder.toNxCharInfo(charInfoData, info, extra);
 
-    // Make extended QR code data.
-    // TODO TODO TODO UNFINISHED
-    const data = new Uint8Array(144);
-    data.set(buildVer3ForQR(ver3Raw));
-    console.debug(nfpExtension);
-    const qrData = (async () => data)();
+    // Make extended QR code data compatible with Switch 2 consoles.
+    const data = new Uint8Array(WrappedMiiDataLength + OunceMiiExtraData.EncodedLength);
+
+    const qrData = (async () => {
+      await wrappedMiiData.encrypt(data, buildVer3ForQR(ver3Raw));
+      await ounceExtra.encryptToWrappedData(data,
+        new Uint8Array([0x11, 0x01, ...nfpExtension]));
+      return data;
+    })();
 
     return /** @type {MiiConversionResult} */ ({
       typeName: MiiDataTypeNames[100 + extendedType],
       studioData,
-      // The embedded Ver3 bytes already have correct Ver3 colors; copy them.
-      ver3StoreData: ver3Raw.slice(),
+      ver3StoreData: ver3Raw, // Use the original Ver3StoreData.
       qrData,
       charInfoData
     });
@@ -167,7 +173,7 @@ const buildVer3ForQR = (ver3StoreData) => {
  * Uses the Mii name if non-empty, otherwise a timestamp + format class.
  */
 const buildFileBaseName = (/** @type {string} */ name,
-  /** @type {string=} */ typeName) => {
+  typeName = 'Unknown') => {
   if (name) {
     return name;
   }
@@ -179,8 +185,7 @@ const buildFileBaseName = (/** @type {string} */ name,
     pad2(now.getDate()) + '_' +
     pad2(now.getHours()) + '-' +
     pad2(now.getMinutes()) + '-' +
-    pad2(now.getSeconds()) + '-' +
-    (typeName || 'Unknown');
+    pad2(now.getSeconds()) + '-' + typeName;
 };
 
 const handleConvertDetailsToggle = (/** @type {Event} */ event) => {
@@ -199,12 +204,9 @@ const handleConvertDetailsToggle = (/** @type {Event} */ event) => {
   const rawInput = parseHexOrB64ToBytes(dataValue);
   const name = target.dataset.name || 'Mii';
 
-  const t0 = performance.now();
-
+  // const t0 = performance.now();
   const result = convertMiiData(rawInput);
-
-  const t1 = performance.now();
-  console.log(`convertMiiData: ${t1 - t0} ms`);
+  // console.debug(`convertMiiData: ${performance.now() - t0} ms`);
 
   applyConversionToDetails(target, result, name);
   target.dataset.revealed = '1';
@@ -258,12 +260,12 @@ const applyConversionToDetails = (target, result, name) => {
   const modelButton = target.querySelector('.model-download-button');
   const imgElement = target.parentElement && target.parentElement.querySelector('img');
   if (modelButton && imgElement) {
-    const linkAdjustGlb = imgElement.src
+    const linkAdjustModel = imgElement.src
       // switch shader has transparent faceline
       // texture which will look wrong so we remove it
       .replace('&shaderType=switch', '')
       .replace('.png?', '.glb?');
-    modelButton.setAttribute('action', linkAdjustGlb);
+    modelButton.setAttribute('action', linkAdjustModel);
   }
 
   // QR code is async (AES encryption + PNG generation).
@@ -271,7 +273,9 @@ const applyConversionToDetails = (target, result, name) => {
 
   /** Async task for QR Code creation created without awaiting. */
   (async () => {
-    qrCodeImage.src = await MiiLogoQrCode.generatePng(await qrData, name);
+    const d = await qrData;
+    const src = await getQrCodePng(d, name);
+    qrCodeImage.src = src;
   })();
 };
 
@@ -326,4 +330,8 @@ const bindResultTemplateHandlers = (cloneEl, copyHandler) => {
   }
 };
 
-export { bindResultTemplateHandlers, convertMiiData, applyConversionToDetails };
+export {
+  bindResultTemplateHandlers,
+  convertMiiData,
+  applyConversionToDetails
+};
