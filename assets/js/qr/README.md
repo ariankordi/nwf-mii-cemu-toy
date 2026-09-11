@@ -4,7 +4,7 @@ This is a "submodule", if you want to consider it that, for handling Mii QR code
 If this is useful to you, feel free to import it into your own project:
 ```sh
 # Remember to grab the latest commit hash and paste it after the #
-npm i github:ariankordi/nwf-mii-cemu-toy#0296069
+npm i github:ariankordi/nwf-mii-cemu-toy#ca9c901
 ```
 
 # License

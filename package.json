@@ -32,7 +32,7 @@
   },
   "files": [
     "assets/js/",
-    "assets/js/kaitai-dist/"
+    "assets/js/qr/"
   ],
   "dependencies": {
     "qr-scanner": "github:ariankordi/qr-scanner-binary#140fda0",

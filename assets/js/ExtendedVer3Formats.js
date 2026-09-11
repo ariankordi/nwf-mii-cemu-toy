@@ -1,3 +1,7 @@
+/**
+ * @file ExtendedVer3Formats.js
+ * @author Arian Kordi <https://github.com/ariankordi>
+ */
 // @ts-check
 
 import { MiiDataSize, MiiDecoder, MiiVisualInfo } from './MiiDataLibrary.mjs';
