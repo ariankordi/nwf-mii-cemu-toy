@@ -48,7 +48,7 @@ import (
 	// ... or gorm in general if you don't even want it
 	"github.com/aarol/reload"
 	"github.com/glebarez/sqlite"
-	"gorm.io/driver/postgres"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
 	// import swaggo documentation:
@@ -273,7 +273,7 @@ func main() {
 	// TODO: hacky non descriptive or helpful name
 	const defaultNNASCacheDBDSN = "./nnas_cache_b4_multi.db"
 	flag.StringVar(&nnasCacheDBDSN, "cache-db", defaultNNASCacheDBDSN, "Cache DB SQLite location")
-	flag.StringVar(&nnidToMiiMapDBDSN, "nnid-to-mii-map-db", "", "Postgres connection string for NNID to Mii mapping database. If you exclude this, it will not be used. If it is the same as the cache DSN, it will use that database instead.")
+	flag.StringVar(&nnidToMiiMapDBDSN, "nnid-to-mii-map-db", "", "MySQL connection string for NNID to Mii mapping database. If you exclude this, it will not be used. If it is the same as the cache DSN, it will use that database instead.")
 	// defined/used in nnid_fetch.go
 	flag.StringVar(&nnidToMiiDataTable, "nnid-to-mii-map-table", "nnid_to_mii_data_map", "NNID to Mii mapping table if it's not the default.")
 
@@ -381,8 +381,8 @@ func main() {
 			log.Println("nnid to mii map dsn is same as nnas cache dsn, using nnas cache database for nnid to mii map (may or may not actually work)")
 			nnidToMiiMapDBConn = nnasCacheDBConn
 		} else {
-			log.Println("using nnid to mii map postgres database")
-			nnidToMiiMapDBConn = postgres.Open(nnidToMiiMapDBDSN)
+			log.Println("using nnid to mii map mysql database")
+			nnidToMiiMapDBConn = mysql.Open(nnidToMiiMapDBDSN)
 		}
 	}
 	initNNIDFetchDatabases(nnasCacheDBConn, nnidToMiiMapDBConn)
