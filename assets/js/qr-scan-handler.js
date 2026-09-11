@@ -3,22 +3,20 @@
  * Sets up event listeners for QR Code scanning.
  * @author Arian Kordi <ariankordi@ariankordi.net>
  */
+// @ts-check
 
 import QrScanner from 'qr-scanner';
-/** Used in {@link handleTomodachiLife3DSData} */
-import { parseTomodachiLifeQRCodeData } from './data-conversion.js';
-import {
-  // CRC-16/CCITT/XMODEM implementation.
-  crc16,
-  extractUTF16Text,
-  findSupportedTypeBySize
-} from './common.js';
-import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
-import TomoExtraData from './TomoExtraData.js';
-import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
+import { findSupportedTypeBySize, getArray16From8 } from './common.js';
+import { TomoExtraData, OunceMiiExtraData } from './qr/ExtraData.js';
+import { TomoExtraDataKey, OunceMiiExtraDataKey } from './qr/ExtraAesKeys.js';
+import { KeySlot0x31Keys, KeyType } from './qr/WrapAesKeys.js';
+import { Char16, Crc16Ccitt } from './MiiDataLibrary.mjs';
+import Tomo3dsExtraAccessor from './Tomo3dsExtraAccessor.js';
+import AesCcmSubtle from './qr/AesCcmSubtle.js';
+import { WrappedMiiData, WrappedMiiDataLength } from './qr/WrappedMiiData.js';
 
 // disable BarcodeDetector api as it does not support binary data
-QrScanner.setBarcodeDetectorDisabled();
+QrScanner.setBarcodeDetectorDisabled !== undefined && QrScanner.setBarcodeDetectorDisabled();
 
 const qrFileInput = document.getElementById('qr-file');
 const video = document.getElementById('qr-video');
@@ -29,7 +27,9 @@ const startCameraLabel = document.getElementById('start-camera-label');
 const stopCameraButton = document.getElementById('stop-camera');
 const stopCameraLabel = document.getElementById('stop-camera-label');
 
-const wrapCipher = new WrappedMiiDataSubtle(KeySlot0x31Keys[KeyType.Production]);
+const wrappedMiiData = new WrappedMiiData(new AesCcmSubtle(KeySlot0x31Keys[KeyType.Production]));
+const tomoExtra = new TomoExtraData(TomoExtraDataKey);
+const ounceExtra = new OunceMiiExtraData(new AesCcmSubtle(OunceMiiExtraDataKey));
 
 /**
  * show a status by selectively picking specific id on the dom
@@ -60,7 +60,8 @@ const qrCodeDataReal = document.getElementById('qrcode-data-real');
 // QrScanner.WORKER_PATH = 'https://debian.local:8443/assets/qr-scanner-worker.min.js';
 // const qrScanner = new QrScanner(video, result => handleDecryption(result));
 // only defined when actually needed
-let scanner;
+
+/** @type {QrScanner|undefined} */ let scanner;
 
 startCameraButton.addEventListener('click', () => {
   // initialize scanner only if it is not already initialized
@@ -218,33 +219,30 @@ function scanFile(file) {
   }
 }
 
-const qrLoadedTL = document.getElementById('qr-status-loaded-tomodachilife');
-const qrLoadedTLHairDye = document.getElementById('qr-tomodachilife-hair-dye');
+const qrLoadedTL = document.getElementById('qr-status-loaded-tl');
+const qrLoadedTLHairDye = document.getElementById('qr-tl-hair-dye');
+const qrLoadedOunce = document.getElementById('qr-status-loaded-ounce');
 
-/**
- * @param {Uint8Array} bytes
- * @param {Uint8Array} data
- * @returns {Promise<Uint8Array>}
- */
-async function handleTomodachiLife3DSData(bytes, data) {
-  let extra = await TomoExtraData.decryptFromWrappedData(bytes);
+/** Takes the input QR Code data and handles the extra data for Tomodachi Life 3DS. */
+async function handleTomodachiLife3DSData(/** @type {Uint8Array} */ bytes) {
+  const extra = await tomoExtra.decryptFromWrappedData(bytes);
   if (!extra) {
     return extra;
   }
 
-  extra = new Uint8Array([...data, ...extra]);
-  const dataObj = {};
-  // NOTE may not be defined:
-  parseTomodachiLifeQRCodeData(extra, dataObj);
-  // TODO check if that worked and props are there
-
-  qrLoadedTL.children[0].textContent = dataObj.firstName;
-  qrLoadedTL.children[1].textContent = dataObj.lastName;
-  qrLoadedTL.children[2].textContent = dataObj.islandName;
-  qrLoadedTLHairDye.style.display = dataObj.hairDyeMode ? '' : 'none';
+  const accessor = new Tomo3dsExtraAccessor(extra);
+  qrLoadedTL.children[0].textContent = accessor.getFirstName();
+  qrLoadedTL.children[1].textContent = accessor.getLastName();
+  qrLoadedTL.children[2].textContent = accessor.getIslandName();
+  qrLoadedTLHairDye.style.display =
+    accessor.getHairDyeMode() === 0 ? 'none' : '';
 
   return extra;
 }
+
+/** Takes the input QR Code data and handles the extra data for the Switch 2. */
+const handleOunceData = (/** @type {Uint8Array} */ bytes) =>
+  ounceExtra.decryptFromWrappedData(bytes);
 
 /**
  * TODO: if you want to streamline stuff
@@ -252,7 +250,7 @@ async function handleTomodachiLife3DSData(bytes, data) {
  * an error of a "no mii" type and handle showing status separately
  * also the function name is not very accurate
  * it's more like, handle scanning
- * @param {{binaryData: Uint8Array<ArrayBufer>}} result - The result object received from QrScanner.
+ * @param {{binaryData: Uint8Array<ArrayBuffer>}} result - The result object received from QrScanner.
  */
 async function handleDecryption(result) {
   // ^^ only async because of decryptAesCtr/SubtleCr*pto
@@ -273,7 +271,7 @@ async function handleDecryption(result) {
   // const inputData = new Uint8Array(result.bytes);
   let decryptedData = new Uint8Array(96);
   try {
-    const result = await wrapCipher.decrypt(decryptedData, bytes);
+    const result = await wrappedMiiData.decrypt(decryptedData, bytes);
     if (!result) {
       showStatus('no-mii', 'CBC-MAC of encrypted data is invalid.');
       return;
@@ -285,39 +283,33 @@ async function handleDecryption(result) {
     return;
   }
 
-  // tomodachi life, miitomo = 172
-  // const isTomodachi3ds = bytes.length === TOMODACHI_LIFE_3DS_QR_DATA_SIZE;
-  const isTomodachi3ds = TomoExtraData.getDataName(bytes.length - WrappedMiiDataLength - 16 /* iv */ - 4 /* crc */) === 'tomodachi-life-data';
-
-  if (isTomodachi3ds) {
-    const ret = await handleTomodachiLife3DSData(bytes, decryptedData);
-    if (ret) {
-      decryptedData = ret;
-    }
-  } else if (bytes.length == 122) { // miic
-    const extra = bytes.slice(WrappedMiiDataLength);
-    decryptedData = new Uint8Array([...decryptedData, ...extra]);
-  }
-
-  const miiName = extractUTF16Text(decryptedData, 0x1A);
-
-  // crc16 verify
-  const dataCrc16 = decryptedData.slice(94, 96);
-  // convert the decrypted qr crc16 to uint16
-  const dataCrc16u16 = (dataCrc16[0] << 8) | dataCrc16[1];
-
-  // now calculate the expected crc16 for the data
-  const expectedCrc16 = crc16(decryptedData.slice(0, 94));
-
-  if (expectedCrc16 !== dataCrc16u16) {
+  const name16 = getArray16From8(decryptedData.subarray(0x1A), true);
+  const miiName = Char16.toString(name16, 10);
+  if (Crc16Ccitt.calculate(decryptedData.subarray(0, 96), 96) !== 0) {
     showStatus('no-mii', 'CRC16 checksum failed.');
     // scanning should continue then
     return;
   }
 
   showStatus('loaded', miiName);
-  if (isTomodachi3ds) {
-    qrLoadedTL.style.display = '';
+
+  // handle extra data
+  {
+    // NOTE: oops, ExtendedVer3 doesn't account for "qr code extra data" length uh
+    // const extraType = ExtendedVer3.getTypeFromSize(bytes.length);
+    const appendExtra = (/** @type {Uint8Array} */ b) =>
+      decryptedData = new Uint8Array([...decryptedData, ...b]);
+
+    let ex;
+    if (bytes.length === 372 &&
+      (ex = await handleTomodachiLife3DSData(bytes))) {
+      appendExtra(ex);
+      qrLoadedTL.style.display = '';
+    } else if (bytes.length === 144 &&
+      bytes[0x70] == 0x11 && (ex = await handleOunceData(bytes))) {
+      appendExtra(ex);
+      qrLoadedOunce.style.display = '';
+    }
   }
 
   // finished, stop camera if it is open
@@ -327,8 +319,8 @@ async function handleDecryption(result) {
   // hide video element
   video.style.height = '0px';
   videoGroup.style.display = 'none';
-  startCameraButton.style.display = ''; // Unhide start button
-  startCameraLabel.style.display = ''; // Unhide start label
+  startCameraButton.style.display = ''; // Un-hide start button
+  startCameraLabel.style.display = ''; // Un-hide start label
   stopCameraButton.style.display = 'none'; // Hide stop button
   stopCameraLabel.style.display = 'none'; // Hide stop label
 

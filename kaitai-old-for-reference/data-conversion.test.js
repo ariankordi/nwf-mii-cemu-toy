@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import { parse } from 'csv-parse/sync';
 import * as conv from './data-conversion.js';
-import { base64ToBytes, bytesToHex, hexToBytes } from './common.js';
+import { base64ExToBytes, bytesToHex, hexToBytes } from './common.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -163,19 +163,19 @@ class Normalize {
  * @param {TestDataTableElement} entry
  * @param {boolean} [fromNX]
  */
-const testConvEntry = (entry, fromNX = false) => () => {
-  /** @type {Uint8Array} */ const srcBytes = new Uint8Array(96);
+const testConversionEntry = (entry, fromNX = false) => () => {
+  /** @type {Uint8Array} */ const srcVer3 = new Uint8Array(96);
   /** @type {Uint8Array} */ let expectedCore;
   /** @type {Uint8Array} */ let expectedStudio;
 
   beforeAll(() => {
     // Prepare byte buffers once per entry.
-    const src = base64ToBytes(entry.ver3StoreData);
+    const src = base64ExToBytes(entry.ver3StoreData);
     expect(src.length).toBeGreaterThanOrEqual(92); // .toHaveLength(96);
-    srcBytes.set(src);
+    srcVer3.set(src);
 
     if (entry.nnmiiCoreData) {
-      expectedCore = base64ToBytes(entry.nnmiiCoreData);
+      expectedCore = base64ExToBytes(entry.nnmiiCoreData);
       expect(expectedCore).toHaveLength(48);
     }
 
@@ -215,8 +215,8 @@ const testConvEntry = (entry, fromNX = false) => () => {
       const roundTrip = conv.convertDataToType(rawRfl, conv.ver3Format, null, false);
 
       /** Source bytes copied for normalization. */
-      const srcBytesForCompare = new Uint8Array(srcBytes.length);
-      srcBytesForCompare.set(srcBytes);
+      const srcBytesForCompare = new Uint8Array(srcVer3.length);
+      srcBytesForCompare.set(srcVer3);
       normalize(srcBytesForCompare);
       normalize(roundTrip);
 
@@ -228,7 +228,7 @@ const testConvEntry = (entry, fromNX = false) => () => {
   if (entry.studioCharInfo) {
     if (!fromNX) {
       it('converts Ver3StoreData -> Studio CharInfo', () => {
-        const studio = conv.convertDataToType(srcBytes, conv.studioFormat, null);
+        const studio = conv.convertDataToType(srcVer3, conv.studioFormat, null);
 
         TestUtility.expectBuffersEqual(studio, expectedStudio);
       });
@@ -254,8 +254,8 @@ const testConvEntry = (entry, fromNX = false) => () => {
       // Set copyable to 1 for source - always gets set to 1 in destinati
 
       /** Source bytes copied for normalization. */
-      const srcBytesForCompare = new Uint8Array(srcBytes.length);
-      srcBytesForCompare.set(srcBytes);
+      const srcBytesForCompare = new Uint8Array(srcVer3.length);
+      srcBytesForCompare.set(srcVer3);
       normalize(srcBytesForCompare);
       normalize(roundTrip);
 
@@ -289,8 +289,8 @@ const testConvEntry = (entry, fromNX = false) => () => {
       // TODO: Continuity Termination
 
       /** Source bytes copied for normalization. */
-      const srcBytesForCompare = new Uint8Array(srcBytes.length);
-      srcBytesForCompare.set(srcBytes);
+      const srcBytesForCompare = new Uint8Array(srcVer3.length);
+      srcBytesForCompare.set(srcVer3);
       normalize(srcBytesForCompare);
       normalize(roundTrip);
 
@@ -342,7 +342,7 @@ const testConvEntry = (entry, fromNX = false) => () => {
 
   if (entry.nfpStoreData && entry.nnmiiCharInfo) {
     it('converts NfpStoreData -> CharInfo', () => {
-      const nfpBytes = base64ToBytes(/** @type {string} */(entry.nfpStoreData));
+      const nfpBytes = base64ExToBytes(/** @type {string} */(entry.nfpStoreData));
       const expectedCharInfo = hexToBytes(/** @type {string} */(entry.nnmiiCharInfo));
       const actualCharInfo = conv.convertDataToType(nfpBytes, conv.charInfoFormat, null, false);
       Normalize.nnmiiCharInfoNormalize(expectedCharInfo);
@@ -364,14 +364,14 @@ describe('Mii data cross-conversion tests', () => {
     }
 
     const name = `${entry.label} / ${entry.details}`;
-    describe(name, testConvEntry(entry));
+    describe(name, testConversionEntry(entry));
     // describe
   }
   // testDataTable.forEach
 
   for (const entry of testDataTableFromNX) {
     const name = `${entry.label} / ${entry.details}`;
-    describe(name, testConvEntry(entry, /* fromNX */ true));
+    describe(name, testConversionEntry(entry, /* fromNX */ true));
     // describe
   }
   // testDataTableFromNX.forEach
@@ -381,9 +381,9 @@ describe('Mii data cross-conversion tests', () => {
   describe('QR code encryption wrapping tests', () => {
     it('encodes Ver3StoreData and wraps for QR code correctly', async () => {
       // Expected wrapped/encrypted QR code data.
-      const expectedQR = base64ToBytes(testWrappedStoreData);
+      const expectedQR = base64ExToBytes(testWrappedStoreData);
       // Get the raw Ver3StoreData.
-      const rawData = base64ToBytes(testVer3StoreDataForWrap);
+      const rawData = base64ExToBytes(testVer3StoreDataForWrap);
       // Convert to object, and then back to StoreData.
       const obj = conv
         .createNewInstanceOfKaitaiStructFormat(conv.ver3Format, rawData);
@@ -403,7 +403,7 @@ describe('Mii data cross-conversion tests', () => {
 
     it('clears temporary flag (bit 5) when encoding', () => {
       // Set bit 5 in avatarId[0] in the raw bytes before encoding.
-      const src = base64ToBytes(normalVer3);
+      const src = base64ExToBytes(normalVer3);
       src[0x0C] |= 0b00100000; // FFLI_CREATE_ID_FLAG_TEMPORARY
 
       const encoded = conv.convertDataToType(src, conv.ver3Format, null, true);
@@ -414,7 +414,7 @@ describe('Mii data cross-conversion tests', () => {
     it('assigns normal/Wii U createid when only temporary flag was set (treated as null)', () => {
       // avatarId[0] = 0x20: only the temporary bit. After clearing it becomes 0,
       // so isArrayNull fires and a fresh normal/Wii U createid is generated.
-      const src = base64ToBytes(normalVer3);
+      const src = base64ExToBytes(normalVer3);
       src[0x0C] = 0b00100000;
       // Zero out the rest of the createid (avatarId bytes 1-3 + clientId).
       TestUtility.zeroRange(src, 0x0D, 0x16);
@@ -427,7 +427,7 @@ describe('Mii data cross-conversion tests', () => {
     });
 
     it('assigns normal/Wii U createid when createid is fully null', () => {
-      const src = base64ToBytes(normalVer3);
+      const src = base64ExToBytes(normalVer3);
       // Zero out avatarId (0x0C-0x0F) and clientId (0x10-0x15).
       TestUtility.zeroRange(src, 0x0C, 0x16);
 
@@ -439,7 +439,7 @@ describe('Mii data cross-conversion tests', () => {
     it('preserves Special Mii createid (Miyamoto, 3DS origin)', () => {
       // Miyamoto: avatarId[0] = 0x15 (non-zero, bit7=0 -> special mii).
       // Encoding should not reassign the createid.
-      const src = base64ToBytes(testVer3StoreDataForWrap);
+      const src = base64ExToBytes(testVer3StoreDataForWrap);
       expect(src[0x0C]).toBe(0x15); // sanity-check fixture
 
       const encoded = conv.convertDataToType(src, conv.ver3Format, null, true);
@@ -451,7 +451,7 @@ describe('Mii data cross-conversion tests', () => {
   describe('Library-specific behavior tests', () => {
     it('fills null name with default when encoding to CharInfo', () => {
       // Ver3StoreData with an all-zero name field.
-      const emptyNameVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
+      const emptyNameVer3 = base64ExToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
       const studio = conv.convertDataToType(emptyNameVer3, conv.studioFormat);
       const charInfo = conv.convertDataToType(studio, conv.charInfoFormat);
 
@@ -497,7 +497,7 @@ describe('Mii data cross-conversion tests', () => {
       const input = 'Should\u0000Not';
 
       // Ver3StoreData with an all-zero name field.
-      const emptyNameVer3 = base64ToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
+      const emptyNameVer3 = base64ExToBytes('AwAAQAAAAAAAAAAAgAAAAOz/gtIAAAAAABBuAG8AIABuAGEAbQBlAAAAAAAAAEBAgQBEAAJoRBgGNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQV');
 
       const nameBuffer = new Uint16Array(emptyNameVer3.buffer, 0x1A, 0x20);
       for (let i = 0; i < input.length; i++) {

@@ -27,10 +27,7 @@ import * as Gen3Studio from '../kaitai-dist/Gen3Studio.cjs';
 import * as Gen3Switch from '../kaitai-dist/Gen3Switch.cjs';
 import * as Gen3Switchgame from '../kaitai-dist/Gen3Switchgame.cjs';
 import * as TomodachiLifeQrCode from '../kaitai-dist/TomodachiLifeQrCode.cjs';
-import {
-  /** CRC-16/CCITT - used in {@link encode3DSStoreDataFromStruct}, {@link wrapVer3StoreDataForQR} */
-  crc16
-} from './common.js';
+import { bytesToHex } from './common.js';
 import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
 
@@ -176,7 +173,7 @@ const supportedFormats = [{
 // for NfpStoreDataExtention:
 {
   className: 'Gen2Wiiu3dsMiitomo',
-  sizes: [104, 106, 108], // 106/108 = for mii-creator ".miic"
+  sizes: [104],
   technicalName: 'Ver3StoreData + NfpStoreDataExtention (amiibo Data)',
   version: 3,
   parseExtensionFunction: 'parseNfpStoreDataExtention',
@@ -1133,14 +1130,6 @@ const convertDataToType = (data, outputFormat, inputFormat, optionalBoolToEncode
 // //  Codec Utilities, String Utilities
 // // ---------------------------------------------------------------------
 
-/**
- * U8 -> Hex / https://www.xaymar.com/articles/2020/12/08/fastest-uint8array-to-hex-string-conversion-in-javascript/
- * @param {Array<number>|Uint8Array} bytes - Input data to encode.
- * @returns {string} Hexadecimal representation of `buffer`.
- */
-const bytesToHex = bytes => Array.prototype.map.call(bytes,
-  (/** @type {{ toString: (arg0: number) => string; }} */ x) => x.toString(16).padStart(2, '0')).join('');
-
 // !! == ALL BELOW TAKEN FROM "mii2studio in js ai slop attempt 1" FIDDLE == !!
 
 // Helper functions
@@ -1188,6 +1177,27 @@ const isArrayNull = array => array.every(i => i === 0);
 // // ---------------------------------------------------------------------
 // //  Encoding Methods
 // // ---------------------------------------------------------------------
+
+/**
+ * Calculates the CRC-16/CCITT/XMODEM checksum for the specified input data.
+ * Courtesy of Luciano Barcaro: https://stackoverflow.com/a/30357446
+ * @param {Uint8Array|Array<number>} data - The data to create a checksum of.
+ * @returns {number} The calculated CRC-16 checksum.
+ */
+function crc16(data) {
+  let msb = 0;
+  let lsb = 0;
+
+  for (let i = 0; i < data.length; i++) {
+    const c = data[i];
+    let x = c ^ msb;
+    x ^= (x >> 4);
+    msb = (lsb ^ (x >> 3) ^ (x << 4)) & 0xFF;
+    lsb = (x ^ (x << 5)) & 0xFF;
+  }
+
+  return (msb << 8) | lsb;
+}
 
 /**
  * NOTE: customized for the kaitai by GPT-4o...
@@ -1477,7 +1487,6 @@ export {
   studioURLObfuscationEncode,
   studioURLEncodeHex,
   parseTomodachiLifeQRCodeData,
-  bytesToHex,
   DEFAULT_NAME_IF_NONE,
   // for tests:
   removeEverythingAfterNullTerminator,
