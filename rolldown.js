@@ -45,10 +45,6 @@ const outMapFile = outFile + '.map';
 const bundle = await rolldown({
   input: 'assets/js/bundle.js',
   platform: 'browser',
-
-  // zlib/iconv-lite are kaitai deps unused in browser
-  external: ['zlib', 'iconv-lite'],
-
   plugins: [babelPlugin, babelPluginVendor]
 });
 
@@ -80,6 +76,10 @@ const transformed = transformSync(code, {
 const result = await minify(transformed.code, {
   ecma: 2017,
   format: { comments: false },
+  mangle: {
+    // mangle properties starting with an underscore
+    properties: { regex: /^_/ }
+  },
   sourceMap: {
     content: JSON.stringify(transformed.map),
     url: 'js-bundle.min.js.map'

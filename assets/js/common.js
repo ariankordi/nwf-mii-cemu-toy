@@ -1,119 +1,72 @@
+// @ts-check
+
+import { ExtendedVer3 } from './ExtendedVer3Formats.js';
+
 // #region Utility: Base64 -> U8, Hex -> U8, U8 -> Hex
 // // ---------------------------------------------------------------------
 // //  Utility: Base64 -> U8, Hex -> U8, U8 -> Hex
 // // ---------------------------------------------------------------------
 // Merge to class: CodecUtility, TextCodingUtil, TextCodec
 
-/**
- * Base64 -> U8 / https://stackoverflow.com/a/41106346
- * @param {string} base64 - Input Base64 data to decode.
- * @returns {Uint8Array} Decoded input data.
- */
-const base64ToBytesCore = base64 => Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-/**
- * Hex -> U8
- * @param {string} hex - Input hex data to decode.
- * @returns {Uint8Array} Decoded input data.
- */
-const hexToBytes = hex => Uint8Array.from({ length: hex.length >>> 1 }, (_, i) =>
-  Number.parseInt(hex.slice(i << 1, (i << 1) + 2), 16));
+// Base64
 
-/**
- * U8 -> Hex / https://www.xaymar.com/articles/2020/12/08/fastest-uint8array-to-hex-string-conversion-in-javascript/
- * @param {Array<number>|Uint8Array} bytes - Input data to encode.
- * @returns {string} Hexadecimal representation of `buffer`.
- */
-const bytesToHex = bytes => Array.prototype.map.call(bytes,
-  (/** @type {{ toString: (arg0: number) => string; }} */ x) =>
-    x.toString(16).padStart(2, '0')).join(''); // padStart: ES2017
+/** Base64 -> Bytes / https://stackoverflow.com/a/41106346 */
+const base64ToBytes = (/** @type {string} */ base64) =>
+  Uint8Array.from(atob(base64), c => c.charCodeAt(0));
 
-/**
- * U8 -> Base64
- * @param {Array<number>|Uint8Array} bytes - Input data to encode.
- * @returns {string} Base64 representation of `buffer`.
- */
-const bytesToBase64 = bytes =>
-// fromCharCode should be compatible with Uint8Array, but its param type is number[].
-  btoa(String.fromCharCode.apply(null, /** @type {Array<number>} */ (bytes)));
+/** Bytes -> Base64 */
+const bytesToBase64 = (/** @type {ArrayLike<number>} */ bytes) =>
+  btoa(String.fromCharCode.apply(null, bytes));
+
+// Base64: Extended
 
 /**
  * Base64 -> U8 function that also supports Base64URL
  * encoding, and adds padding if it is missing.
  * @param {string} base64 - Input Base64 or Base64URL data to decode.
- * @returns {Uint8Array} Decoded input data.
  */
-function base64ToBytes(base64) {
+function base64ExToBytes(base64) {
   // Replace URL-safe characters with regular Base64 equivalents.
   base64 = base64.replace(/-/g, '+').replace(/_/g, '/');
   // Add padding to the Base64 string if it is missing.
   while (base64.length % 4 !== 0) {
     base64 += '=';
   }
-  return base64ToBytesCore(base64);
+  return base64ToBytes(base64);
 }
+
+// Hex
+
+/** Hex -> Bytes */
+const hexToBytes = (/** @type {string} */ hex) =>
+  Uint8Array.from({ length: hex.length >>> 1 }, (_, i) =>
+    Number.parseInt(hex.slice(i << 1, (i << 1) + 2), 16));
+
+/** U8 -> Hex / https://www.xaymar.com/articles/2020/12/08/fastest-uint8array-to-hex-string-conversion-in-javascript/ */
+const bytesToHex = (/** @type {ArrayLike<number>} */ bytes) =>
+  Array.prototype.map.call(bytes,
+    (/** @type {{ toString: (arg0: number) => string; }} */ x) =>
+      x.toString(16).padStart(2, '0')).join('');
 
 // #endregion
 
-const stripSpaces = str => str.replace(/\s+/g, '');
-
-const parseHexOrB64ToBytes = (text) => {
-  // decode it to a uint8array whether it's hex or base64
-  const textData = stripSpaces(text);
-  // check if it's base 16 exclusively, otherwise assume base64
-  return /^[0-9a-fA-F]+$/.test(textData) ? hexToBytes(textData) : base64ToBytesCore(textData);
+/** Parses either hex or Base64 -> U8, stripping spaces from the input. */
+const parseHexOrB64ToBytes = (/** @type {string} */ text) => {
+  text = text.replace(/\s+/g, ''); // Strip spaces.
+  // Check if it is hex, otherwise assume it is Base64.
+  return /^[0-9a-fA-F]+$/.test(text)
+    ? hexToBytes(text)
+    : base64ExToBytes(text);
 };
 
-/**
- * Calculates the CRC-16/CCITT/XMODEM checksum for the specified input data.
- * Courtesy of Luciano Barcaro: https://stackoverflow.com/a/30357446
- * @param {Uint8Array|Array<number>} data - The data to create a checksum of.
- * @returns {number} The calculated CRC-16 checksum.
- */
-function crc16(data) {
-  let msb = 0;
-  let lsb = 0;
+// Uint16Array conversion.
 
-  for (let i = 0; i < data.length; i++) {
-    const c = data[i];
-    let x = c ^ msb;
-    x ^= (x >> 4);
-    msb = (lsb ^ (x >> 3) ^ (x << 4)) & 0xFF;
-    lsb = (x ^ (x << 5)) & 0xFF;
-  }
+const getArray16 = (/** @type {DataView} */ view, littleEndian = true) =>
+  Uint16Array.from({ length: view.byteLength / 2 },
+    (_, i) => view.getUint16(i * 2, littleEndian));
 
-  return (msb << 8) | lsb;
-}
-
-/**
- * @param {Uint8Array|Array<number>} data
- * @param {number} [startOffset]
- * @param {boolean} [isBigEndian]
- * @param {number} [nameLength]
- * @returns {string}
- */
-function extractUTF16Text(data, startOffset, isBigEndian = false, nameLength = 10) {
-  // Default to 10 characters (20 bytes) if nameLength is not provided
-  const length = nameLength * 2;
-  let endPosition = startOffset;
-
-  // Determine the byte order based on the isBigEndian flag
-  // NOTE: TextDecoder only works on newish browsers
-  // despite the rest of this script using pre-ES6 syntax
-  // TODO: TEST ON OLDER BROWSERS!!!!!!!!!!
-  const decoder = new TextDecoder(isBigEndian ? 'utf-16be' : 'utf-16le');
-
-  // Find the position of the null terminator (0x00 0x00)
-  while (endPosition < startOffset + length) {
-    if (data[endPosition] === 0x00 && data[endPosition + 1] === 0x00) {
-      break;
-    }
-    endPosition += 2; // Move in 2-byte increments (UTF-16)
-  }
-
-  // Extract and decode the name bytes
-  const nameBytes = data.slice(startOffset, endPosition);
-  return decoder.decode(nameBytes);
-}
+const getArray16From8 = (/** @type {Uint8Array} */ u8, littleEndian = true) =>
+  getArray16(new DataView(u8.buffer, u8.byteOffset, u8.byteLength), littleEndian);
 
 //
 // common formats
@@ -127,9 +80,14 @@ function extractUTF16Text(data, startOffset, isBigEndian = false, nameLength = 1
  * Empty means no CRC16.
  * @property {number} [offsetName] - Offset for the name, if any.
  * @property {boolean} [isNameU16BE] - Whether the name's format is big-endian.
- * @property {boolean} [specialCaseConvertTo] - Whether the format should be
- * converted to studio format in certain cases.
  */
+
+/** @type {SupportedTypeDefinition} */ const ver3StoreData = {
+  name: 'FFLStoreData',
+  sizes: [96],
+  offsetCRC16: 94,
+  offsetName: 0x1A
+};
 
 /** @type {Array<SupportedTypeDefinition>} */
 const supportedTypes = [
@@ -145,22 +103,6 @@ const supportedTypes = [
     offsetName: 0x1A
   },
   {
-    name: 'FFLStoreData',
-    sizes: [96],
-    offsetCRC16: 94,
-    offsetName: 0x1A
-  },
-  {
-    name: 'FFLStoreData',
-    sizes: [104, // 104 = 96 + nfpstoredataextention length
-      106, 108, // mii-creator custom format
-      336 // plus tomodachi life qr code extension
-    ],
-    offsetCRC16: 94,
-    offsetName: 0x1A,
-    specialCaseConvertTo: true
-  },
-  {
     name: 'RFLCharData',
     sizes: [74],
     offsetName: 0x2,
@@ -173,6 +115,7 @@ const supportedTypes = [
     offsetName: 0x2,
     isNameU16BE: true
   },
+  ver3StoreData,
   {
     name: 'nn::mii::CharInfo',
     sizes: [88],
@@ -180,45 +123,34 @@ const supportedTypes = [
   },
   {
     name: 'nn::mii::CoreData',
-    sizes: [48, 68],
+    sizes: [48],
     offsetName: 0x1C
   },
-  // TODO: DON'T KNOW THE CRC, DON'T HAVE SAMPLES EITHER
-  /* {
+  {
     name: 'nn::mii::StoreData',
     sizes: [68],
-    offsetName: 0x1C,
-  }, */
-  /*
-        <!-- switch mii store data types:
-        nn::mii::CoreData - 48 bytes
-          * size from method nn::mii::detail::CoreDataRaw::SetDefault
-            - contains memset for 0x30 = size is 0x30/48
-        nn::mii::StoreData - 68 bytes, i think
-          * size from method nn::mii::detail::StoreDataRaw::UpdateDeviceCrc -> nn::mii::detail::CalculateAndSetCrc16
-            - sets total size to 0x44 = size is 0x44/68
-        -->
-  */
+    offsetCRC16: 0x44,
+    offsetName: 0x1C
+  },
   {
     name: 'Mii Studio Data',
-    sizes: [46, 47] // ignoring the encoded format for now
+    sizes: [46, 47] // last covers the obfuscated/encoded format
   }
 ];
 
-/**
- * @param {number} size
- * @returns {SupportedTypeDefinition|undefined}
- */
-const findSupportedTypeBySize =
-  size => supportedTypes.find(type => type.sizes.includes(size));
+const findSupportedTypeBySize = (/** @type {number} */ size) => {
+  const r = supportedTypes.find(type => type.sizes.includes(size));
+  return (!r && ExtendedVer3.has(size)) ? ver3StoreData : r;
+};
 
 export {
   hexToBytes,
   bytesToHex,
   base64ToBytes,
+  base64ExToBytes,
   parseHexOrB64ToBytes,
   bytesToBase64,
-  extractUTF16Text,
-  findSupportedTypeBySize,
-  crc16
+  getArray16,
+  getArray16From8,
+  findSupportedTypeBySize
 };
