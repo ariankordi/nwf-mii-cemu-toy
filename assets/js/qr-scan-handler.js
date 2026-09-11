@@ -11,6 +11,7 @@ import TomoExtraData from './TomoExtraData.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
 import { Char16, Crc16Ccitt } from './MiiDataLibrary.mjs';
 import Tomo3dsExtraAccessor from './Tomo3dsExtraAccessor.js';
+import { ExtendedVer3, ExtendedVer3DataType } from './ExtendedVer3Formats.js';
 
 // disable BarcodeDetector api as it does not support binary data
 QrScanner.setBarcodeDetectorDisabled !== undefined && QrScanner.setBarcodeDetectorDisabled();
@@ -281,25 +282,6 @@ async function handleDecryption(result) {
     return;
   }
 
-  // tomodachi life, miitomo = 172
-  // const isTomodachi3ds = bytes.length === TOMODACHI_LIFE_3DS_QR_DATA_SIZE;
-  const isTomodachi3ds = TomoExtraData.getDataName(bytes.length - WrappedMiiDataLength - 16 /* iv */ - 4 /* crc */) === 'tomodachi-life-data';
-
-  if (isTomodachi3ds) {
-    const ret = await handleTomodachiLife3DSData(bytes);
-    if (ret) {
-      decryptedData = new Uint8Array([...decryptedData, ...ret]);
-    }
-  }
-
-  const isOunce = true;
-  if (isOunce) {
-    const ret = await handleOunceData(bytes);
-    if (ret) {
-      decryptedData = new Uint8Array([...decryptedData, ...ret]);
-    }
-  }
-
   const name16 = getArray16From8(decryptedData.subarray(0x1A), true);
   const miiName = Char16.toString(name16, 10);
   if (Crc16Ccitt.calculate(decryptedData.subarray(0, 96), 96) !== 0) {
@@ -309,11 +291,22 @@ async function handleDecryption(result) {
   }
 
   showStatus('loaded', miiName);
-  if (isTomodachi3ds) {
-    qrLoadedTL.style.display = '';
-  }
-  if (isOunce) {
-    qrLoadedOunce.style.display = '';
+
+  // handle extra data
+  {
+    // NOTE: oops, ExtendedVer3 doesn't account for "qr code extra data" length uh
+    // const extraType = ExtendedVer3.getTypeFromSize(bytes.length);
+    /** @type {Uint8Array<ArrayBuffer>} */ let ex;
+    const appendExtra = () => decryptedData = new Uint8Array([...decryptedData, ...ex]);
+    if (bytes.length === 372 &&
+      (ex = await handleTomodachiLife3DSData(bytes))) {
+      appendExtra();
+      qrLoadedTL.style.display = '';
+    } else if (bytes.length === 144 &&
+      bytes[0x70] == 0x11 && (ex = await handleOunceData(bytes))) {
+      appendExtra();
+      qrLoadedOunce.style.display = '';
+    }
   }
 
   // finished, stop camera if it is open
@@ -323,8 +316,8 @@ async function handleDecryption(result) {
   // hide video element
   video.style.height = '0px';
   videoGroup.style.display = 'none';
-  startCameraButton.style.display = ''; // Unhide start button
-  startCameraLabel.style.display = ''; // Unhide start label
+  startCameraButton.style.display = ''; // Un-hide start button
+  startCameraLabel.style.display = ''; // Un-hide start label
   stopCameraButton.style.display = 'none'; // Hide stop button
   stopCameraLabel.style.display = 'none'; // Hide stop label
 

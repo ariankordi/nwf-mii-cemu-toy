@@ -13,16 +13,12 @@ import {
   MiiVisualInfo,
   StudioObfuscation
 } from './MiiDataLibrary.mjs';
-import Tomo3dsExtraAccessor from './Tomo3dsExtraAccessor.js';
 import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
 import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
 import { MiiLogoQrCode } from './MiiLogoQrCode.js';
+import { ExtendedVer3, ExtendedVer3DataType } from './ExtendedVer3Formats.js';
 
 const wrappedMiiData = new WrappedMiiDataSubtle(KeySlot0x31Keys[KeyType.Production]);
-
-const CUSTOM_DATA_TYPE_NFP = MiiDataType.VER3_STORE_DATA + 30;
-const CUSTOM_DATA_TYPE_TOMO3DS = MiiDataType.VER3_STORE_DATA + 31;
-const CUSTOM_DATA_TYPE_OUNCE = MiiDataType.VER3_STORE_DATA + 32;
 
 /**
  * Maps MiiDataType values to display strings.
@@ -41,14 +37,13 @@ const MiiDataTypeNames = {
   [MiiDataType.NX_CORE_PARAM]: 'nn::mii::CoreData (Minimal, Switch)',
   [MiiDataType.STUDIO_DATA]: 'Mii Studio Data',
   [MiiDataType.STUDIO_URL_DATA]: 'Mii Studio URL Data',
-  [CUSTOM_DATA_TYPE_NFP]: 'Ver3StoreData + NfpStoreDataExtention (amiibo Data)',
-  [CUSTOM_DATA_TYPE_TOMO3DS]: 'CFLiMiiDataPacket + Tomodachi Life 3DS QR Data',
-  [CUSTOM_DATA_TYPE_OUNCE]: 'Ver3StoreData + Switch 2 QR Code Extension'
+  [100 + ExtendedVer3DataType.Nfp]: 'Ver3StoreData + NfpStoreDataExtention (amiibo Data)',
+  [100 + ExtendedVer3DataType.Tomo3ds]: 'CFLiMiiDataPacket + Tomodachi Life 3DS QR Data',
+  [100 + ExtendedVer3DataType.Ounce]: 'Ver3StoreData + Switch 2 QR Code Extension'
 };
 
 /**
  * @typedef {Object} MiiConversionResult
- * @property {number} inputType - MiiDataType of the detected input.
  * @property {string=} typeName - Display name for input format.
  * @property {Uint8Array} studioData - 46-byte Mii Studio raw data.
  * @property {Uint8Array} ver3StoreData - 96-byte Ver3StoreData.
@@ -67,24 +62,20 @@ const MiiDataTypeNames = {
  */
 const convertMiiData = (rawInput) => {
   const info = new MiiVisualInfo(), extra = new MiiExtraInfo();
-  const inputType = MiiFormat.getTypeFromSize(rawInput.length);
-
-  /** sizeof(VER3_STORE_DATA) + sizeof(NfpStoreDataExtention) */
-  const NFP_SIZE = MiiDataSize.VER3_STORE_DATA + 8;
-  const TOMO3DS_SIZE = MiiDataSize.VER3_STORE_DATA + 240;
-
   const newId = Fnv1a.create128(rawInput, rawInput.length);
 
-  /** Makes a promise with an allocated QR Code buffer. */
-  async function makeQrDataPromise(/** @type {Uint8Array<ArrayBuffer>} */ src) {
-    const data = new Uint8Array(WrappedMiiDataLength);
-    await wrappedMiiData.encrypt(data, src);
-    return data;
-  }
+  // Always decode Ver3StoreData and ignore CRC (assumed correct).
+  const extendedType = ExtendedVer3.getTypeFromSize(rawInput.length);
+  if (extendedType !== ExtendedVer3DataType.None) {
+    const ver3Raw = rawInput.subarray(0, MiiDataSize.VER3_STORE_DATA);
+    MiiDecoder.fromVer3Data(ver3Raw, info, extra);
 
-  const postVer3Extension = (/** @type {MiiVisualInfo} */ info,
-    /** @type {MiiExtraInfo} */ extra, /** @type {Uint8Array} */ ver3Raw,
-    /** @type {number} */ inputType) => {
+    // Overwrite visual colors with the NX common colors from the
+    // format-specific extension, normalized to a common Nfp-style layout
+    // (this also does the Tomo3ds hair dye -> color conversion internally).
+    const nfpExtension = ExtendedVer3.getNfpExtensionFromType(extendedType, rawInput);
+    ConvUtility.applyNfpExtension(info, nfpExtension);
+
     const studioData = new Uint8Array(MiiDataSize.STUDIO_DATA);
     MiiEncoder.toStudioData(studioData, info);
 
@@ -92,38 +83,24 @@ const convertMiiData = (rawInput) => {
     ConvUtility.adjustExtraForNx(extra, newId);
     MiiEncoder.toNxCharInfo(charInfoData, info, extra);
 
+    // Make extended QR code data.
+    // TODO TODO TODO UNFINISHED
+    const data = new Uint8Array(144);
+    data.set(buildVer3ForQR(ver3Raw));
+    console.debug(nfpExtension);
+    const qrData = (async () => data)();
+
     return /** @type {MiiConversionResult} */ ({
-      inputType,
-      typeName: MiiDataTypeNames[inputType],
+      typeName: MiiDataTypeNames[100 + extendedType],
       studioData,
       // The embedded Ver3 bytes already have correct Ver3 colors; copy them.
       ver3StoreData: ver3Raw.slice(),
-      qrData: makeQrDataPromise(buildVer3ForQR(ver3Raw)),
+      qrData,
       charInfoData
     });
-  };
-
-  // Always decode Ver3StoreData and ignore CRC (assumed correct).
-  if (rawInput.length === NFP_SIZE) {
-    const ver3Raw = rawInput.subarray(0, MiiDataSize.VER3_STORE_DATA);
-    MiiDecoder.fromVer3Data(ver3Raw, info, extra);
-    // Overwrite visual colors with the NX common colors from the extension.
-    ConvUtility.applyNfpExtension(info, rawInput, MiiDataSize.VER3_STORE_DATA);
-
-    return postVer3Extension(info, extra, ver3Raw, CUSTOM_DATA_TYPE_NFP);
-  } else if (rawInput.length === TOMO3DS_SIZE) {
-    const ver3Raw = rawInput.subarray(0, MiiDataSize.VER3_STORE_DATA);
-    const extraRaw = rawInput.subarray(MiiDataSize.VER3_STORE_DATA);
-    MiiDecoder.fromVer3Data(ver3Raw, info, extra);
-
-    const accessor = new Tomo3dsExtraAccessor(extraRaw);
-    // Apply hair/eyebrow/beard colors from hair dye.
-    Tomo3dsExtraAccessor.applyHairDye(info,
-      accessor.getHairDyeMode(), accessor.getHairDye());
-
-    return postVer3Extension(info, extra, ver3Raw, CUSTOM_DATA_TYPE_TOMO3DS);
   }
 
+  const inputType = MiiFormat.getTypeFromSize(rawInput.length);
   if (inputType === MiiDataType.UNKNOWN) {
     throw new Error(`Input format is an unknown size of: ${rawInput.length}`);
   }
@@ -153,12 +130,13 @@ const convertMiiData = (rawInput) => {
   MiiEncoder.toStudioData(studioData, info);
   MiiEncoder.toNxCharInfo(charInfoData, info, extraForNx);
 
+  const data = new Uint8Array(WrappedMiiDataLength);
+  const qrData = wrappedMiiData.encrypt(data, buildVer3ForQR(ver3StoreData)).then(() => data);
   return {
-    inputType,
     typeName: MiiDataTypeNames[inputType],
     studioData,
     ver3StoreData,
-    qrData: makeQrDataPromise(buildVer3ForQR(ver3StoreData)),
+    qrData,
     charInfoData
   };
 };
