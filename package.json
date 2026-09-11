@@ -31,8 +31,8 @@
     "rolldown": "^1.0.0-rc.15"
   },
   "dependencies": {
-    "qr-scanner": "github:ariankordi/qr-scanner-binary#v1.6.2",
-    "qrjs": "github:ariankordi/qr.js#v0.4.0",
+    "qr-scanner": "github:ariankordi/qr-scanner-binary#140fda0",
+    "qrjs": "github:ariankordi/qr.js#v0.4.1",
     "sjcl": "npm:sjcl-with-all-without-require-crypto@^1.0.8"
   }
 }

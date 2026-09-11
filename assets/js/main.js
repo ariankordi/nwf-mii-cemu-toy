@@ -11,10 +11,12 @@ import {
   parseHexOrB64ToBytes,
   bytesToBase64, base64ToBytes,
   findSupportedTypeBySize,
-  getArray16From8
+  getArray16From8,
+  bytesToHex
 } from './common.js';
 import { Char16, Crc16Ccitt, DataConversionUtilityTodoMoveThis as ConvUtility, MiiDecoder, MiiVisualInfo, MiiEncoder, MiiDataSize } from './MiiDataLibrary.mjs';
 import Tomo3dsExtraAccessor from './Tomo3dsExtraAccessor.js';
+import { ExtendedVer3, ExtendedVer3DataType } from './ExtendedVer3Formats.js';
 
 const elementById = (/** @type {string} */ id) => {
   const element = document.getElementById(id);
@@ -1089,47 +1091,31 @@ function checkSupportedTypeBySize(data, type, checkCRC16) {
 /**
  *
  * @param {Uint8Array} data
- * @param {import('./common.js').SupportedTypeDefinition} type
+ * @param {import('./common.js').SupportedTypeDefinition} _no
  * @param {HTMLInputElement} dataField
  * @param {HTMLInputElement} dataRealField
  */
-function setDataConvertInline(data, type, dataField, dataRealField) {
-  if (!type.specialCaseConvertTo || dataRealField === undefined) {
+function setDataConvertInline(data, _no, dataField, dataRealField) {
+  const type = ExtendedVer3.getTypeFromSize(data.length);
+  if (type === ExtendedVer3DataType.None || dataRealField === undefined) {
     // ig it is already set
     // dataField.value = uint8ArrayToBase64(data);
     return;
   }
 
-  const info = new MiiVisualInfo();
-  const extraData = data.subarray(MiiDataSize.VER3_STORE_DATA);
-  const studioBuffer = new Uint8Array(MiiDataSize.STUDIO_DATA);
-  switch (data.length) {
-    case 104:
-      MiiDecoder.visualFromVer3Core(data, info);
-      ConvUtility.applyNfpExtension(info, extraData);
-      MiiEncoder.toStudioData(studioBuffer, info);
-      break;
-    case 336: {
-      MiiDecoder.visualFromVer3Core(data, info);
-      const accessor = new Tomo3dsExtraAccessor(extraData);
-      Tomo3dsExtraAccessor.applyHairDye(info,
-        accessor.getHairDyeMode(), accessor.getHairDye());
-      MiiEncoder.toStudioData(studioBuffer, info);
-      break;
-    }
-    case 106: // ounce
-      MiiDecoder.visualFromVer3Core(data, info);
-      ConvUtility.applyNfpExtension(info, extraData.subarray(2));
-      MiiEncoder.toStudioData(studioBuffer, info);
-      break;
-    default:
-      throw new Error('setDataConvertInline: Unhandled case. You just found a design-time bug!');
+  // Get the extension data and build it along
+  // with the Ver3StoreData to Studio format.
+  {
+    const extension = ExtendedVer3.getNfpExtensionFromType(type, data);
+    const info = new MiiVisualInfo();
+    const studioBuffer = new Uint8Array(MiiDataSize.STUDIO_DATA);
+    MiiDecoder.visualFromVer3Core(data, info);
+    ConvUtility.applyNfpExtension(info, extension);
+    MiiEncoder.toStudioData(studioBuffer, info);
+    const studioCode = bytesToHex(studioBuffer);
+    // set data field
+    dataField.value = studioCode;
   }
-
-  const studioCode = bytesToBase64(studioBuffer);
-
-  // set data field
-  dataField.value = studioCode;
 
   // set real value that will be read by conversion
   dataRealField.disabled = false;
