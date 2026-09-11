@@ -1,8 +1,8 @@
 /**
  * @file WrapAesKeys.js
+ * @author Arian Kordi <https://github.com/ariankordi>
  * AES-128 keys for "WrappedStoreData", AKA the
  * encrypted form of Mii data seen in QR codes.
- * @author Arian Kordi <https://github.com/ariankordi>
  */
 // @ts-check
 

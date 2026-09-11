@@ -1,8 +1,9 @@
 {
   "name": "nwf-mii-cemu-toy",
+  "author": "Arian Kordi",
   "type": "module",
   "version": "1.0.0",
-  "description": "NOTE: This package is purely for the frontend JS.",
+  "description": "Package for the frontend JS of mii-unsecure.ariankordi.net. Not meant to be published. Has some Mii data helpers that may be useful.",
   "scripts": {
     "build:rolldown": "node rolldown.js",
     "build": "npm run-script build:rolldown"
@@ -14,11 +15,9 @@
     "@eslint-community/eslint-plugin-eslint-comments": "^4.5.0",
     "@eslint/js": "^9.25.1",
     "@rollup/plugin-babel": "^7.0.0",
-    "@rollup/plugin-terser": "^1.0.0",
     "@stylistic/eslint-plugin": "^4.2.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.15.19",
-    "@types/sjcl": "^1.0.34",
     "core-js": "^3.49.0",
     "csv-parse": "^6.1.0",
     "eslint": "^9.25.1",
@@ -28,11 +27,11 @@
     "globals": "^16.0.0",
     "jest": "^29.7.0",
     "jest-html-reporter": "^4.3.0",
-    "rolldown": "^1.0.0-rc.15"
+    "rolldown": "^1.0.0-rc.15",
+    "terser": "^5.51.2"
   },
   "dependencies": {
     "qr-scanner": "github:ariankordi/qr-scanner-binary#140fda0",
-    "qrjs": "github:ariankordi/qr.js#v0.4.1",
-    "sjcl": "npm:sjcl-with-all-without-require-crypto@^1.0.8"
+    "qrjs": "github:ariankordi/qr.js#v0.4.1"
   }
 }

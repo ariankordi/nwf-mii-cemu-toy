@@ -6,9 +6,9 @@
 
 import QrScanner from 'qr-scanner';
 import { findSupportedTypeBySize, getArray16From8 } from './common.js';
-import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
-import TomoExtraData from './TomoExtraData.js';
-import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
+import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './qr/WrappedMiiDataSubtle.js';
+import TomoExtraData from './qr/TomoExtraData.js';
+import { KeySlot0x31Keys, KeyType } from './qr/WrapAesKeys.js';
 import { Char16, Crc16Ccitt } from './MiiDataLibrary.mjs';
 import Tomo3dsExtraAccessor from './Tomo3dsExtraAccessor.js';
 import { ExtendedVer3, ExtendedVer3DataType } from './ExtendedVer3Formats.js';

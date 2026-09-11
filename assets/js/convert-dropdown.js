@@ -13,9 +13,9 @@ import {
   MiiVisualInfo,
   StudioObfuscation
 } from './MiiDataLibrary.mjs';
-import { KeySlot0x31Keys, KeyType } from './WrapAesKeys.js';
-import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './WrappedMiiDataSubtle.js';
-import { MiiLogoQrCode } from './MiiLogoQrCode.js';
+import { KeySlot0x31Keys, KeyType } from './qr/WrapAesKeys.js';
+import { WrappedMiiDataLength, WrappedMiiDataSubtle } from './qr/WrappedMiiDataSubtle.js';
+import { MiiLogoQrCode } from './qr/MiiLogoQrCode.js';
 import { ExtendedVer3, ExtendedVer3DataType } from './ExtendedVer3Formats.js';
 
 const wrappedMiiData = new WrappedMiiDataSubtle(KeySlot0x31Keys[KeyType.Production]);
