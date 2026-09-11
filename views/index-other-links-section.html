@@ -4,65 +4,14 @@
     <ul class="left-aligned-ul">
 
         <li>
-            <b><a target="_blank" href="https://mii.nxw.pw">Mii Creator</a> by <a target="_blank" href="https://github.com/datkat21">kat21</a></b> - Web app for editing Miis, making pose images with them, and more.
-            <ul>
-                <!-- To my disappointment, it's not open source anymore. -->
-                <!--
-                <li><a target="_blank" href="https://github.com/datkat21/mii-creator">Open source</a>, made with my own <a target="_blank" href="https://github.com/ariankordi/FFL.js">FFL.js library</a> for rendering Miis in Three.js with shaders. Development is far more active, feel free to help them out!</li>
-                <li>You can consider it a successor to my tool if you want, since I've mostly stopped adding to it by now <span class="smaller">(that doesn't mean I'm done with Miis though)</span>. I hope you enjoy using Mii Creator.</li>
-                -->
-                <li>This site is more feature-dense, so give this a try if it's what you're looking for. See the <a target="_blank" href="https://www.youtube.com/watch?v=-9p8FkswQ7g">official video</a> as well.</li>
-                <li>(As of writing the credits are WIP, so) It is made with prior contributions from me:
-                    <ul><li>Two Mii rendering solutions,
-                        <!-- * server gltfs (10/2024 to 01/2025)
-                             * and ffl.js (2025/03 until 2025/09 release) -->
-                        Wii U/Miitomo shaders
-                        <!-- * from ffl.js, or abood's/my table extracts if he rewrites them -->
-                        and Switch LUTs,
-                        <!-- * refers to the material tables in SwitchShaderMaterials.ts
-                             * from my extracts in FFL-Testing/src/SwitchShader.cpp -->
-                        documenting accurate body scaling
-                        <!-- * mii-renderer-async/extra/BoneScaler.js (September 2025)
-                             * derived from FFL-Testing/src/BodyModel.cpp
-                             * which is reversed and documented from Switch VariableIconBody -->
-                    </li>
-                    <li>Code for reading Mii shapes/textures in JS
-                        <!-- * mii-renderer-async/ResourceParser.ts (September 2025)
-                             * most code is copy-pasted from: https://jsfiddle.net/arian_/52u3wntz/6/, https://gist.github.com/ariankordi/66efb65ebf58da9f8151f21dcf3299dc
-                             * (plus comments were removed and variable names were changed for seemingly no reason other than to make it not look copied)
-                         -->
-                        and loading into Three.js
-                        <!-- assumption based off of other code I've seen as of June 2025 -->
-                    </li>
-                    <li>Data parsing: struct-fu port, <!-- mii-renderer-async/fu/struct-fu.js from https://github.com/ariankordi/struct-fu -->
-                        FFSD format, <!-- src/class/struct/FFLStoreData.ts from https://jsfiddle.net/arian_/dvnym03t/3/ -->
-                        QR en/decoding
-                        <!-- * src/util/EncodeQRCode.ts, src/util/DecodeQRCode.ts, src/external/mii-frontend/*.js
-                             * from either one of the three jsfiddles I wrote or my website, can't keep track anymore --></li>
-                    <li>Initial inspiration,
-                        <!--
-                        1. project began weeks after adding gltfs to my server, one of the proposed names was "Mii Maker (REAL)" or something
-                        2. he's told me on occasion that he knows about my blurb about wanting to make a mii editor on my website
-                        -->
-                        various help and debugging in the beginning,
-                        <!-- * subjective, but most instances are in jasmine discord (360173962862395392)
-                             * there are cherry-picked changes from my fork such as defer "loading" popup
-                             * ideas such as faster modal animations, changing modal to pop instead of slide, even the mii toolbox "convert, edit, etc" idea i saw pop up in a screenshot from him lol i dont know if its real tho
-                             * you can AT LEAST count the hours of source control cleanup -->
-                        clothing idea <!-- FCL discussion in march 2025, notice how miic suspiciously added and showed off clothing just after this https://x.com/aaaarrrriaaannn/status/1901392235129680011 -->
-                        <span class="small">(read HTML comments for all details)</span>
-                    </li>
-                </ul></li>
-                <!-- we pretty much cut ties in june 2025 though -->
-
-                <li><b>Note:</b> As of writing (January 2026), mandatory Discord membership is still required: <a target="_blank" href="https://discord.gg/miicreator">https://discord.gg/miicreator</a></li>
+            <b><a target="_blank" href="https://mii.nxw.pw">Mii Creator</a> by <a target="_blank" href="https://github.com/datkat21">kat21</a></b> - Featureful web app for editing Miis, making images, and more.
+                <li><b>Note:</b> Requires an account to use. Not fully endorsed by me since 2025.</li>
             </ul>
         </li>
 
         <li>
             <b><a href="https://jsfiddle.net/u/arian_/fiddles/" target="_blank">My JSFiddles</a></b> - I write a lot of Mii-related code snippets for: converting Tomodachi Collection DS Mii data, accurately rendering Miis in JS, en/decoding Mii QRs with game extra data, Mii conversion code, a Switch Mii color reference... Occasionally more is added.
         </li>
-        <!-- TODO: FFL samples in C - Shows you how to use the FFL decomp in any OpenGL game engine, this example using Raylib. This could even be helpful for porting FFL to other languages entirely, or even using it through JS/WASM. -->
         <!-- TODO TODO TODO: POINT OUT MY NNID DATABASE. if you are lurking the html its here:
         * MariaDB database: https://mega.nz/file/HWJh2BrA#qoJ4Vn_Sdy7b1vWJqjGR9uVvs-yYRQJLaPmu2g2nMdE
         * Original dump and scripts should be here too: https://mega.nz/file/SboWHRrK#_5vuSzFAkyvz9lGy7RBqwAh3CN0OHCRQ9AbYn-Kd09s
