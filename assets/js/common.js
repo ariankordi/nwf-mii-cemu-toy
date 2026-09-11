@@ -1,3 +1,7 @@
+/**
+ * @file common.js
+ * @author Arian Kordi <https://github.com/ariankordi>
+ */
 // @ts-check
 
 import { ExtendedVer3 } from './ExtendedVer3Formats.js';
