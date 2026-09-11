@@ -7,15 +7,19 @@ import Tomo3dsExtraAccessor from './Tomo3dsExtraAccessor.js';
 const ExtendedVer3DataType = {
   None: 0,
   Tomo3ds: 1,
-  Nfp: 2,
-  Ounce: 3
+  // Miitomo: 2,
+  Nfp: 3,
+  // Miitopia3ds: 4,
+  Ounce: 5
 };
 
 /*
 const ExtendedVer3DataSize = {
   None: 96,
   Tomo3ds: 96 + 240,
+  Miitomo: 96 + 40,
   Nfp: 96 + 8,
+  Miitopia3ds: 96 + 192,
   Ounce: 96 + 10
 };
 */
@@ -34,7 +38,7 @@ function infoToNfpData(/** @type {Uint8Array} */ dst,
 }
 
 class ExtendedVer3 {
-  static getTypeFromSize(size = 0) {
+  static getTypeFromSize(/** @type {number} */ size) {
     switch (size) {
       case MiiDataSize.VER3_STORE_DATA + 240:
         return ExtendedVer3DataType.Tomo3ds;
@@ -70,7 +74,7 @@ class ExtendedVer3 {
             accessor.getHairDyeMode(), accessor.getHairDye());
         }
         // Convert MiiVisualInfo to the extension.
-        infoToNfpData(extension);
+        infoToNfpData(extension, info);
         return extension;
       }
       case ExtendedVer3DataType.Nfp:
