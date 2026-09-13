@@ -36,6 +36,6 @@
   ],
   "dependencies": {
     "qr-scanner": "github:ariankordi/qr-scanner-binary#140fda0",
-    "qrjs": "github:ariankordi/qr.js#v0.4.1"
+    "qrjs": "github:ariankordi/qr.js#v0.4.2"
   }
 }
