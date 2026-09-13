@@ -1,8 +1,12 @@
+# Authored by Arian Kordi:
+# - https://github.com/ariankordi
+# - ariankordi@ariankordi.net
+# - https://jsfiddle.net/u/arian_/fiddles/
 meta:
   id: tomodachi_life_qr_code
   application: |
     Extra data stored within Mii QR codes created from Tomodachi Life.
-    To access this data, use this jsfiddle: https://jsfiddle.net/arian_/ckya346z/18/
+    To access this data, use this jsfiddle: https://jsfiddle.net/arian_/ckya346z/22/
     Please note that strings usually contain garbage data after the first terminator.
   endian: le
   bit-endian: le

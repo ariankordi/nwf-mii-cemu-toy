@@ -1,9 +1,7 @@
-# Struct by Arian Kordi:
+# Authored by Arian Kordi:
 # - https://github.com/ariankordi
 # - ariankordi@ariankordi.net
 # - https://jsfiddle.net/u/arian_/fiddles/
-# Please include credit and/or let me
-# know what you're using this for.
 meta:
   id: ver3_store_data
   title: 3DS/Wii U Mii data format
