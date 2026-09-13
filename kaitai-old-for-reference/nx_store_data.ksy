@@ -1,3 +1,7 @@
+# Authored by Arian Kordi:
+# - https://github.com/ariankordi
+# - ariankordi@ariankordi.net
+# - https://jsfiddle.net/u/arian_/fiddles/
 meta:
   id: nx_store_data
   application: |

@@ -1,3 +1,7 @@
+# Kaitai Structs (for reference)
+
+They used to be used in this repo, but aren't anymore.
+
 * Source of gen1_wii.ksy, gen2_wiiu_3ds_miitomo.ksy, gen3_studio.ksy, gen3_switch.ksy, gen3_switchgame.ksy: https://github.com/JimKatz/mii2studio
   - The repo above is just a fork of Larsenv's last commit to mii2studio.
 ## Credits verbatim from the above repo:
