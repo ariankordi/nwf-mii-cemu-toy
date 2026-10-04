@@ -274,7 +274,7 @@ func fetchNNIDToPID(nnid string, apiID int) (uint64, error) {
 	}
 	if err != nil {
 		if err.Error() == encodingXMLErrorThrownWhenAccountWSReturnsHTML {
-			return 0, fmt.Errorf("i think the account server is returning html instead of data: %v", err)
+			return 0, fmt.Errorf("Account server is having problems: %v", err)
 		}
 		return 0, err
 	}
@@ -350,7 +350,7 @@ func fetchMiiFromPID(pid uint64, apiID int, forceRefresh bool) (MiisResponse, er
 			if err := xml.Unmarshal([]byte(result), &miiResponse); err != nil {
 				if err.Error() == encodingXMLErrorThrownWhenAccountWSReturnsHTML {
 					return MiisResponse{},
-						fmt.Errorf("i think the account server is returning html instead of data: %v", err)
+						fmt.Errorf("Account server is having problems: %v", err)
 				}
 				return miiResponse, err
 			}
